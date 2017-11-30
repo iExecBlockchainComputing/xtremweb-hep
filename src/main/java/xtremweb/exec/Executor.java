@@ -46,12 +46,13 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 
 public class Executor {
 
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(Executor.class);
+
 	/**
 	 * This contains environment variables
 	 *
@@ -114,12 +115,7 @@ public class Executor {
 	private final Timer timer = new Timer();
 	private boolean wallclockTimeReached;
 
-	public void setLoggerLevel(final LoggerLevel l) {
-		getLogger().setLoggerLevel(l);
-	}
-
 	public Executor() {
-		setLogger(new Logger(this));
 		maxWallClockTime = -1;
 		wallclockTimeReached = false;
 		startDate = 0;
@@ -256,7 +252,7 @@ public class Executor {
 		} else if (sleep_delay < 5) {
 			sleep_delay = 5;
 		}
-		getLogger().info("Executor#setDelay() = " + sleep_delay);
+		logger.info("Executor#setDelay() = " + sleep_delay);
 		return sleep_delay;
 	}
 
@@ -318,7 +314,7 @@ public class Executor {
 	 */
 	public synchronized void stop() throws ExecutorLaunchException {
 
-		getLogger().debug("stop process");
+		logger.debug("stop process");
 
 		clean();
 
@@ -327,7 +323,7 @@ public class Executor {
 			isRunning = false;
 			process = null;
 		} catch (final Throwable e) {
-			getLogger().debug("Can't stop process : " + e);
+			logger.debug("Can't stop process : " + e);
 			throw new ExecutorLaunchException();
 		}
 	}
@@ -340,7 +336,7 @@ public class Executor {
 	 */
 	private void closeHandles() {
 
-		getLogger().finest("closeHandles()");
+		logger.trace("closeHandles()");
 
 		try {
 			stdout.flush();
@@ -375,7 +371,7 @@ public class Executor {
 	 */
 	public void start() throws ExecutorLaunchException {
 
-		getLogger().debug("start process : " + getCommandLine());
+		logger.debug("start process : " + getCommandLine());
 
 		File dir = null;
 
@@ -394,7 +390,7 @@ public class Executor {
 			}
 			isRunning = true;
 		} catch (final Exception e) {
-			getLogger().exception("Can't start process : " + getCommandLine(), e);
+			logger.error("Caught exception, Can't start process : " + getCommandLine(), e);
 			throw new ExecutorLaunchException();
 		} finally {
 			dir = null;
@@ -440,11 +436,11 @@ public class Executor {
 			if (stdin != null) {
 				try {
 					if (stdin.available() > 0) {
-						getLogger().finest("stdin.available() = " + stdin.available());
+						logger.trace("stdin.available() = " + stdin.available());
 					}
 					piped = pipe(stdin, process.getOutputStream(), false);
 					if (piped > 0) {
-						getLogger().finest("pipe(stdin)  = " + piped);
+						logger.trace("pipe(stdin)  = " + piped);
 					}
 					if (stdin.available() <= 0) {
 						stdin.close();
@@ -452,7 +448,7 @@ public class Executor {
 						stdin = null;
 					}
 				} catch (final Exception e) {
-					getLogger().exception("Executor (" + getCommandLine() + ") : stdin error", e);
+					logger.error("Caught exception, Executor (" + getCommandLine() + ") : stdin error", e);
 					try {
 						stdin.close();
 					} catch (final Exception e1) {
@@ -470,34 +466,34 @@ public class Executor {
 			if (process.getInputStream() != null) {
 				try {
 					if (process.getInputStream().available() > 0) {
-						getLogger().finest(
+						logger.trace(
 								"process.getInputStream().available() = " + process.getInputStream().available());
 					}
 
 					piped = pipe(process.getInputStream(), stdout, false);
 					if (piped > 0) {
-						getLogger().finest("pipe(stdout) = " + piped);
+						logger.trace("pipe(stdout) = " + piped);
 					}
 				} catch (final Exception e) {
-					getLogger().exception("Executor (" + getCommandLine() + ") : input stream error", e);
+					logger.error("Caught exception, Executor (" + getCommandLine() + ") : input stream error", e);
 				}
 			}
 			if (process.getErrorStream() != null) {
 				try {
 					if (process.getErrorStream().available() > 0) {
-						getLogger().finest(
+						logger.trace(
 								"process.getErrorStream().available() = " + process.getErrorStream().available());
 					}
 					piped = pipe(process.getErrorStream(), stderr, false);
 					if (piped > 0) {
-						getLogger().finest("pipe(stderr) = " + piped);
+						logger.trace("pipe(stderr) = " + piped);
 					}
 				} catch (final Exception e) {
-					getLogger().exception("Executor (" + getCommandLine() + ") : err stream error", e);
+					logger.error("Caught exception, Executor (" + getCommandLine() + ") : err stream error", e);
 				}
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -557,7 +553,7 @@ public class Executor {
 			try {
 				stop();
 			} catch (final ExecutorLaunchException e) {
-				getLogger().exception("checkWallClock", e);
+				logger.error("Caught exception ,checkWallClock", e);
 			}
 			wallclockTimeReached = true;
 			isRunning = false;
@@ -606,7 +602,7 @@ public class Executor {
 				if (out != null) {
 					out.write(buf, 0, nread);
 				} else {
-					getLogger().error("Executor#pipe : out is null ?!?!");
+					logger.error("Executor#pipe : out is null ?!?!");
 				}
 				total += nread;
 			}
@@ -655,27 +651,11 @@ public class Executor {
 				final FileOutputStream stderr = new FileOutputStream(new File("stderr.txt"))) {
 			final Executor exec = new Executor(command, ".",
 					stdinName == null ? null : new FileInputStream(new File(stdinName)), stdout, stderr);
-			exec.getLogger().setLoggerLevel(LoggerLevel.DEBUG);
 			exec.startAndWait();
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
-	}
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
 	}
 
 	/**

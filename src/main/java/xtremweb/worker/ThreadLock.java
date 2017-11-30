@@ -23,7 +23,8 @@
 
 package xtremweb.worker;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 
 /**
  * ThreadLock.java This Thread Launch the screen saver
@@ -35,12 +36,11 @@ import xtremweb.common.Logger;
 
 public class ThreadLock extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ThreadLock.class);
 	private Process xlockProcess;
 
 	ThreadLock() {
 		super("ThreadLock");
-		logger = new Logger();
 	}
 
 	@Override

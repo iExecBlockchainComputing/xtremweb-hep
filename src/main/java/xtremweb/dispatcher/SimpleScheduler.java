@@ -26,6 +26,9 @@ package xtremweb.dispatcher;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.HostInterface;
 import xtremweb.common.MileStone;
 import xtremweb.common.StatusEnum;
@@ -41,6 +44,9 @@ import xtremweb.database.SQLRequestWorkRequest;
  */
 
 public class SimpleScheduler extends Scheduler {
+
+	private static final Logger logger = Logger.getLogger(SimpleScheduler.class);
+
 	/**
 	 * This aims to display some time stamps
 	 */
@@ -92,7 +98,7 @@ public class SimpleScheduler extends Scheduler {
 
 		if (theWork == null) {
 			getMileStone().println("</select>");
-			getLogger().info("SimpleScheduler#select() can't find any work");
+			logger.info("SimpleScheduler#select() can't find any work");
 			return null;
 		}
 

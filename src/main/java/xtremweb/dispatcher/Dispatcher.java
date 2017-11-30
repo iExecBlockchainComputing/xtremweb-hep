@@ -23,27 +23,21 @@
 
 package xtremweb.dispatcher;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Timer;
-
 import org.eclipse.jetty.server.session.SessionHandler;
-
-import xtremweb.common.CommandLineOptions;
-import xtremweb.common.CommandLineParser;
-import xtremweb.common.CommonVersion;
-import xtremweb.common.Logger;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWReturnCode;
-import xtremweb.common.XWRole;
-import xtremweb.common.XWTools;
+import xtremweb.common.*;
 import xtremweb.communications.AccessLogger;
 import xtremweb.communications.HTTPServer;
 import xtremweb.communications.TCPServer;
 import xtremweb.security.PEMPublicKeyValidator;
 import xtremweb.security.X509ProxyValidator;
+
+import org.apache.log4j.Logger;
+
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Timer;
 
 /**
  * Dispatcher Implementation
@@ -57,7 +51,7 @@ import xtremweb.security.X509ProxyValidator;
 
 public class Dispatcher {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Dispatcher.class);
 
 	/**
 	 * The TaskSet and TaskManager
@@ -102,11 +96,11 @@ public class Dispatcher {
 	 */
 	public Dispatcher(final String a[]) {
 		final String[] argv = a.clone();
-		logger = new Logger(this);
 		try {
 			args = new CommandLineParser(argv);
 		} catch (final Exception e) {
-			logger.fatal("Command line error " + e);
+			logger.error("Command line error " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		XWRole.setDispatcher();
@@ -114,7 +108,8 @@ public class Dispatcher {
 		try {
 			setConfig((XWConfigurator) args.getOption(CommandLineOptions.CONFIG));
 		} catch (final Exception e) {
-			logger.fatal("can retreive config file");
+			logger.error("can retreive config file");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -144,28 +139,28 @@ public class Dispatcher {
 			setScheduler(
 					(Scheduler) (Class.forName(getConfig().getProperty(XWPropertyDefs.SCHEDULERCLASS)).newInstance()));
 		} catch (final Exception e) {
-			logger.exception(e);
-			logger.fatal(e.toString());
+			logger.error("Caught exception: ", e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		try {
 			setProxyValidator(new X509ProxyValidator());
 		} catch (final Exception e) {
 			setProxyValidator(null);
-			logger.exception("Can't create ProxyValidator", e);
+			logger.error("Caught exception, Can't create ProxyValidator", e);
 		}
 
 		try {
 			getProxyValidator().setCACertificateEntries(getConfig().getKeyStore());
 		} catch (final Exception e) {
-			logger.exception("Can't add CA certificates to keystore", e);
+			logger.error("Caught exception, Can't add CA certificates to keystore", e);
 		}
 
 		try {
 			certValidator = new PEMPublicKeyValidator();
 		} catch (final Exception e) {
 			certValidator = null;
-			logger.exception("Can't create PEMPublicKeyValidator", e);
+			logger.error("Caught exception, Can't create PEMPublicKeyValidator", e);
 		}
 
 		tset.start();
@@ -227,8 +222,8 @@ public class Dispatcher {
 				httpServer.start();
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
-			logger.fatal("Dispatcher main(): " + e);
+			logger.error("Caught exception, Dispatcher main(): " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		final Collection<String> services = XWTools.split(getConfig().getProperty(XWPropertyDefs.SERVICES));

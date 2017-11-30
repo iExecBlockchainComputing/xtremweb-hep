@@ -42,8 +42,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 
 /**
  * This class describes the XtremWeb client swing panel.
@@ -51,7 +51,7 @@ import xtremweb.common.LoggerLevel;
 
 public final class MainPanel extends JPanel {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(MainPanel.class);
 
 	/**
 	 * This defines tabs order Tab must be inserted in this order
@@ -136,7 +136,6 @@ public final class MainPanel extends JPanel {
 		_parent = p;
 
 		tabbedPane = new JTabbedPane();
-		logger = new Logger(this);
 
 		try {
 			jobsTableModel = new JobsTableModel(_parent);
@@ -183,7 +182,7 @@ public final class MainPanel extends JPanel {
 				}
 			});
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			System.exit(1);
 		}
 
@@ -192,29 +191,6 @@ public final class MainPanel extends JPanel {
 		setLayout(new GridLayout(1, 1));
 		add(tabbedPane);
 		setMinimumSize(new Dimension(500, 450));
-		setLoggerLevel(_parent.getLoggerLevel());
-	}
-
-	/**
-	 * This sets the logger level. This also sets the logger levels checkboxes
-	 * menu item.
-	 */
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-		jobsTableModel.setLoggerLevel(l);
-		groupsTableModel.setLoggerLevel(l);
-		sessionsTableModel.setLoggerLevel(l);
-		appsTableModel.setLoggerLevel(l);
-		datasTableModel.setLoggerLevel(l);
-		usersTableModel.setLoggerLevel(l);
-		usergroupsTableModel.setLoggerLevel(l);
-		hostsTableModel.setLoggerLevel(l);
-		tasksTableModel.setLoggerLevel(l);
-		worksTableModel.setLoggerLevel(l);
-	}
-
-	public LoggerLevel getLoggerLevel() {
-		return logger.getLoggerLevel();
 	}
 
 	/**

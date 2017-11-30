@@ -24,7 +24,6 @@ package xtremweb.common;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,6 +33,7 @@ import java.security.InvalidKeyException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -69,10 +69,13 @@ import xtremweb.communications.URI;
  */
 public final class Cache extends XMLable {
 
+	private static final Logger logger = Logger.getLogger(Cache.class);
+
 	/**
 	 * This class defines a cache entry
 	 */
 	public class CacheEntry extends XMLable {
+
 		/**
 		 * This is the XML tag
 		 */
@@ -148,7 +151,7 @@ public final class Cache extends XMLable {
 			try (final XMLReader reader = new XMLReader(this)) {
 				reader.read(input);
 			} catch (final InvalidKeyException e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -158,12 +161,11 @@ public final class Cache extends XMLable {
 		 * @since 7.0.0
 		 */
 		public synchronized void lock() throws IOException {
-			final Logger logger = getLogger();
-			logger.finest("CacheEntre#locking " + Thread.currentThread().getName() + " " + uri);
+			logger.trace("CacheEntre#locking " + Thread.currentThread().getName() + " " + uri);
 			try {
 				while (locked) {
 					try {
-						logger.finest("CacheEntre#locking : waiting");
+						logger.trace("CacheEntre#locking : waiting");
 						wait();
 					} catch (final InterruptedException e) {
 					}
@@ -171,7 +173,7 @@ public final class Cache extends XMLable {
 
 				locked = true;
 
-				logger.finest("CacheEntre#locked  " + Thread.currentThread().getName() + " " + uri);
+				logger.trace("CacheEntre#locked  " + Thread.currentThread().getName() + " " + uri);
 			} finally {
 				notify();
 			}
@@ -184,10 +186,9 @@ public final class Cache extends XMLable {
 		 */
 		public synchronized void unlock() throws IOException {
 			try {
-				final Logger logger = getLogger();
-				logger.finest("CacheEntre#unlocking " + Thread.currentThread().getName() + " " + uri);
+				logger.trace("CacheEntre#unlocking " + Thread.currentThread().getName() + " " + uri);
 				locked = false;
-				logger.finest("CacheEntre#unlocked  " + Thread.currentThread().getName() + " " + uri);
+				logger.trace("CacheEntre#unlocked  " + Thread.currentThread().getName() + " " + uri);
 			} finally {
 				notify();
 			}
@@ -224,7 +225,7 @@ public final class Cache extends XMLable {
 			for (int a = 0; a < attrs.getLength(); a++) {
 				final String attribute = attrs.getQName(a);
 				final String value = attrs.getValue(a);
-				getLogger().finest(
+				logger.trace(
 						"Cache  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
 
 				setLastAccess();
@@ -267,8 +268,7 @@ public final class Cache extends XMLable {
 			} catch (final SAXException ioe) {
 			}
 
-			final Logger logger = getLogger();
-			logger.finest("  xmlElementStart()   qname=\"" + qname + "\"");
+			logger.trace("  xmlElementStart()   qname=\"" + qname + "\"");
 
 			if (qname.compareToIgnoreCase(THISTAG) == 0) {
 				fromXml(attrs);
@@ -276,7 +276,7 @@ public final class Cache extends XMLable {
 				try {
 					this.uri = new URI(attrs);
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			} else {
 				try {
@@ -294,7 +294,7 @@ public final class Cache extends XMLable {
 		@Override
 		public void xmlElementStop(final String uri, final String tag, final String qname) throws SAXException {
 
-			getLogger().finest("     xmlElementStop()  qname=\"" + qname + "\"");
+			logger.trace("     xmlElementStop()  qname=\"" + qname + "\"");
 
 			if (uri == null) {
 				throw new SAXException("URI was not defined");
@@ -511,7 +511,7 @@ public final class Cache extends XMLable {
 		try {
 			XWTools.checkDir(contentDir);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		maxCacheSize = config.getInt(XWPropertyDefs.CACHESIZE);
 		streamer = null;
@@ -532,7 +532,7 @@ public final class Cache extends XMLable {
 		try (final XMLReader reader = new XMLReader(this)) {
 			reader.read(input);
 		} catch (final InvalidKeyException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -542,14 +542,14 @@ public final class Cache extends XMLable {
 	 */
 	protected void flush() {
 		try {
-			getLogger().finest("XWCache flush");
+			logger.trace("XWCache flush");
 			if ((cacheFile != null) && (streamer != null) && (cacheFile.exists())) {
 
 				streamer.writeBytes("</" + THISTAG + ">");
 				streamer.close();
 			}
 		} catch (final Exception e) {
-			getLogger().exception("can't flush", e);
+			logger.error("Caught exception, can't flush", e);
 		}
 		streamer = null;
 	}
@@ -560,7 +560,7 @@ public final class Cache extends XMLable {
 	@Override
 	public synchronized void clear() {
 		try {
-			getLogger().finest("XWCacheCleaner");
+			logger.trace("XWCacheCleaner");
 			cache.clear();
 			flush();
 			leastRecentlyUsedEntry = null;
@@ -573,8 +573,8 @@ public final class Cache extends XMLable {
 			XWTools.checkDir(contentDir);
 			write();
 		} catch (final Exception e) {
-			getLogger().exception(e);
-			getLogger().fatal(e.toString());
+			logger.error("Caught exception: ", e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		notifyAll();
 	}
@@ -595,7 +595,7 @@ public final class Cache extends XMLable {
 		for (int a = 0; a < attrs.getLength(); a++) {
 			final String attribute = attrs.getQName(a);
 			final String value = attrs.getValue(a);
-			getLogger().finest("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
+			logger.trace("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
 		}
 	}
 
@@ -613,7 +613,7 @@ public final class Cache extends XMLable {
 			try {
 				ret.append(entry.toXml());
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -638,7 +638,7 @@ public final class Cache extends XMLable {
 			try {
 				entry.toXml(o);
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -666,7 +666,7 @@ public final class Cache extends XMLable {
 		} catch (final SAXException ioe) {
 		}
 
-		getLogger().finest("  xmlElementStart()   qname=\"" + qname + "\"");
+		logger.trace("  xmlElementStart()   qname=\"" + qname + "\"");
 
 		if (qname.compareToIgnoreCase(THISTAG) == 0) {
 			fromXml(attrs);
@@ -686,7 +686,7 @@ public final class Cache extends XMLable {
 	@Override
 	public void xmlElementStop(final String saxuri, final String tag, final String qname) throws SAXException {
 
-		getLogger().finest("     xmlElementStop()  qname=\"" + qname + "\"");
+		logger.trace("     xmlElementStop()  qname=\"" + qname + "\"");
 
 		if (qname.compareToIgnoreCase(CacheEntry.THISTAG) == 0) {
 
@@ -712,8 +712,7 @@ public final class Cache extends XMLable {
 	 * @see #streamer
 	 */
 	protected void read() {
-		final Logger logger = getLogger();
-		logger.finest("read()");
+		logger.trace("read()");
 
 		if ((cacheFile != null) && (cacheFile.exists())) {
 			try (final FileInputStream fis = new FileInputStream(cacheFile)) {
@@ -722,13 +721,13 @@ public final class Cache extends XMLable {
 					reader.read(input);
 				}
 			} catch (final InvalidKeyException | IOException | SAXException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			} finally {
 				if (streamer != null) {
 					streamer.close();
 				}
 				streamer = null;
-				logger.finest("XWHEP Cache : " + cache.size() + " objects cached");
+				logger.trace("XWHEP Cache : " + cache.size() + " objects cached");
 			}
 		}
 
@@ -739,8 +738,7 @@ public final class Cache extends XMLable {
 	 * This writes this cache content to cache file
 	 */
 	protected void write() {
-		final Logger logger = getLogger();
-		logger.finest("write()");
+		logger.trace("write()");
 
 		if (cacheFile != null) {
 			try {
@@ -756,7 +754,7 @@ public final class Cache extends XMLable {
 					writeEntry(entry);
 				}
 			} catch (final IOException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}
@@ -765,7 +763,7 @@ public final class Cache extends XMLable {
 		try {
 			write(entry);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -776,13 +774,12 @@ public final class Cache extends XMLable {
 	 *            is the object to write
 	 */
 	protected void write(final CacheEntry entry) throws IOException {
-		final Logger logger = getLogger();
 		final String str = entry.toXml();
 		if (streamer != null) {
-			logger.finest("Writing to cache : " + str);
+			logger.trace("Writing to cache : " + str);
 			streamer.writeBytes(str);
 		} else {
-			logger.finest("streamer is null : not writing to disk");
+			logger.trace("streamer is null : not writing to disk");
 		}
 	}
 
@@ -809,7 +806,7 @@ public final class Cache extends XMLable {
 			write(entry);
 			put(entry);
 		} catch (final Exception e) {
-			getLogger().exception("Unable to insert entry in cache", e);
+			logger.error("Caught exception, Unable to insert entry in cache", e);
 		}
 	}
 
@@ -842,7 +839,7 @@ public final class Cache extends XMLable {
 	 */
 	private synchronized void put(final CacheEntry entry) {
 		final URI uri = entry.getURI();
-		getLogger().finest("Put to cache " + entry.toXml());
+		logger.trace("Put to cache " + entry.toXml());
 		updateEntryDateAccess(entry);
 		cache.put(uri, entry);
 		notifyAll();
@@ -859,7 +856,7 @@ public final class Cache extends XMLable {
 		if (entry == null) {
 			return null;
 		}
-		getLogger().finest("Retreived from cache " + entry.toXml());
+		logger.trace("Retreived from cache " + entry.toXml());
 		updateEntryDateAccess(entry);
 		return entry.getInterface();
 	}
@@ -938,7 +935,6 @@ public final class Cache extends XMLable {
 	 */
 	public void lock(final URI uri) throws IOException {
 
-		final Logger logger = getLogger();
 		if (uri == null) {
 			logger.error("Cache#lock : uri cannot be null");
 			return;
@@ -961,7 +957,6 @@ public final class Cache extends XMLable {
 	 * @see CacheEntry#unlock()
 	 */
 	public void unlock(final URI uri) throws IOException {
-		final Logger logger = getLogger();
 		if (uri == null) {
 			logger.error("Cache#unlock : uri cannot be null");
 			return;
@@ -1002,7 +997,6 @@ public final class Cache extends XMLable {
 	 */
 	public File getContentFile(final URI uri) throws IOException {
 
-		final Logger logger = getLogger();
 		if (uri == null) {
 			logger.error("Cache#getContentFile : uri cannot be null");
 			return null;
@@ -1087,7 +1081,7 @@ public final class Cache extends XMLable {
 		}
 
 		final CacheEntry entry = leastRecentlyUsedEntry;
-		getLogger().finest("removeLeastRecentlyUsedEntry() removing " + entry.getURI());
+		logger.trace("removeLeastRecentlyUsedEntry() removing " + entry.getURI());
 		leastRecentlyUsedEntry = null;
 		remove(entry);
 	}
@@ -1119,8 +1113,7 @@ public final class Cache extends XMLable {
 	 */
 	public synchronized void remove(final URI uri) throws IOException {
 		final CacheEntry entry = cache.get(uri);
-		final Logger logger = getLogger();
-		logger.finest("Removing from cache " + uri);
+		logger.trace("Removing from cache " + uri);
 		if (entry == null) {
 			notifyAll();
 			return;
@@ -1132,7 +1125,7 @@ public final class Cache extends XMLable {
 		cache.remove(uri);
 
 		if (f != null) {
-			logger.finest("deleting " + f);
+			logger.trace("deleting " + f);
 			f.delete();
 		}
 
@@ -1152,7 +1145,7 @@ public final class Cache extends XMLable {
 			try {
 				System.out.println(entry.getInterface().toXml());
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}
@@ -1179,7 +1172,7 @@ public final class Cache extends XMLable {
 			try {
 				ret.append(((CacheEntry) entry).getInterface().toXml());
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 

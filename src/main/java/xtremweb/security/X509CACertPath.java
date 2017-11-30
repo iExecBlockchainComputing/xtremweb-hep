@@ -45,7 +45,8 @@ import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 
 /**
  * This class contains CA cert path and its most trusted certificate. Both are
@@ -54,10 +55,9 @@ import xtremweb.common.Logger;
  * @since 7.0.0
  */
 public final class X509CACertPath {
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
+
+	private static final Logger logger = Logger.getLogger(X509CACertPath.class);
+
 	/**
 	 * This is the certificate factory to retrieve certificate from file,
 	 * certificate paths etc.
@@ -91,7 +91,6 @@ public final class X509CACertPath {
 
 		certFactory = CertificateFactory.getInstance("X.509", new BouncyCastleProvider());
 		pathValidator = CertPathValidator.getInstance("PKIX", new BouncyCastleProvider());
-		logger = new Logger(this);
 	}
 
 	/**
@@ -248,7 +247,7 @@ public final class X509CACertPath {
 		} catch (final CertPathValidatorException e) {
 			throw e;
 		} catch (final Exception e) {
-			logger.finest(e.toString());
+			logger.trace(e.toString());
 			throw new CertPathValidatorException(e);
 		} finally {
 			proxyLast = null;
@@ -271,7 +270,7 @@ public final class X509CACertPath {
 		String pathfirstSubjectName = null;
 		boolean removefirst = false;
 
-		logger.finest("X509CertPath#validate size= " + certPathList.size());
+		logger.trace("X509CertPath#validate size= " + certPathList.size());
 
 		try {
 			if (certPathList.size() > 0) {
@@ -281,11 +280,11 @@ public final class X509CACertPath {
 				proxyIssuerName = principal.getName();
 				principal = pathFirst.getSubjectX500Principal();
 				pathfirstSubjectName = principal.getName();
-				logger.finest(">> Validating certificate (" + proxyIssuerName + ") ; CA cert path least trusted "
+				logger.trace(">> Validating certificate (" + proxyIssuerName + ") ; CA cert path least trusted "
 						+ pathfirstSubjectName);
-				logger.finest(">> Validating certificate (" + proxyIssuerName + ") ; CA cert path trustAnchor   "
+				logger.trace(">> Validating certificate (" + proxyIssuerName + ") ; CA cert path trustAnchor   "
 						+ trustAnchor.getSubjectX500Principal().getName());
-				logger.finest(">> Validating certificate (" + proxyIssuerName + ") ; CA cert path size          "
+				logger.trace(">> Validating certificate (" + proxyIssuerName + ") ; CA cert path size          "
 						+ certPathList.size());
 			}
 			certPathList.add(0, proxy);

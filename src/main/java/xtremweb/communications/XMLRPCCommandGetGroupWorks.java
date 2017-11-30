@@ -29,6 +29,7 @@ import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
@@ -49,6 +50,8 @@ import xtremweb.common.XWConfigurator;
  * This class defines the XMLRPCCommand to retreive group jobs
  */
 public class XMLRPCCommandGetGroupWorks extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandGetGroupWorks.class);
 
 	/**
 	 * This is the RPC id
@@ -131,7 +134,7 @@ public class XMLRPCCommandGetGroupWorks extends XMLRPCCommand {
 		try {
 			return getURI().getUID();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return null;
 	}

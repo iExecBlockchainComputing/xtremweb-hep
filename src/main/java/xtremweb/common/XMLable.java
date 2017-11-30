@@ -30,6 +30,9 @@ import java.io.InputStream;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.communications.URI;
 
 /**
@@ -42,15 +45,7 @@ import xtremweb.communications.URI;
 
 public abstract class XMLable {
 
-	private final Logger logger;
-
-	public Logger getLogger() {
-		return logger;
-	}
-
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-	}
+	private static final Logger logger = Logger.getLogger(XMLable.class);
 
 	/**
 	 * This contains the version attribute name
@@ -436,7 +431,6 @@ public abstract class XMLable {
 	 * This default constructor sets version to current version
 	 */
 	protected XMLable() {
-		logger = new Logger(this);
 		input = null;
 		values = null;
 		XMLTAG = null;
@@ -611,7 +605,7 @@ public abstract class XMLable {
 
 		if (qname.compareToIgnoreCase(ROOTTAG) == 0) {
 
-			getLogger().finest("XMLable#xmlElementStart(" + uri + ", " + tag + ", " + qname + ") " + attrs.getLength());
+			logger.trace("XMLable#xmlElementStart(" + uri + ", " + tag + ", " + qname + ") " + attrs.getLength());
 
 			rootTagFound = true;
 
@@ -620,7 +614,7 @@ public abstract class XMLable {
 				final String value = attrs.getValue(a);
 
 				if (attribute.compareToIgnoreCase(VERSIONATTRIBUTE) == 0) {
-					getLogger().finest("XMLable#xmlElementStart() set current version " + value);
+					logger.trace("XMLable#xmlElementStart() set current version " + value);
 					currentVersion = new Version(value);
 				}
 			}

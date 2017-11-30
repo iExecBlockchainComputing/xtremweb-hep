@@ -22,7 +22,6 @@
 
 package xtremweb.dispatcher;
 
-import xtremweb.common.Logger;
 import xtremweb.common.MileStone;
 
 /**
@@ -33,9 +32,7 @@ import xtremweb.common.MileStone;
 public abstract class DBCommand  {
 	protected static final String URINOTSET = "uri not set";
 	protected final MileStone mileStone;
-	protected final Logger logger;
 	protected DBCommand() {
 		mileStone = new MileStone(this.getClass());
-		logger = new Logger(this.getClass());
 	}
 }

@@ -69,6 +69,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.swing.JMenuItem;
@@ -83,10 +84,7 @@ import xtremweb.security.X509Proxy;
 
 public final class XWConfigurator extends Properties {
 
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XWConfigurator.class);
 
 	private static final String LOCALHOST = "localhost";
 	/**
@@ -537,16 +535,6 @@ public final class XWConfigurator extends Properties {
 		return getInt(XWPropertyDefs.CPULOAD);
 	}
 
-	public LoggerLevel getLoggerLevel() {
-
-		final String p = getProperty(XWPropertyDefs.LOGGERLEVEL);
-		if (p == null) {
-			setProperty(XWPropertyDefs.LOGGERLEVEL);
-			return LoggerLevel.valueOf(XWPropertyDefs.LOGGERLEVEL.defaultValue());
-		} else {
-			return LoggerLevel.valueOf(p.toUpperCase());
-		}
-	}
 
 	/**
 	 * This initializes default values. This is used to be able to launch the
@@ -554,10 +542,6 @@ public final class XWConfigurator extends Properties {
 	 */
 	public XWConfigurator() {
 		super();
-
-		setProperty(XWPropertyDefs.LOGGERLEVEL);
-
-		logger = new Logger(this);
 
 		upTime = new Date();
 		dispatchers = new Vector<>();
@@ -654,11 +638,9 @@ public final class XWConfigurator extends Properties {
 			load(def);
 			def.close();
 		} catch (final Exception e) {
-			logger.exception("Can't open config file " + configFileName, e);
+			logger.error("Caught exception, Can't open config file " + configFileName, e);
 			System.exit(XWReturnCode.DISK.ordinal());
 		}
-
-		logger.setLoggerLevel(getLoggerLevel());
 
 		try {
 			configFile = configFile.getCanonicalFile();
@@ -674,7 +656,7 @@ public final class XWConfigurator extends Properties {
 			setProperty(XWPropertyDefs.ALONE);
 		} catch (final Exception e) {
 			e.printStackTrace();
-			logger.exception("error in config file", e);
+			logger.error("Caught exception, error in config file", e);
 			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
@@ -731,7 +713,7 @@ public final class XWConfigurator extends Properties {
 					// this is for backward compatibility
 					setProperty(XWPropertyDefs.fromString(pname), getProperty(pname), false);
 				} catch (final Exception e2) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			}
 		}
@@ -780,8 +762,6 @@ public final class XWConfigurator extends Properties {
 		if (getInt(XWPropertyDefs.SORETRIES) < 1) {
 			setProperty(XWPropertyDefs.SORETRIES);
 		}
-
-		logger.setLoggerLevel(getLoggerLevel());
 
 		final String p = getProperty(XWPropertyDefs.ROLE);
 		if (p == null) {
@@ -849,7 +829,7 @@ public final class XWConfigurator extends Properties {
 				setProperty(XWPropertyDefs.SSLKEYSTORE, keyStoreFile.getCanonicalPath());
 				extractResource("data/xwhep" + XWRole.getMyRole().toString().toLowerCase() + ".keys", keyStoreFile);
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				keyStoreFile = null;
 			}
 		}
@@ -858,17 +838,17 @@ public final class XWConfigurator extends Properties {
 			final String passPhrase = getProperty(XWPropertyDefs.SSLKEYPASSPHRASE);
 			final String passWord = getProperty(XWPropertyDefs.SSLKEYPASSWORD);
 			try {
-				logger.finest("keystore password = " + passWord);
+				logger.trace("keystore password = " + passWord);
 				keyStore = KeyStore.getInstance("JKS");
 				keyStore.load(new FileInputStream(keyStoreFile), (passWord == null ? null : passWord.toCharArray()));
 				keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
 				keyManagerFactory.init(keyStore, (passPhrase == null ? null : passPhrase.toCharArray()));
 			} catch (final IOException e) {
-				logger.exception("Can't open keystore", e);
+				logger.error("Caught exception, Can't open keystore", e);
 				throw e;
 			} catch (final KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
 				keyStore = null;
-				logger.exception("Can't init keystore", e);
+				logger.error("Caught exception, Can't init keystore", e);
 			}
 			XWTools.setCACertificateEntries(keyStore);
 		}
@@ -912,7 +892,8 @@ public final class XWConfigurator extends Properties {
 			}
 		} catch (final Exception e) {
 			x509Proxy = null;
-			logger.fatal("X509 proxy error : " + e);
+			logger.error("X509 proxy error : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		try {
 			final File proxyfile = getFile(XWPropertyDefs.USERCERT);
@@ -929,7 +910,8 @@ public final class XWConfigurator extends Properties {
 				_user.setPassword(null);
 			}
 		} catch (final Exception e) {
-			logger.fatal("User cert error : " + e);
+			logger.error("User cert error : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		setChallenging(false);
@@ -940,23 +922,26 @@ public final class XWConfigurator extends Properties {
 
 			if (userkeyfile != null) {
 				if ((userkeypassword == null) || (userkeypassword.length() < 1)) {
-					logger.fatal("Private key password can not be empty");
+					logger.error("Private key password can not be empty");
+					System.exit(XWReturnCode.FATAL.ordinal());
 				}
 				if (userkeyfile.exists()) {
 					privateKey = new PEMPrivateKey();
 					privateKey.read(userkeyfile, userkeypassword);
 					privateKey.setKeyntries(keyStore, publicKey.getCertificate(), userkeypassword);
-					logger.config("KeyStore.size = " + keyStore.size());
+					logger.info("KeyStore.size = " + keyStore.size());
 					setChallenging(true);
 					_user.setChallenging(true);
 					_user.setPassword(null);
 				} else {
-					logger.fatal("Can't retrieve private key file : " + userkeyfile);
+					logger.error("Can't retrieve private key file : " + userkeyfile);
+					System.exit(XWReturnCode.FATAL.ordinal());
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception("Private key error : ", e);
-			logger.fatal("Private key error");
+			logger.error("Caught exception, Private key error : ", e);
+			logger.error("Private key error");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		setTmpDir();
@@ -991,7 +976,7 @@ public final class XWConfigurator extends Properties {
 					uid = new UID(uidStr);
 				}
 			} catch (final IllegalArgumentException e) {
-				logger.exception("UID format error ; reseting to " + UID.getMyUid(), e);
+				logger.error("Caught exception, UID format error ; reseting to " + UID.getMyUid(), e);
 				uid = UID.getMyUid();
 			}
 			if (getBoolean(XWPropertyDefs.FORCENEWUID)) {
@@ -1002,7 +987,8 @@ public final class XWConfigurator extends Properties {
 			setProperty(XWPropertyDefs.UID, uid);
 			_host.setUID(uid);
 		} catch (final Exception e) {
-			logger.fatal("can't set UID ???");
+			logger.error("can't set UID ???");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		try {
@@ -1061,7 +1047,7 @@ public final class XWConfigurator extends Properties {
 				setProperty(XWPropertyDefs.COMMLAYER, commLayer);
 			}
 		} catch (final Exception e) {
-			logger.exception("Comm layer definition error ", e);
+			logger.error("Caught exception, Comm layer definition error ", e);
 			setProperty(XWPropertyDefs.COMMLAYER, getProperty(XWPropertyDefs.COMMLAYER));
 			logger.warn("Comm layer set to '" + getProperty(XWPropertyDefs.COMMLAYER) + "'");
 		}
@@ -1092,7 +1078,7 @@ public final class XWConfigurator extends Properties {
 			}
 			_host.setJobId(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		try {
 			final String uriStr = getProperty(XWPropertyDefs.BATCHID);
@@ -1102,14 +1088,14 @@ public final class XWConfigurator extends Properties {
 			}
 			_host.setBatchId(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		try {
 			final String ptxt = getProperty(XWPropertyDefs.INCOMINGCONNECTIONS);
 			logger.debug("INCOMINGCONNECTIONS = " + ptxt);
 			_host.setIncomingConnections(Boolean.parseBoolean(ptxt));
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		_host.setNatedIPAddr(ip);
@@ -1160,7 +1146,8 @@ public final class XWConfigurator extends Properties {
 			} catch (final UnsatisfiedLinkError e) {
 			}
 		} else {
-			logger.fatal("can't load xwutil library");
+			logger.error("can't load xwutil library");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		final String localAppsProperty = getProperty(XWPropertyDefs.SHAREDAPPS).toUpperCase();
@@ -1185,7 +1172,7 @@ public final class XWConfigurator extends Properties {
 							localAppNames.append(apptype + " ");
 						}
 					} catch (final Exception e) {
-						logger.exception("Invalid application type : " + apptype, e);
+						logger.error("Caught exception, Invalid application type : " + apptype, e);
 						enumapps.remove();
 					}
 				}
@@ -1234,7 +1221,7 @@ public final class XWConfigurator extends Properties {
 			if (actDate == null) {
 				setProperty(XWPropertyDefs.ACTIVATIONDATE, "* 19-7");
 			}
-			logger.config(XWPropertyDefs.ACTIVATIONDATE.toString() + "= " + getProperty(XWPropertyDefs.ACTIVATIONDATE));
+			logger.info(XWPropertyDefs.ACTIVATIONDATE.toString() + "= " + getProperty(XWPropertyDefs.ACTIVATIONDATE));
 
 			if (act.compareTo("xtremweb.worker.CpuActivator") == 0) {
 				if (OSEnum.getOs().isWin32()) {
@@ -1258,7 +1245,7 @@ public final class XWConfigurator extends Properties {
 				try {
 					extractResource("data/" + iconFile, iconFile);
 				} catch (final Exception e2) {
-					logger.exception("can't extract resource " + iconFile, e2);
+					logger.error("Caught exception, can't extract resource " + iconFile, e2);
 					useNotify = false;
 				}
 			}
@@ -1284,9 +1271,8 @@ public final class XWConfigurator extends Properties {
 					try {
 						tray.add(trayIcon);
 					} catch (final AWTException e) {
-						logger.exception(e);
+						logger.error("Caught exception: ", e);
 					}
-					// ...
 				} else {
 					logger.info("SystemTray not supported");
 				}
@@ -1618,7 +1604,7 @@ public final class XWConfigurator extends Properties {
 		if (sys == true) {
 			System.setProperty(prop.toString(), getProperty(prop));
 		}
-		logger.config("setProperty(" + prop.toString() + ", " + v + ") = " + getProperty(prop));
+		logger.info("setProperty(" + prop.toString() + ", " + v + ") = " + getProperty(prop));
 		v = null;
 	}
 
@@ -1632,7 +1618,7 @@ public final class XWConfigurator extends Properties {
 		try {
 			ret = XWRole.valueOf(srole);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return ret;
 	}
@@ -1655,11 +1641,13 @@ public final class XWConfigurator extends Properties {
 		try {
 			final int p = Integer.parseInt(s);
 			if (!((p > 0) && (p < (1 << 15)))) {
-				logger.fatal("Invalid port number (" + port + ") = " + s);
+				logger.error("Invalid port number (" + port + ") = " + s);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 			return p;
 		} catch (final NumberFormatException e) {
-			logger.fatal("Invalid port number (" + port + ") = " + s);
+			logger.error("Invalid port number (" + port + ") = " + s);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		return -1;
 	}
@@ -2090,7 +2078,7 @@ public final class XWConfigurator extends Properties {
 				ret.remove(srv);
 				ret.add(srv_hn);
 			} catch (final IOException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 		return ret;
@@ -2128,7 +2116,7 @@ public final class XWConfigurator extends Properties {
 			fw.write(servers);
 			fw.flush();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		notifyAll();
 	}
@@ -2219,13 +2207,13 @@ public final class XWConfigurator extends Properties {
 	 */
 	public void store(final String header, final File out) {
 		if (getBoolean(XWPropertyDefs.FORCENEWUID)) {
-			logger.config("Don't write config ; FORCENEWUID == " + getBoolean(XWPropertyDefs.FORCENEWUID));
+			logger.info("Don't write config ; FORCENEWUID == " + getBoolean(XWPropertyDefs.FORCENEWUID));
 			return;
 		}
 		try {
 			store(new FileOutputStream(out), header);
 		} catch (final Exception e) {
-			logger.exception("Can't store config", e);
+			logger.error("Caught exception, Can't store config", e);
 		}
 	}
 
@@ -2241,7 +2229,7 @@ public final class XWConfigurator extends Properties {
 			binCachedPath = getCacheDir().getCanonicalPath() + File.separator + "bin";
 			XWTools.checkDir(binCachedPath);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -2258,7 +2246,7 @@ public final class XWConfigurator extends Properties {
 			binCachedPath = getCacheDir().getCanonicalPath() + File.separator + "bin";
 			XWTools.checkDir(binCachedPath);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

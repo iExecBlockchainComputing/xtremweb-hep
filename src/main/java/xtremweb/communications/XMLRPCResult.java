@@ -28,8 +28,8 @@ import java.io.FileInputStream;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
-import xtremweb.common.Logger;
 import xtremweb.common.XMLEndParseException;
 import xtremweb.common.XMLReader;
 import xtremweb.common.XMLWriter;
@@ -44,7 +44,8 @@ import xtremweb.common.XWTools;
  *
  */
 public final class XMLRPCResult extends XMLable {
-	private final Logger logger;
+
+	private static final Logger logger = Logger.getLogger(XMLRPCResult.class);
 	/**
 	 * This is the XML tag
 	 */
@@ -130,7 +131,6 @@ public final class XMLRPCResult extends XMLable {
 		setColumnAt(RETURNCODE, "RETURNCODE");
 		setColumnAt(TIMESTAMP, "TIMESTAMP");
 		setTimeStamp(System.currentTimeMillis());
-		logger = new Logger(this);
 	}
 
 	/**
@@ -171,32 +171,32 @@ public final class XMLRPCResult extends XMLable {
 			return;
 		}
 
-		logger.finest("     attribute.length = " + attrs.getLength());
+		logger.trace("     attribute.length = " + attrs.getLength());
 
 		for (int a = 0; a < attrs.getLength(); a++) {
 			final String attribute = attrs.getQName(a);
 			final String value = attrs.getValue(a);
 
-			logger.finest("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
+			logger.trace("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
 
 			if (attribute.compareToIgnoreCase(getColumnLabel(MESSAGE)) == 0) {
-				logger.finest("creating message from " + value);
+				logger.trace("creating message from " + value);
 				try {
 					setValueAt(MESSAGE, value);
 				} catch (final Exception e) {
 				}
 			} else if (attribute.compareToIgnoreCase(getColumnLabel(TIMESTAMP)) == 0) {
-				logger.finest("creating timestamp from " + value);
+				logger.trace("creating timestamp from " + value);
 				try {
 					setValueAt(TIMESTAMP, new Long(value));
 				} catch (final Exception e) {
 				}
 			} else if (attribute.compareToIgnoreCase(getColumnLabel(RETURNCODE)) == 0) {
-				logger.finest("creating returncode from " + value);
+				logger.trace("creating returncode from " + value);
 				try {
 					setValueAt(RETURNCODE, XWReturnCode.valueOf(value));
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			}
 		}
@@ -217,7 +217,7 @@ public final class XMLRPCResult extends XMLable {
 		} catch (final SAXException ioe) {
 		}
 
-		logger.finest("Start element - " + qname);
+		logger.trace("Start element - " + qname);
 
 		if (qname.compareToIgnoreCase(getXMLTag()) == 0) {
 			fromXml(attrs);

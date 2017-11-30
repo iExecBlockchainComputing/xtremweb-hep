@@ -41,12 +41,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.AppInterface;
 import xtremweb.common.CommonVersion;
 import xtremweb.common.DataInterface;
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
 import xtremweb.common.MileStone;
 import xtremweb.common.StatusEnum;
 import xtremweb.common.TaskInterface;
@@ -87,15 +87,9 @@ import xtremweb.communications.XWPostParams;
 
 public abstract class CommHandler extends Thread implements xtremweb.communications.CommHandler {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(CommHandler.class);
 	private final String URINOTSET = "uri not set";
 
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
 
 	/**
 	 * This aims to display some time stamps
@@ -264,7 +258,6 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 */
 	protected CommHandler(final String name) {
 		super(name);
-		logger = new Logger(this);
 		logger.debug(name);
 		mileStone = new MileStone(xtremweb.dispatcher.CommHandler.class);
 		config = Dispatcher.getConfig();
@@ -288,7 +281,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 * This prefixes the finest message with the remote host name and port
 	 */
 	public void finest(final String msg) {
-		logger.finest(msgWithRemoteAddresse(msg));
+		logger.trace(msgWithRemoteAddresse(msg));
 	}
 
 	/**
@@ -323,14 +316,14 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 * This prefixes the error message with the remote host name and port
 	 */
 	public void error(final Exception e) {
-		logger.exception(msgWithRemoteAddresse(""), e);
+		logger.error(msgWithRemoteAddresse(""), e);
 	}
 
 	/**
 	 * This prefixes the error message with the remote host name and port
 	 */
 	public void error(final String msg, final Exception e) {
-		logger.exception(msgWithRemoteAddresse(msg), e);
+		logger.error(msgWithRemoteAddresse(msg), e);
 	}
 
 	/**
@@ -720,7 +713,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 				// }
 				write(result);
 			} catch (final Exception e) {
-				logger.exception("Can't write result", e);
+				logger.error("Caught exception, Can't write result", e);
 			} finally {
 				resultxml = null;
 			}
@@ -825,10 +818,10 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 				return Dispatcher.getScheduler().select(host, user);
 			}
 		} catch (InvalidKeyException e) {
-			logger.exception("workRequest error", e);
+			logger.error("Caught exception, workRequest error", e);
 			throw e;
 		} catch (final Exception e) {
-			logger.exception("workRequest error", e);
+			logger.error("Caught exception, workRequest error", e);
 			throw new IOException(e);
 		} finally {
 			mileStone("</workRequest>");
@@ -904,7 +897,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			}
 			theTask.update();
 		} else {
-			logger.finest("work is not in the dispatcher pool. Send back 'abort'");
+			logger.trace("work is not in the dispatcher pool. Send back 'abort'");
 			keepWorking = false;
 		}
 
@@ -974,7 +967,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 		ret.put(XWPostParams.TRACESRESULTDELAY.toString(), new Integer(tracesResultDelay));
 		ret.put(XWPostParams.CURRENTVERSION.toString(), CURRENTVERSIONSTRING);
 
-		logger.finest("retrieve saved tasks so that the worker cleans its local copy");
+		logger.trace("retrieve saved tasks so that the worker cleans its local copy");
 		final Vector<UID> finishedTasks = new Vector<>();
 		final Vector<UID> resultsVector = new Vector<>();
 
@@ -1299,12 +1292,12 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			if (dFile != null) {
 				dFile.delete();
 			}
-			logger.exception(ioe);
+			logger.error("Caught exception: ", ioe);
 			dataStatus = StatusEnum.DATAREQUEST;
 			throw new IOException("uploadData(" + uid + ") IOerror on server side");
 		} catch (final Exception e) {
 			mileStone("<error method='uploadData' msg='" + e.getMessage() + "' />");
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			dataStatus = StatusEnum.ERROR;
 			throw new IOException(e.getMessage());
 		} finally {
@@ -1314,7 +1307,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 					theData.update();
 				}
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 			if (dFile != null) {
 				ret = dFile.length();

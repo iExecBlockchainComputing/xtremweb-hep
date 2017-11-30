@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.concurrent.TimeoutException;
+import org.apache.log4j.Logger;
+
 
 /*
  * Copyrights     : CNRS
@@ -35,7 +37,6 @@ import java.util.concurrent.TimeoutException;
 
 import ibis.smartsockets.util.MalformedAddressException;
 import ibis.smartsockets.virtual.InitializationException;
-import xtremweb.common.Logger;
 import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
 
@@ -49,6 +50,8 @@ import xtremweb.common.XWTools;
  * @since 8.3.0
  */
 public final class SocketProxy extends Thread {
+
+	private static final Logger logger = Logger.getLogger(SocketProxy.class);
 
 	/**
 	 * This class implements the reading thread
@@ -130,13 +133,13 @@ public final class SocketProxy extends Thread {
 		private boolean isClosed() {
 			if (inSocket != null) {
 				if (inSocket.isClosed()) {
-					logger.finest("insocket is closed");
+					logger.trace("insocket is closed");
 				}
 				return inSocket.isClosed();
 			}
 			if (outSocket != null) {
 				if (outSocket.isClosed()) {
-					logger.finest("outsocket is closed");
+					logger.trace("outsocket is closed");
 				}
 				return outSocket.isClosed();
 			}
@@ -168,7 +171,7 @@ public final class SocketProxy extends Thread {
 						if (n != -1) {
 							outputStream.write(buffer, 0, n);
 							outputStream.flush();
-							logger.finest("forwarded = " + n);
+							logger.trace("forwarded = " + n);
 							now = new Date();
 							start = now.getTime();
 							now = null;
@@ -181,7 +184,7 @@ public final class SocketProxy extends Thread {
 						throw new TimeoutException("Inactivity since " + (last - start));
 					}
 				} catch (final Exception e) {
-					logger.exception("run error", e);
+					logger.error("Caught exception: ", e);
 					break;
 				}
 			}
@@ -215,10 +218,6 @@ public final class SocketProxy extends Thread {
 	 * This is this thread name header
 	 */
 	public static final String NAME = "ThreadProxy";
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
 	/**
 	 * This tells if this proxy acts as server or as client.
 	 */
@@ -310,8 +309,6 @@ public final class SocketProxy extends Thread {
 		this.outputPort = outPort;
 
 		this.continuer = true;
-		logger = new Logger(this);
-
 		logger.info("Started on " + inputAddr + ":" + inPort + " => " + outputAddr + ":" + outputPort);
 	}
 
@@ -342,7 +339,7 @@ public final class SocketProxy extends Thread {
 
 				logger.debug("Started");
 			} catch (final IOException e) {
-				logger.exception("socket proxy error", e);
+				logger.error("Caught exception, socket proxy error", e);
 			}
 		}
 	}

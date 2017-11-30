@@ -42,9 +42,11 @@ import ibis.smartsockets.virtual.VirtualServerSocket;
 import ibis.smartsockets.virtual.VirtualSocket;
 import ibis.smartsockets.virtual.VirtualSocketAddress;
 import ibis.smartsockets.virtual.VirtualSocketFactory;
-import xtremweb.common.Logger;
 import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
+
+import org.apache.log4j.Logger;
+
 
 /**
  * This class implements a SmartSockets proxy. In server mode, this listen from
@@ -64,6 +66,8 @@ import xtremweb.common.XWTools;
  * @since 8.0.0
  */
 public final class SmartSocketsProxy extends Thread {
+
+	private static final Logger logger = Logger.getLogger(SmartSocketsProxy.class);
 
 	/**
 	 * This class implements the reading thread
@@ -116,7 +120,7 @@ public final class SmartSocketsProxy extends Thread {
 		 *
 		 * @param n
 		 *            is this thread name
-		 * @param s
+		 * @param vs
 		 *            is the incoming connection socket
 		 * @param in
 		 *            is the incoming connection input stream
@@ -143,11 +147,11 @@ public final class SmartSocketsProxy extends Thread {
 		 */
 		private boolean isClosed() {
 			if (socket != null) {
-				logger.finest("socket is closed " + socket.isClosed());
+				logger.trace("socket is closed " + socket.isClosed());
 				return socket.isClosed();
 			}
 			if (vsocket != null) {
-				logger.finest("vsocket is closed " + vsocket.isClosed());
+				logger.trace("vsocket is closed " + vsocket.isClosed());
 				return vsocket.isClosed();
 			}
 			return true;
@@ -193,7 +197,7 @@ public final class SmartSocketsProxy extends Thread {
 						throw new TimeoutException("Inactivity since " + (last - start));
 					}
 				} catch (final Exception e) {
-					logger.exception("run error", e);
+					logger.error("Caught exception: ", e);
 					break;
 				}
 			}
@@ -235,10 +239,6 @@ public final class SmartSocketsProxy extends Thread {
 	 * This is the writer thread name
 	 */
 	private final String writerName;
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
 	/**
 	 * This tells if this proxy acts as server or as client.
 	 */
@@ -371,7 +371,6 @@ public final class SmartSocketsProxy extends Thread {
 		readerName = proxyName + "Reader";
 		writerName = proxyName + "Writer";
 		this.server = server;
-		logger = new Logger(this);
 		connectProperties = new HashMap<>();
 		System.setProperty(Connection.HUBPNAME, hubAddr);
 		vSocketFactory = VirtualSocketFactory.getDefaultSocketFactory();
@@ -439,7 +438,7 @@ public final class SmartSocketsProxy extends Thread {
 					logger.debug("Started");
 				}
 			} catch (final IOException e) {
-				logger.exception("SmartSockets server proxy", e);
+				logger.error("Caught exception, SmartSockets server proxy", e);
 			}
 		}
 	}
@@ -479,7 +478,7 @@ public final class SmartSocketsProxy extends Thread {
 					logger.debug("Started");
 				}
 			} catch (final IOException e) {
-				logger.exception("SmartSockets client proxy", e);
+				logger.error("Caught exception, SmartSockets client proxy", e);
 			}
 		}
 	}

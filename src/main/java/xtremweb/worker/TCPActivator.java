@@ -37,6 +37,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWPropertyDefs;
 
 /**
@@ -49,6 +51,7 @@ import xtremweb.common.XWPropertyDefs;
 
 public final class TCPActivator extends Activator implements Runnable {
 
+	private static final Logger logger = Logger.getLogger(TCPActivator.class);
 	private final int defaultPort = 4567;
 
 	private int mPort;
@@ -80,7 +83,7 @@ public final class TCPActivator extends Activator implements Runnable {
 			} catch (final UnknownHostException e) {
 				throw e;
 			} catch (final Throwable e) {
-				getLogger().warn("can't parse 'activator.tcp.listen=" + listen + "' " + e);
+				logger.warn("can't parse 'activator.tcp.listen=" + listen + "' " + e);
 				mPort = defaultPort;
 				mAddr = InetAddress.getLocalHost();
 			}
@@ -90,13 +93,13 @@ public final class TCPActivator extends Activator implements Runnable {
 	public TCPActivator() {
 		try {
 			this.setListen();
-			getLogger().debug("TCPActivator will listen on " + mAddr + ":" + mPort);
+			logger.debug("TCPActivator will listen on " + mAddr + ":" + mPort);
 			mFeedback = Worker.getConfig().getBoolean(XWPropertyDefs.TCPACTIVATORFEEDBACK);
 			if (mFeedback) {
-				getLogger().debug("feedback enable");
+				logger.debug("feedback enable");
 			}
 		} catch (final Exception e) {
-			getLogger().error("problem while reading config " + e);
+			logger.error("Caught exception, problem while reading config " + e);
 		}
 	}
 
@@ -116,7 +119,7 @@ public final class TCPActivator extends Activator implements Runnable {
 				} catch (final InterruptedIOException e) {
 					continue;
 				} catch (final IOException e) {
-					getLogger().error("I/O error" + e);
+					logger.error("Caught exception, I/O error" + e);
 					Thread.currentThread().interrupt();
 					continue;
 				}
@@ -149,12 +152,12 @@ public final class TCPActivator extends Activator implements Runnable {
 						}
 					}
 				} catch (final IOException e) {
-					getLogger().exception(e);
+					logger.error("Caught exception: ", e);
 					control.close();
 				}
 			}
 		} catch (final IOException ie) {
-			getLogger().exception(ie);
+			logger.error("Caught exception: ", ie);
 		}
 	}
 }

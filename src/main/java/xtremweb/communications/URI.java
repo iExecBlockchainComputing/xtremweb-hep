@@ -31,6 +31,7 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -48,6 +49,8 @@ import xtremweb.common.XMLable;
  * @since 2.0.0
  */
 public class URI extends XMLable {
+
+	private static final Logger logger = Logger.getLogger(URI.class);
 
 	// static {
 	// AtticProtocol.registerAttic();
@@ -402,14 +405,14 @@ public class URI extends XMLable {
 		for (int a = 0; a < attrs.getLength(); a++) {
 			final String attribute = attrs.getQName(a);
 			final String value = attrs.getValue(a);
-			getLogger().finest("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\""
+			logger.trace("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\""
 					+ "getColumnLabel(URI) = " + getColumnLabel(URIIDX));
 
 			if (attribute.compareToIgnoreCase(getColumnLabel(URIIDX)) == 0) {
 				try {
 					fromString(value);
 				} catch (final Exception e) {
-					getLogger().exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			}
 		}

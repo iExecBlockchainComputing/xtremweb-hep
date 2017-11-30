@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -46,6 +47,7 @@ import xtremweb.exec.Executor;
  */
 public final class HTTPLauncher {
 
+	private static final Logger logger = Logger.getLogger(HTTPLauncher.class);
 	private static final int SLEEPDELAY = 2500;
 	private XWConfigurator config;
 
@@ -86,8 +88,6 @@ public final class HTTPLauncher {
 		} catch (final Exception e) {
 			XWTools.fatal("can retreive config file");
 		}
-
-		final Logger logger = new Logger();
 
 		URL url = null;
 		try {
@@ -142,10 +142,11 @@ public final class HTTPLauncher {
 					}
 				}
 			} catch (final SSLHandshakeException e) {
-				logger.fatal("SSL error (maybe we have received a new keystore: relaunch is then necessary) : " + e);
+				logger.error("SSL error (maybe we have received a new keystore: relaunch is then necessary) : " + e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			} catch (final Exception e) {
 				upgrade = false;
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 
 			if ((upgrade) && (url != null)) {
@@ -156,9 +157,10 @@ public final class HTTPLauncher {
 					io.readFileContent(jarFile);
 					io.close();
 				} catch (final FileNotFoundException e) {
-					logger.fatal("Can't download " + XWTools.JARFILENAME + " : " + e);
+					logger.error("Can't download " + XWTools.JARFILENAME + " : " + e);
+					System.exit(XWReturnCode.FATAL.ordinal());
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 					logger.warn("Can't download " + XWTools.JARFILENAME + "; using default : " + e.toString());
 				}
 			} else {
@@ -182,13 +184,13 @@ public final class HTTPLauncher {
 						libDir = libDir.getParentFile();
 					}
 				}
-				logger.config("libDir = " + libDir.getCanonicalPath());
+				logger.info("libDir = " + libDir.getCanonicalPath());
 
 				if ((jarFile == null) || !jarFile.exists()) {
 					jarFile = new File(libDir, XWTools.JARFILENAME);
 				}
 
-				logger.config("jarFile = " + jarFile.getCanonicalPath());
+				logger.info("jarFile = " + jarFile.getCanonicalPath());
 				Thread.sleep(SLEEPDELAY);
 
 				tmpPath = config.getProperty(XWPropertyDefs.TMPDIR);
@@ -234,13 +236,13 @@ public final class HTTPLauncher {
 				final String serveurOpt = " -server ";
 				final String cmd = javaCmd + serveurOpt + javaOpts;
 
-				logger.config("Executing " + cmd);
+				logger.info("Executing " + cmd);
 				final FileInputStream in = null;
 				exec = new Executor(cmd, binDir.getCanonicalPath(), in, System.out, System.err,
 						Long.parseLong(config.getProperty(XWPropertyDefs.TIMEOUT)));
 				int rc = exec.startAndWait();
 				XWReturnCode returnCode = XWReturnCode.fromInt(rc);
-				logger.config("returnCode = " + returnCode + " (" + rc + ")");
+				logger.info("returnCode = " + returnCode + " (" + rc + ")");
 
 				if (returnCode == XWReturnCode.RESTART) {
 					continue;
@@ -250,7 +252,7 @@ public final class HTTPLauncher {
 
 					final String cmd1 = javaCmd + javaOpts;
 
-					logger.config("Trying to launch the worker without \"" + serveurOpt + "\" java option : " + cmd1);
+					logger.info("Trying to launch the worker without \"" + serveurOpt + "\" java option : " + cmd1);
 					exec = new Executor(cmd1, binDir.getCanonicalPath(), in, System.out, System.err,
 							Long.parseLong(config.getProperty(XWPropertyDefs.TIMEOUT)));
 					rc = exec.startAndWait();
@@ -267,8 +269,7 @@ public final class HTTPLauncher {
 							+ "\n(maybe config file is corrupted...)");
 				}
 			} catch (final Exception e) {
-				logger.exception(e);
-				logger.error(e.toString());
+				logger.error("Caught exception: ", e);
 			} finally {
 				if (exec != null) {
 					try {

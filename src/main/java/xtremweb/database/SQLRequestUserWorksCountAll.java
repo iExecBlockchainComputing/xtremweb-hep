@@ -25,6 +25,7 @@ package xtremweb.database;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.StatusEnum;
 import xtremweb.common.Table;
@@ -68,6 +69,8 @@ import xtremweb.common.UID;
  * @since 5.8.0
  */
 public class SQLRequestUserWorksCountAll extends Table {
+
+	private static final Logger logger = Logger.getLogger(SQLRequestUserWorksCountAll.class);
 
 	private static final String TABLENAME = "users";
 	private static final String SELECTIONROW = "login," + "uid as theuid, " + "   (select count(*) from works "
@@ -183,31 +186,31 @@ public class SQLRequestUserWorksCountAll extends Table {
 		try {
 			setWaitings(rs.getInt(Columns.WAITINGS.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find waitingsfrom result set");
+			logger.warn("can't find waitingsfrom result set");
 			setWaitings(0);
 		}
 		try {
 			setPendings(rs.getInt(Columns.PENDINGS.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find pendingsfrom result set");
+			logger.warn("can't find pendingsfrom result set");
 			setPendings(0);
 		}
 		try {
 			setRunnings(rs.getInt(Columns.RUNNINGS.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find runningsfrom result set");
+			logger.warn("can't find runningsfrom result set");
 			setRunnings(0);
 		}
 		try {
 			setCompleteds(rs.getInt(Columns.COMPLETEDS.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find completedsfrom result set");
+			logger.warn("can't find completedsfrom result set");
 			setCompleteds(0);
 		}
 		try {
 			setErrors(rs.getInt(Columns.ERRORS.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find errorsfrom result set");
+			logger.warn("can't find errorsfrom result set");
 			setErrors(0);
 		}
 	}

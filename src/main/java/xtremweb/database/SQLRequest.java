@@ -25,7 +25,9 @@ package xtremweb.database;
 
 import java.io.IOException;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.UserInterface;
 import xtremweb.common.XWConfigurator;
 
@@ -38,7 +40,7 @@ import xtremweb.common.XWConfigurator;
  */
 public abstract class SQLRequest {
 
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(SQLRequest.class);
 	/**
 	 * This aliased UID of the main table
 	 */
@@ -109,7 +111,6 @@ public abstract class SQLRequest {
 		columnSelection = null;
 		criterias = null;
 		moreCriterias = null;
-		logger = new Logger(this);
 	}
 
 	/**
@@ -136,21 +137,6 @@ public abstract class SQLRequest {
 	 * @return a String containing SQL criteria
 	 */
 	public abstract String getFullCriterias() throws IOException;
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
-	}
 
 	/**
 	 * @return the tableNames

@@ -34,6 +34,8 @@ import java.nio.channels.DatagramChannel;
 import java.rmi.RemoteException;
 
 import javax.net.ssl.SSLSocket;
+import org.apache.log4j.Logger;
+
 
 import xtremweb.common.BytePacket;
 import xtremweb.common.OSEnum;
@@ -55,6 +57,8 @@ import xtremweb.communications.XMLRPCCommand;
  */
 
 public class UDPHandler extends xtremweb.dispatcher.CommHandler {
+
+	private static final Logger logger = Logger.getLogger(UDPHandler.class);
 
 	/**
 	 * This aims to send datagram packets back to client
@@ -204,7 +208,7 @@ public class UDPHandler extends xtremweb.dispatcher.CommHandler {
 			packetOut.putObject(obj);
 			send();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -217,7 +221,7 @@ public class UDPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	@Override
 	public void writeFile(final File f) throws IOException {
-		getLogger().error("UDP does not implement writeFile");
+		logger.error("UDP does not implement writeFile");
 		throw new IOException("UDP does not implement writeFile");
 	}
 
@@ -230,7 +234,7 @@ public class UDPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	@Override
 	public void readFile(final File f) throws IOException {
-		getLogger().error("UDP does not implement readFile");
+		logger.error("UDP does not implement readFile");
 		throw new IOException("UDP does not implement readFile");
 	}
 
@@ -251,15 +255,15 @@ public class UDPHandler extends xtremweb.dispatcher.CommHandler {
 			try {
 				cmd = XMLRPCCommand.newCommand(packetIn.getString());
 			} catch (final Exception e) {
-				getLogger().error(remoteAddresse() + ") : " + e);
-				getLogger().exception(e);
+				logger.error(remoteAddresse() + ") : " + e);
+				logger.error("Caught exception: ", e);
 				cmd = null;
 			}
 
 			super.run(cmd);
 			cmd = null;
 		} catch (final Exception e) {
-			getLogger().exception(remoteAddresse(), e);
+			logger.error(remoteAddresse(), e);
 		}
 	}
 }

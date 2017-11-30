@@ -41,6 +41,9 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.GroupInterface;
 import xtremweb.common.UID;
 import xtremweb.common.XMLVector;
@@ -51,6 +54,8 @@ import xtremweb.common.XMLVector;
  */
 
 class GroupsTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(GroupsTableModel.class);
 
 	/**
 	 * These defines submission parameters
@@ -115,7 +120,7 @@ class GroupsTableModel extends TableModel {
 		try {
 			userUID = getParent().getClient().getConfig().getUser().getUID();
 		} catch (final Exception e) {
-			getLogger().error("user UID is not set ?!?!");
+			logger.error("user UID is not set ?!?!");
 			return;
 		}
 		final Vector newRow = new Vector();
@@ -147,7 +152,7 @@ class GroupsTableModel extends TableModel {
 
 			getParent().commClient().send(group);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			JOptionPane.showMessageDialog(getParent(), "Can't send group : " + e, ERROR, JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -172,7 +177,7 @@ class GroupsTableModel extends TableModel {
 			return getParent().commClient().getGroups();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}

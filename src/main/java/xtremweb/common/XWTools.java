@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -75,7 +76,7 @@ public class XWTools {
 	private XWTools() {
 	}
 
-	private static final Logger logger = new Logger();
+	private static final Logger logger = Logger.getLogger(XWTools.class);
 
 	public static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -337,7 +338,8 @@ public class XWTools {
 	public static void fatal(final String s) {
 
 		final SimpleDateFormat logDateFormat = new SimpleDateFormat("[dd/MMM/yyyy:HH:mm:ss Z]", Locale.US);
-		logger.fatal(logDateFormat.format(new Date()) + " Fatal : " + s);
+		logger.error(logDateFormat.format(new Date()) + " Fatal : " + s);
+		System.exit(XWReturnCode.FATAL.ordinal());
 	}
 
 	/**
@@ -638,7 +640,7 @@ public class XWTools {
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception("Launch browser error", e);
+			logger.error("Caught exception, Launch browser error", e);
 		}
 	}
 
@@ -803,7 +805,6 @@ public class XWTools {
 		socket.startHandshake();
 
 		final X509Certificate[] certs = (X509Certificate[]) socket.getSession().getPeerCertificates();
-		final Logger logger = new Logger(HTTPOpenIdHandler.class);
 		logger.info(host + " : certs retrieved = " + certs.length);
 		int i = 0;
 		for (final X509Certificate cert : certs) {
@@ -875,17 +876,16 @@ public class XWTools {
 		if (store == null) {
 			return null;
 		}
-		final Logger logger = new Logger();
 		try {
 			final X509Certificate[] gcerts = XWTools.retrieveCertificates(GOOGLE_ADDR, false);
 			for (int i = 0; i < gcerts.length; i++) {
 				final X509Certificate cert = gcerts[i];
 				try {
 					final String alias = cert.getSubjectDN().toString();
-					logger.finest("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
+					logger.trace("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
 					store.setCertificateEntry(alias, cert);
 				} catch (final Exception e) {
-					logger.exception("Can't add new entry to keystore", e);
+					logger.error("Caught exception, Can't add new entry to keystore", e);
 				}
 			}
 			final X509Certificate[] ycerts = XWTools.retrieveCertificates(YAHOO_ADDR, false);
@@ -893,14 +893,14 @@ public class XWTools {
 				final X509Certificate cert = ycerts[i];
 				try {
 					final String alias = cert.getSubjectDN().toString();
-					logger.finest("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
+					logger.trace("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
 					store.setCertificateEntry(alias, cert);
 				} catch (final Exception e) {
-					logger.exception("Can't add new entry to keystore", e);
+					logger.error("Caught exception, Can't add new entry to keystore", e);
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception("Can't add new entry to keystore", e);
+			logger.error("Caught exception, Can't add new entry to keystore", e);
 		}
 		return store;
 	}
@@ -920,20 +920,18 @@ public class XWTools {
 
 			logger.info("uid " + uid + " " + uid.hashCode() + " " + (uid.hashCode() % 1000));
 			logger.info("uid " + uid + " " + createDir("/tmp", uid));
-			logger.info();
 
 			final UID uid2 = new UID(uid.toString());
 
 			logger.info("uid2 " + uid2 + " " + uid2.hashCode() + " " + (uid2.hashCode() % 1000));
 			logger.info("uid2 " + uid2 + " " + createDir("/tmp", uid2));
-			logger.info();
 
 			final UID uid3 = uid;
 
 			logger.info("uid3 " + uid3 + " " + uid3.hashCode() + " " + (uid3.hashCode() % 1000));
 			logger.info("uid3 " + uid3 + " " + createDir("/tmp", uid3));
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 }

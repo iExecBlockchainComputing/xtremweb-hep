@@ -46,7 +46,9 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.openssl.PEMReader;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+import xtremweb.common.XWReturnCode;
 
 /**
  * This reads X509 public key from PEM files
@@ -54,6 +56,9 @@ import xtremweb.common.Logger;
  * @since 7.4.0
  */
 public class PEMPublicKey {
+
+	private static final Logger logger = Logger.getLogger(PEMPublicKey.class);
+
 	static {
 		Security.addProvider(new BouncyCastleProvider());
 	}
@@ -193,12 +198,11 @@ public class PEMPublicKey {
 	 */
 	public static void main(final String[] args) throws Exception {
 
-		final Logger logger = new Logger();
-
 		if (args.length < 1) {
-			logger.fatal("Usage : PublicKey file [--server]\n " + "Where : file is the public key file\n"
+			logger.error("Usage : PublicKey file [--server]\n " + "Where : file is the public key file\n"
 					+ "        --server to accept connection from localhost:79999 for testing\n"
 					+ "        (then you can start PrivateKeyReader to connect - see PrivateKeyReader)");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		final PEMPublicKey reader = new PEMPublicKey();
 		final PublicKey publicKey = reader.read(args[0]);
@@ -208,7 +212,7 @@ public class PEMPublicKey {
 			validator.validate(reader.certificate);
 			logger.info("PEMPublic key validated against CA cert path :)");
 		} catch (final Exception e) {
-			logger.exception("Can't validate", e);
+			logger.error("Caught exception, Can't validate", e);
 		}
 
 		if (args.length > 1) {

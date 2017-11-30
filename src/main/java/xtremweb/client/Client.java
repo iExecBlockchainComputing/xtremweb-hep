@@ -54,6 +54,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
+
+
 import javax.net.ssl.SSLHandshakeException;
 
 import org.xml.sax.SAXException;
@@ -67,8 +70,6 @@ import xtremweb.common.CommonVersion;
 import xtremweb.common.DataInterface;
 import xtremweb.common.DataTypeEnum;
 import xtremweb.common.GroupInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
 import xtremweb.common.MD5;
 import xtremweb.common.MileStone;
 import xtremweb.common.OSEnum;
@@ -106,7 +107,6 @@ import xtremweb.communications.XMLRPCCommandGetHosts;
 import xtremweb.communications.XMLRPCCommandGetSessions;
 import xtremweb.communications.XMLRPCCommandGetTasks;
 import xtremweb.communications.XMLRPCCommandGetTraces;
-import xtremweb.communications.XMLRPCCommandGetUserByLogin;
 import xtremweb.communications.XMLRPCCommandGetUserGroups;
 import xtremweb.communications.XMLRPCCommandGetUsers;
 import xtremweb.communications.XMLRPCCommandGetWorks;
@@ -146,12 +146,8 @@ public final class Client {
 	 */
 	private PrintStream out;
 
-	/**
-	 * This is the logger
-	 *
-	 * @since 7.0.0
-	 */
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Client.class);
+
 	/**
 	 * This stores and tests the command line parameters
 	 */
@@ -199,7 +195,6 @@ public final class Client {
 	private Client(final String[] a) throws ParseException {
 		final String[] argv = a.clone();
 
-		logger = new Logger(this);
 		out = System.out;
 		executingMacro = false;
 		shellRunning = false;
@@ -217,11 +212,11 @@ public final class Client {
 		}
 		try {
 			config = (XWConfigurator) args.getOption(CommandLineOptions.CONFIG);
-			setLoggerLevel(config.getLoggerLevel());
 		} catch (final NullPointerException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			if (args.getOption(CommandLineOptions.GUI) == null) {
-				logger.fatal("You must provide a config file, using \"--xwconfig\" !");
+				logger.error("You must provide a config file, using \"--xwconfig\" !");
+				System.exit(XWReturnCode.FATAL.ordinal());
 			} else {
 				new MileStone(XWTools.split(""));
 				mileStone = new MileStone(Client.class);
@@ -258,8 +253,6 @@ public final class Client {
 			client = config.defaultCommClient();
 		}
 
-		client.setLoggerLevel(logger.getLoggerLevel());
-
 		commClients.put(Connection.xwScheme(), client);
 
 		client.setAutoClose(false);
@@ -282,7 +275,7 @@ public final class Client {
 			try {
 				client = config.getCommClient(uri);
 			} catch (final InstantiationException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				throw new IOException("can't get client for " + uri);
 			}
 		}
@@ -452,19 +445,8 @@ public final class Client {
 			io.close();
 			mileStone.println("Read file " + fdata);
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw (e);
-		}
-	}
-
-	/**
-	 * This sets the logger level. This also sets the logger levels checkboxes
-	 * menu item.
-	 */
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-		if (zipper != null) {
-			zipper.setLoggerLevel(l);
 		}
 	}
 
@@ -598,7 +580,7 @@ public final class Client {
 			client.setAutoClose(true);
 			commClient().close();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		if (shellRunning == false) {
 			System.exit(code.ordinal());
@@ -1265,7 +1247,7 @@ public final class Client {
 							binaryFile = null;
 						}
 					} catch (final Exception e) {
-						logger.finest(appParams.get(i).toString() + " is not an URI");
+						logger.trace(appParams.get(i).toString() + " is not an URI");
 						binaryFile = null;
 					}
 				}
@@ -1275,14 +1257,14 @@ public final class Client {
 					logger.debug(appParams.get(i).toString() + " are access rights");
 					continue;
 				} catch (final Exception e) {
-					logger.finest(appParams.get(i).toString() + " are not access rights");
+					logger.trace(appParams.get(i).toString() + " are not access rights");
 				}
 				try {
 					apptype = (AppTypeEnum) appParams.get(i);
 					logger.debug(appParams.get(i).toString() + " is an applicaiton type");
 					continue;
 				} catch (final Exception e) {
-					logger.finest(appParams.get(i).toString() + " is not an application type");
+					logger.trace(appParams.get(i).toString() + " is not an application type");
 				}
 				try {
 					if (binaryUri == null) {
@@ -1291,7 +1273,7 @@ public final class Client {
 						continue;
 					}
 				} catch (final Exception e) {
-					logger.finest(appParams.get(i).toString() + " is not an UID");
+					logger.trace(appParams.get(i).toString() + " is not an UID");
 				}
 				try {
 					if (cpu == null) {
@@ -1300,7 +1282,7 @@ public final class Client {
 						continue;
 					}
 				} catch (final Exception e) {
-					logger.finest(appParams.get(i).toString() + " is not a CPU");
+					logger.trace(appParams.get(i).toString() + " is not a CPU");
 				}
 				try {
 					if (os == null) {
@@ -1309,7 +1291,7 @@ public final class Client {
 						continue;
 					}
 				} catch (final Exception e) {
-					logger.finest(appParams.get(i).toString() + " is not an OS");
+					logger.trace(appParams.get(i).toString() + " is not an OS");
 				}
 			}
 
@@ -1751,7 +1733,7 @@ public final class Client {
 			try {
 				commClient().uploadData(uri, dataFile);
 			} catch (final Exception e) {
-				logger.exception("Upload error", e);
+				logger.error("Caught exception:, Upload error:", e);
 				try {
 					commClient().setAutoClose(true);
 					commClient().close();
@@ -2453,8 +2435,6 @@ public final class Client {
 		println(XWPropertyDefs.LOGIN + "=" + user.getLogin());
 		println(XWPropertyDefs.PASSWORD + "=" + user.getPassword());
 		println(XWPropertyDefs.USERUID + "=" + user.getUID());
-		println("# logger level");
-		println(XWPropertyDefs.LOGGERLEVEL + "=" + LoggerLevel.INFO);
 		final String certPath = config.getPath(XWPropertyDefs.SSLKEYSTORE);
 		if ((certPath != null) && (new File(certPath)).exists()) {
 			println("# keystore");
@@ -2664,7 +2644,7 @@ public final class Client {
 					work.setListenPort(lp);
 				}
 			} catch (final Exception e) {
-				logger.exception("Can't set LISTENPORT", e);
+				logger.error("Can't set LISTENPORT", e);
 			}
 
 			try {
@@ -2673,7 +2653,7 @@ public final class Client {
 					work.setSmartSocketClient(fa);
 				}
 			} catch (final Exception e) {
-				logger.exception("Can't set FORWARDADDRESSES", e);
+				logger.error("Can't set FORWARDADDRESSES", e);
 			}
 
 			try {
@@ -2682,7 +2662,7 @@ public final class Client {
 					work.setMaxWallClockTime(wct.longValue());
 				}
 			} catch (final Exception e) {
-				logger.exception("Can't set WALLCLOCKTIME", e);
+				logger.error("Can't set WALLCLOCKTIME", e);
 			}
 
 			try {
@@ -2691,7 +2671,7 @@ public final class Client {
 					work.setExpectedReplications(replica.intValue());
 				}
 			} catch (final Exception e) {
-				logger.exception("Can't set REPLICA", e);
+				logger.error("Can't set REPLICA", e);
 			}
 			try {
 				final Integer rsize = (Integer) args.getOption(CommandLineOptions.REPLICASIZE);
@@ -2699,7 +2679,7 @@ public final class Client {
 					work.setReplicaSetSize(rsize.intValue());
 				}
 			} catch (final Exception e) {
-				logger.exception("Can't set REPLICASIZE", e);
+				logger.error("Can't set REPLICASIZE", e);
 			}
 
 			DataTypeEnum dirinType = null;
@@ -2960,7 +2940,7 @@ public final class Client {
 			if (e instanceof SAXException) {
 				logger.info("Server gave no work to compute");
 			} else {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}
@@ -2998,7 +2978,7 @@ public final class Client {
 			try {
 				rmiResults = commClient().workAlive(rmiParams).getHashtable();
 			} catch (final Exception e2) {
-				logger.exception(e2);
+				logger.error("Caught exception: ", e2);
 				exit("Alive to " + config.getCurrentDispatcher() + " : connection error " + e2.toString(),
 						XWReturnCode.CONNECTION);
 				return;
@@ -3099,7 +3079,7 @@ public final class Client {
 						println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 					}
 				} catch (final Exception e2) {
-					logger.exception("can't check keystore", e2);
+					logger.error("can't check keystore", e2);
 				}
 			}
 		}
@@ -3124,7 +3104,7 @@ public final class Client {
 			}
 			return hubAddr;
 		} catch (final Exception e) {
-			logger.exception("Can't retrieve SmartSocket hub address", e);
+			logger.error("Can't retrieve SmartSocket hub address", e);
 			throw new IOException("Can't retrieve SmartSocket hub address");
 		}
 	}
@@ -3181,7 +3161,7 @@ public final class Client {
 		try {
 			mileStone = new MileStone(getClass());
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			if (args.getOption(CommandLineOptions.GUI) == null) {
 				exit("Can't init comm :  " + e, XWReturnCode.FATAL);
 			}
@@ -3193,11 +3173,11 @@ public final class Client {
 				final String pass = config.getUser().getPassword();
 				final String certificate = config.getUser().getCertificate();
 
-				logger.finest("Client#execute temporarly removing mandate to get client info");
+				logger.trace("Client#execute temporarly removing mandate to get client info");
 				final String savmandating = config.getMandate();
 				config.setMandate("");
 				config.setUser(getUser(config.getUser().getLogin()));
-				logger.finest("Client#execute restoring mandate " + savmandating);
+				logger.trace("Client#execute restoring mandate " + savmandating);
 				config.setMandate(savmandating);
 
 				config.getUser().setPassword(pass);
@@ -3207,23 +3187,23 @@ public final class Client {
 				config.getUser().setChallenging(challenge);
 				CommClient.setConfig(config);
 			} catch (final SSLHandshakeException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				handshakeError();
 			} catch (final InvalidKeyException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				exit(e.getMessage(), XWReturnCode.AUTHENTICATION);
 			} catch (final AccessControlException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				exit(e.getMessage(), XWReturnCode.AUTHORIZATION);
 			} catch (final IOException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				if (args.getOption(CommandLineOptions.GUI) == null) {
 					connectionRefused();
 				}
 			} catch (final SAXException e) {
 				connectionRefused();
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -3286,7 +3266,7 @@ public final class Client {
 						println("**********  **********  **********");
 					}
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 				exit("", XWReturnCode.SUCCESS);
 				break;
@@ -3383,37 +3363,37 @@ public final class Client {
 				break;
 			}
 		} catch (final SSLHandshakeException ssle) {
-			logger.exception(ssle);
+			logger.error("Caught exception: ", ssle);
 			handshakeError();
 		} catch (final ParseException ce) {
-			logger.exception(ce);
+			logger.error("Caught exception: ", ce);
 			usage(args.command(), ce.getMessage());
 		} catch (final ConnectException ce) {
-			logger.exception(ce);
+			logger.error("Caught exception: ", ce);
 			connectionRefused();
 		} catch (final ClassNotFoundException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit(e.getMessage(), XWReturnCode.DISK);
 		} catch (final CertificateExpiredException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit(e.getMessage(), XWReturnCode.AUTHENTICATION);
 		} catch (final CertificateException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit(e.getMessage(), XWReturnCode.AUTHENTICATION);
 		} catch (final InvalidKeyException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit(e.getMessage(), XWReturnCode.AUTHENTICATION);
 		} catch (final AccessControlException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit(e.getMessage(), XWReturnCode.AUTHORIZATION);
 		} catch (final FileNotFoundException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit(e.getMessage(), XWReturnCode.DISK);
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			objectNotFound();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			usage(args.command());
 		}
 	}
@@ -3428,7 +3408,7 @@ public final class Client {
 
 		final String line = reader.readLine();
 
-		logger.finest("line = " + line);
+		logger.trace("line = " + line);
 
 		final Collection<String> params = XWTools.split(line);
 
@@ -3553,7 +3533,7 @@ public final class Client {
 				+ ", forwarding port : " + forwardPort);
 				smartSocketsProxy.start();
 			} catch (final Exception e) {
-				logger.exception("Can't start new SmartSocket proxy", e);
+				logger.error("Can't start new SmartSocket proxy", e);
 				XWTools.releasePort(forwardPort);
 			}
 			return;
@@ -3588,7 +3568,7 @@ public final class Client {
 						+ smartSocketsProxy.getRemoteAddress());
 				smartSocketsProxy.start();
 			} catch (final Exception e) {
-				logger.exception("Can't start new SmartSocket proxy", e);
+				logger.error("Can't start new SmartSocket proxy", e);
 				XWTools.releasePort(forwardPort);
 			}
 			return;
@@ -3631,7 +3611,7 @@ public final class Client {
 						+ smartSocketsProxy.getLocalAddress());
 				smartSocketsProxy.start();
 			} catch (final Exception e) {
-				logger.exception("Can't start new SmartSocket proxy", e);
+				logger.error("Can't start new SmartSocket proxy", e);
 				XWTools.releasePort(fport);
 			}
 		}

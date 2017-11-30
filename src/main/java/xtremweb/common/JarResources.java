@@ -34,13 +34,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
+import org.apache.log4j.Logger;
+
+
 /**
  * JarResources: JarResources maps all resources included in a Zip or Jar file.
  * Additionaly, it provides a method to extract one as a blob.
  */
 public final class JarResources {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(JarResources.class);
 
 	// jar resource mapping tables
 	private final Hashtable htSizes = new Hashtable();
@@ -61,7 +64,6 @@ public final class JarResources {
 	 */
 	public JarResources(final String jarFileName) {
 		this.jarFileName = jarFileName;
-		logger = new Logger(this);
 		init();
 	}
 
@@ -134,9 +136,9 @@ public final class JarResources {
 		} catch (final NullPointerException e) {
 			logger.debug("done.");
 		} catch (final FileNotFoundException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

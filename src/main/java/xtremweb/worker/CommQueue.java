@@ -32,15 +32,12 @@ package xtremweb.worker;
  * @author <a href="mailto: "Gilles Fedak</a>
  */
 
-import xtremweb.common.Logger;
-
 /**
  * This abstract class defines message container : a class that holds messages
  * to compute
  */
 abstract public class CommQueue {
 
-	private Logger logger;
 	/**
 	 * This defines maximum number of simultaneous messages. Default value is 2
 	 */
@@ -89,20 +86,4 @@ abstract public class CommQueue {
 	 * @return the number of events of the given type in queue
 	 */
 	abstract public int size(int type);
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
-	}
-
 }

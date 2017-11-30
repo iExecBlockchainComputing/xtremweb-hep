@@ -38,6 +38,8 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.apache.log4j.Logger;
+
 
 /**
  * Zipper.java This class zip/unzip files
@@ -54,7 +56,7 @@ import java.util.zip.ZipOutputStream;
 public class Zipper {
 	static final int BUFFERSIZE = 2048;
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Zipper.class);
 
 	protected static final String NAME = "ZIPPER";
 
@@ -84,30 +86,10 @@ public class Zipper {
 	private final byte[] buffer = new byte[1024];
 
 	/**
-	 * This sets the logger level. This also sets the logger levels checkboxes
-	 * menu item.
-	 */
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-	}
-
-	/**
 	 * This is the default constructor.
 	 */
 	public Zipper() {
 		creation = true;
-		logger = new Logger(this);
-	}
-
-	/**
-	 * This is the default constructor.
-	 *
-	 * @param l
-	 *            is the log level
-	 */
-	public Zipper(final LoggerLevel l) {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -115,11 +97,9 @@ public class Zipper {
 	 *
 	 * @param fn
 	 *            is the filename to be used
-	 * @param l
-	 *            is the output level
 	 */
-	public Zipper(final String fn, final LoggerLevel l) {
-		this(l);
+	public Zipper(final String fn) {
+		this();
 		fileName = fn;
 	}
 
@@ -135,7 +115,7 @@ public class Zipper {
 
 			fileName = "." + File.separator + fileName;
 		}
-		logger.finest("seFileName " + fileName);
+		logger.trace("seFileName " + fileName);
 	}
 
 	public String getFileName() {
@@ -267,7 +247,7 @@ public class Zipper {
 					// because a file name contained a french accentuation
 					// :(
 					if ((in == null) || (entry.isDirectory())) {
-						logger.finest("Unzipping " + fileName + " : " + entry.getName() + " is not unzipped ...");
+						logger.trace("Unzipping " + fileName + " : " + entry.getName() + " is not unzipped ...");
 						continue;
 					}
 
@@ -281,14 +261,14 @@ public class Zipper {
 					in.close();
 
 					filesList.put(entry.getName(), new Long(f.lastModified()));
-					logger.finest("Extracted file: " + entry.getName());
+					logger.trace("Extracted file: " + entry.getName());
 				}
 
 				return true;
 			}
 
 		} catch (final ZipException z) {
-			logger.exception("not a zip file ? trying unzipNew", z);
+			logger.error("Caught exception, not a zip file ? trying unzipNew", z);
 			return unzipNew(outDir);
 		}
 	}
@@ -330,7 +310,7 @@ public class Zipper {
 		try (final FileInputStream fis = new FileInputStream(fileName)) {
 			zis = new ZipInputStream(new BufferedInputStream(fis));
 		} catch (final Exception z) {
-			logger.exception("definitly not a zip file ", z);
+			logger.error("Caught exception, definitely not a zip file ", z);
 			return false;
 		}
 
@@ -350,7 +330,7 @@ public class Zipper {
 				}
 				fos = new FileOutputStream(f);
 			} catch (final Exception e) {
-				logger.exception("Unzipping " + fileName + " : " + entry.getName() + " is not unzipped ...", e);
+				logger.error("Caught exception, Unzipping " + fileName + " : " + entry.getName() + " is not unzipped ...", e);
 				continue;
 			}
 
@@ -360,7 +340,7 @@ public class Zipper {
 			}
 			dest.flush();
 			dest.close();
-			logger.finest("Extracted entry : " + entry.getName());
+			logger.trace("Extracted entry : " + entry.getName());
 		}
 
 		zis.close();
@@ -400,12 +380,12 @@ public class Zipper {
 	public boolean zip(final String[] inputs, final boolean optimize) throws IOException {
 
 		if ((optimize) && (inputs.length == 1)) {
-			logger.finest("Zipper     inputs[0] = " + inputs[0]);
+			logger.trace("Zipper     inputs[0] = " + inputs[0]);
 			final File inputFile = new File(inputs[0]);
 			if (!inputFile.isDirectory()) {
 				if (inputFile.length() < XWTools.LONGFILESIZE) {
 					fileName = inputs[0];
-					logger.finest("not necessary to zip = " + fileName + " (" + inputFile.length() + ")");
+					logger.trace("not necessary to zip = " + fileName + " (" + inputFile.length() + ")");
 					return false;
 				}
 			} else {
@@ -413,7 +393,7 @@ public class Zipper {
 				switch (files.length) {
 				case 0:
 					fileName = null;
-					logger.finest("not necessary to zip; no file found");
+					logger.trace("not necessary to zip; no file found");
 					return false;
 
 				case 1:
@@ -421,7 +401,7 @@ public class Zipper {
 					if (!f2.isDirectory() && (f2.length() < XWTools.LONGFILESIZE)) {
 						fileName = inputFile.getCanonicalPath() + File.separator + files[0];
 
-						logger.finest("not necessary to zip file = " + fileName);
+						logger.trace("not necessary to zip file = " + fileName);
 						return false;
 					}
 					break;
@@ -436,7 +416,7 @@ public class Zipper {
 			logger.debug("zipping to " + fileName);
 
 			for (int i = 0; i < inputs.length; i++) {
-				logger.finest("*** " + inputs[i]);
+				logger.trace("*** " + inputs[i]);
 				scratch = inputs[i];
 				atleastone = zip(zipFile, inputs[i]);
 			}
@@ -486,7 +466,7 @@ public class Zipper {
 			return false;
 		}
 
-		logger.finest("Zipping " + input + " " + tmpFiles.length + " entries");
+		logger.trace("Zipping " + input + " " + tmpFiles.length + " entries");
 
 		if (tmpFiles.length == 0) {
 			final int nLen = scratch.length();
@@ -508,13 +488,13 @@ public class Zipper {
 				try {
 					entryName = entryName.substring(lastslash + 1);
 				} catch (final IndexOutOfBoundsException e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 					return false;
 				}
 				final String header = entryName.substring(0, lastslash);
 				logger.warn("Invalid entry name " + entryName + "; removing header '" + header + "'");
 			}
-			logger.finest("Zipping put entry " + entryName);
+			logger.trace("Zipping put entry " + entryName);
 			zipfile.putNextEntry(new ZipEntry(entryName + "/"));
 			zipfile.closeEntry();
 			return false;
@@ -543,7 +523,7 @@ public class Zipper {
 					entryName = withoutScratch + "/" + tmpFiles[loop];
 				}
 
-				logger.finest("Zipping scratch = " + scratch + " withoutScratch = " + withoutScratch + " entryName = "
+				logger.trace("Zipping scratch = " + scratch + " withoutScratch = " + withoutScratch + " entryName = "
 						+ entryName);
 
 				if (entryName.startsWith("/") || (entryName.indexOf("../") > 0)) {
@@ -556,7 +536,7 @@ public class Zipper {
 					try {
 						entryName = entryName.substring(lastslash + 1);
 					} catch (final IndexOutOfBoundsException e) {
-						logger.exception(e);
+						logger.error("Caught exception: ", e);
 						return false;
 					}
 					logger.warn("Invalid entry name " + entryName + "; removing header '" + header + "'");
@@ -567,14 +547,14 @@ public class Zipper {
 
 				if (inputFile.isDirectory()) {
 					fileIn = new File(input + "/" + tmpFiles[loop]);
-					logger.finest("Zipping directory : " + entryName + "(" + input + "/" + tmpFiles[loop] + ", "
+					logger.trace("Zipping directory : " + entryName + "(" + input + "/" + tmpFiles[loop] + ", "
 							+ fileIn.length() + ")");
 				} else {
 					fileIn = new File(tmpFiles[loop]);
-					logger.finest("Zipping file : " + entryName + "(" + tmpFiles[loop] + ", " + fileIn.length() + ")");
+					logger.trace("Zipping file : " + entryName + "(" + tmpFiles[loop] + ", " + fileIn.length() + ")");
 				}
 
-				logger.finest("Zipping put entry " + entryName);
+				logger.trace("Zipping put entry " + entryName);
 				if (!fileIn.isDirectory()) {
 
 					zipfile.putNextEntry(new ZipEntry(entryName));
@@ -597,7 +577,7 @@ public class Zipper {
 				atleastone = true;
 
 			} else {
-				logger.finest("Zipping is skipping : " + input + "/" + tmpFiles[loop]);
+				logger.trace("Zipping is skipping : " + input + "/" + tmpFiles[loop]);
 			}
 
 		}
@@ -614,7 +594,7 @@ public class Zipper {
 		final File testDir = new File(System.getProperty("java.io.tmpdir"),
 				"XWHEP.Zipper.Test." + System.currentTimeMillis());
 		XWTools.checkDir(testDir);
-		final Zipper zipper = new Zipper(LoggerLevel.DEBUG);
+		final Zipper zipper = new Zipper();
 		zipper.setCreation(false);
 		zipper.setFileName(fileName);
 		final boolean ret = zipper.unzip(testDir.getCanonicalPath());

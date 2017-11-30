@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import java.util.Date;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -51,6 +52,8 @@ import xtremweb.security.XWAccessRightsValidator;
  */
 
 public abstract class Table extends Type {
+
+	private static final Logger logger = Logger.getLogger(Table.class);
 
 	/**
 	 * This grants access
@@ -400,7 +403,7 @@ public abstract class Table extends Type {
 			DBConnPoolThread.getInstance().update(this, (String) null, pool);
 			setDirty(false);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -417,7 +420,7 @@ public abstract class Table extends Type {
 		try {
 			DBConnPoolThread.getInstance().select(this);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -476,8 +479,7 @@ public abstract class Table extends Type {
 			}
 			System.out.println(itf.openXmlRootElement() + itf.toXml() + itf.closeXmlRootElement());
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception("Usage : java -cp " + XWTools.JARFILENAME
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME
 					+ " xtremweb.common.TableInterface [anXMLDescriptionFile]", e);
 		}
 	}

@@ -25,6 +25,8 @@ package xtremweb.database;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import org.apache.log4j.Logger;
+
 
 import xtremweb.common.StatusEnum;
 import xtremweb.common.WorkInterface;
@@ -47,6 +49,8 @@ import xtremweb.common.WorkInterface;
  * @since 5.8.0
  */
 public class SQLRequestWorksCount extends WorkInterface {
+
+	private static final Logger logger = Logger.getLogger(SQLRequestWorksCount.class);
 
 	private static final String SELECTIONROW = "count(*) as " + Columns.COUNT;
 
@@ -113,7 +117,7 @@ public class SQLRequestWorksCount extends WorkInterface {
 		try {
 			setCount(rs.getInt(Columns.COUNT.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find waitingsfrom result set");
+			logger.warn("can't find waitingsfrom result set");
 			setCount(0);
 		}
 	}

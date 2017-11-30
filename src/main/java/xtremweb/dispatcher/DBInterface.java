@@ -23,6 +23,15 @@
 
 package xtremweb.dispatcher;
 
+import org.apache.log4j.Logger;
+
+import xtremweb.common.*;
+import xtremweb.communications.*;
+import xtremweb.database.*;
+import xtremweb.security.X509Proxy;
+import xtremweb.security.XWAccessRights;
+
+import javax.mail.MessagingException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -30,52 +39,7 @@ import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import java.text.ParseException;
-import java.util.Vector;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Iterator;
-
-import javax.mail.MessagingException;
-
-import xtremweb.common.AppInterface;
-import xtremweb.common.AppTypeEnum;
-import xtremweb.common.Cache;
-import xtremweb.common.DataInterface;
-import xtremweb.common.DataTypeEnum;
-import xtremweb.common.GroupInterface;
-import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.MD5;
-import xtremweb.common.SessionInterface;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.Table;
-import xtremweb.common.TableColumns;
-import xtremweb.common.TaskInterface;
-import xtremweb.common.TraceInterface;
-import xtremweb.common.UID;
-import xtremweb.common.UserGroupInterface;
-import xtremweb.common.UserInterface;
-import xtremweb.common.UserRightEnum;
-import xtremweb.common.WorkInterface;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
-import xtremweb.communications.EmailSender;
-import xtremweb.communications.URI;
-import xtremweb.communications.XMLRPCCommand;
-import xtremweb.communications.XMLRPCCommandActivateHost;
-import xtremweb.communications.XMLRPCCommandChmod;
-import xtremweb.communications.XMLRPCCommandGetUserByLogin;
-import xtremweb.communications.XMLRPCCommandGetWorks;
-import xtremweb.database.ColumnSelection;
-import xtremweb.database.DBConnPoolThread;
-import xtremweb.database.SQLRequest;
-import xtremweb.database.SQLRequestReadable;
-import xtremweb.database.SQLRequestWorkStatus;
-import xtremweb.security.X509Proxy;
-import xtremweb.security.XWAccessRights;
+import java.util.*;
 
 /**
  * DBInterface.java Created: Sun Feb 25 22:06:12 2001
@@ -91,7 +55,7 @@ public final class DBInterface {
 	 */
 	private final XWConfigurator config;
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(DBInterface.class);
 
 	/**
 	 * This helps to send mail
@@ -164,7 +128,7 @@ public final class DBInterface {
 			final URI uri = newURI(uid);
 			cache.add(itf, uri);
 		} catch (final Exception e) {
-			logger.exception("can't put to cache", e);
+			logger.error("Caught exception, can't put to cache", e);
 		}
 	}
 
@@ -224,7 +188,7 @@ public final class DBInterface {
 			}
 			return getFromCache(uri, row);
 		} catch (final Exception e) {
-			logger.exception("can't retrieve from cache", e);
+			logger.error("Caught exception, can't retrieve from cache", e);
 			return null;
 		}
 	}
@@ -298,7 +262,7 @@ public final class DBInterface {
 			final URI uri = newURI(uid);
 			return getFromCache(u, uri, row);
 		} catch (final URISyntaxException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return null;
 		}
 	}
@@ -329,7 +293,7 @@ public final class DBInterface {
 		try {
 			removeFromCache(row.getUID());
 		} catch (final Exception e) {
-			logger.exception("can't remove from cache", e);
+			logger.error("Caught exception, can't remove from cache", e);
 		}
 	}
 
@@ -343,7 +307,7 @@ public final class DBInterface {
 			final URI uri = newURI(uid);
 			removeFromCache(uri);
 		} catch (final Exception e) {
-			logger.exception("can't remove from cache", e);
+			logger.error("Caught exception, can't remove from cache", e);
 		}
 	}
 
@@ -368,7 +332,6 @@ public final class DBInterface {
 	 * @see xtremweb.database.SQLRequest#setHsqldb(boolean)
 	 */
 	public DBInterface(final XWConfigurator c) throws IOException {
-		logger = new Logger(this);
 		config = c;
 		dbConnPool = new DBConnPoolThread(config);
 		dbConnPool.start();
@@ -412,7 +375,7 @@ public final class DBInterface {
 					msg + "\n" + row.toString(false, true) + "\n\n" + "https://" + XWTools.getLocalHostName() + ":"
 							+ System.getProperty(XWPropertyDefs.HTTPSPORT.toString()) + "/get/" + row.getUID());
 		} catch (MessagingException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -508,7 +471,7 @@ public final class DBInterface {
 			return null;
 		}
 
-		logger.finest("selectAll : " + row.getClass().getName() + ", " + conditions);
+		logger.trace("selectAll : " + row.getClass().getName() + ", " + conditions);
 
 		return DBConnPoolThread.getInstance().selectAll(row, conditions);
 	}
@@ -541,7 +504,7 @@ public final class DBInterface {
 			return null;
 		}
 
-		logger.finest("selectUID : " + row.getClass().getName() + ", " + conditions);
+		logger.trace("selectUID : " + row.getClass().getName() + ", " + conditions);
 		return DBConnPoolThread.getInstance().selectUID(row, conditions);
 	}
 
@@ -573,7 +536,7 @@ public final class DBInterface {
 			return null;
 		}
 
-		logger.finest("selectOne : " + row.getClass().getName() + ", " + conditions);
+		logger.trace("selectOne : " + row.getClass().getName() + ", " + conditions);
 
 		return DBConnPoolThread.getInstance().selectOne(row, conditions);
 	}
@@ -2481,7 +2444,7 @@ public final class DBInterface {
 	protected UserInterface checkClient2(final UserInterface client, final UserRightEnum actionLevel)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		logger.finest("checkClient(" + client.toXml() + ", " + actionLevel + ")");
+		logger.trace("checkClient(" + client.toXml() + ", " + actionLevel + ")");
 
 		if ((client == null) || (actionLevel == null)) {
 			throw new IOException("Can't check client");
@@ -2502,7 +2465,7 @@ public final class DBInterface {
 			final byte[] strb = certificate.getBytes();
 
 			try (ByteArrayInputStream is = new ByteArrayInputStream(strb);){
-				logger.finest(certificate);
+				logger.trace(certificate);
 				final X509Proxy proxy = new X509Proxy(is);
 				Dispatcher.getProxyValidator().validate(proxy);
 				subjectName = proxy.getSubjectName();
@@ -2511,7 +2474,7 @@ public final class DBInterface {
 				loginName = subjectName + "_" + issuerName;
 			} catch (final Exception e) {
 				loginName = null;
-				logger.exception("Certificate validation failure", e);
+				logger.error("Caught exception, Certificate validation failure", e);
 				throw new InvalidKeyException(subjectName + " : certificate validation failed");
 			} finally {
 				subjectName = null;
@@ -2543,7 +2506,7 @@ public final class DBInterface {
 					result = new UserInterface(newUserItf);
 				}
 			} catch (final Exception e) {
-				logger.exception("Cant insert new user", e);
+				logger.error("Caught exception, Cant insert new user", e);
 				throw new IOException("Cant insert new UserInterface " + loginName);
 			} finally {
 				loginName = null;
@@ -2636,18 +2599,18 @@ public final class DBInterface {
 
 			ret = removeApplication(theClient, theApp, ownerGroup);
 			if (ret) {
-				logger.finest("app deleted " + uid);
+				logger.trace("app deleted " + uid);
 				return true;
 			}
 		}
 
 		if (removeUser(theClient, uid)) {
-			logger.finest("UserInterface deleted " + uid);
+			logger.trace("UserInterface deleted " + uid);
 			return true;
 		}
 
 		if (removeUserGroup(theClient, uid)) {
-			logger.finest("usergroup deleted " + uid);
+			logger.trace("usergroup deleted " + uid);
 			return true;
 		}
 
@@ -2725,7 +2688,7 @@ public final class DBInterface {
 				theApp.isService();
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 	}
@@ -2740,7 +2703,7 @@ public final class DBInterface {
 		try {
 			DBConnPoolThread.getInstance().unlockWorks(serverName);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -2826,8 +2789,8 @@ public final class DBInterface {
 					try {
 						theData.setURI(new URI(XWTools.getLocalHostName(), theData.getUID()));
 					} catch (final URISyntaxException e) {
-						logger.exception(e);
-						logger.fatal(e.getMessage());
+						logger.error("Caught exception: ", e);
+						System.exit(XWReturnCode.FATAL.ordinal());
 					}
 				}
 				update(theClient, UserRightEnum.INSERTDATA, theData);
@@ -2859,8 +2822,8 @@ public final class DBInterface {
 		try {
 			data.setURI(new URI(XWTools.getLocalHostName(), data.getUID()));
 		} catch (final URISyntaxException e) {
-			logger.exception(e);
-			logger.fatal(e.getMessage());
+			logger.error("Caught exception: ", e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		data.setLinks(0);
@@ -3150,7 +3113,7 @@ public final class DBInterface {
 				newUser = new UserInterface(useritf);
 				insert(newUser);
 			} catch (final Exception e) {
-				logger.exception(theClient.getLogin() + " can't create " + useritf.getLogin(), e);
+				logger.error("Caught exception: " + theClient.getLogin() + " can't create " + useritf.getLogin(), e);
 				throw new AccessControlException(theClient.getLogin() + " can't create " + useritf.getLogin());
 			}
 		} else {
@@ -3500,7 +3463,7 @@ public final class DBInterface {
 				appitf.setUID(new UID());
 			}
 		} catch (final Exception e) {
-			logger.exception(theClient.getLogin() + " can't create " + appitf.getName(), e);
+			logger.error("Caught exception: " + theClient.getLogin() + " can't create " + appitf.getName(), e);
 			throw new AccessControlException(
 					theClient.getLogin() + " can't create " + appitf.getName() + " : " + e.getMessage());
 		}
@@ -4536,7 +4499,7 @@ public final class DBInterface {
 			}
 		} catch (final Exception e) {
 			result = false;
-			logger.exception("DeleteJobs", e);
+			logger.error("Caught exception: ", e);
 		}
 
 		return result;
@@ -4666,13 +4629,13 @@ public final class DBInterface {
 				: job.getAccessRights());
 
 		final int jobRightsInt = jobRights.value() & theApp.getAccessRights().value();
-		logger.finest(String.format("DBInterface#addWork() jobRights.value() & theApp.getAccessRights().value() : %x & %x = %x",
+		logger.trace(String.format("DBInterface#addWork() jobRights.value() & theApp.getAccessRights().value() : %x & %x = %x",
 				jobRights.value(),
 				theApp.getAccessRights().value(),
 				jobRights.value() & theApp.getAccessRights().value()));
 
 		final int appStickyBit = theApp.getAccessRights().value() & XWAccessRights.STICKYBIT_INT;
-		logger.finest(String.format("DBInterface#addWork() theApp.getAccessRights().value() & XWAccessRights.STICKYBIT_INT : %x & %x = %x",
+		logger.trace(String.format("DBInterface#addWork() theApp.getAccessRights().value() & XWAccessRights.STICKYBIT_INT : %x & %x = %x",
 				theApp.getAccessRights().value(), XWAccessRights.STICKYBIT_INT, appStickyBit));
 
 		final XWAccessRights newJobRights = new XWAccessRights(jobRightsInt | appStickyBit);
@@ -5116,11 +5079,11 @@ public final class DBInterface {
 					insert(_host);
 					return _host;
 				} catch (final Exception e) {
-					logger.exception(hostName + " can't create new host", e);
+					logger.error("Caught exception " + hostName + " can't create new host", e);
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			logger.debug("new connection");
 		}
 

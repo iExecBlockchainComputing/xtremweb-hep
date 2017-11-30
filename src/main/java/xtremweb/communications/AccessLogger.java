@@ -31,9 +31,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import org.apache.log4j.Logger;
+
 
 import xtremweb.common.CommonVersion;
-import xtremweb.common.Logger;
 import xtremweb.common.XWTools;
 
 /**
@@ -57,6 +58,8 @@ import xtremweb.common.XWTools;
  *
  */
 public class AccessLogger {
+
+	private static final Logger logger = Logger.getLogger(AccessLogger.class);
 
 	/**
 	 * This helps to format date : the format is "yyyy-MM-dd HH:mm:ss"
@@ -90,10 +93,6 @@ public class AccessLogger {
 	 * This is the directory name where access logs are stored
 	 */
 	private static final String DIRNAME = "xwAccessLogs";
-	/**
-	 * This is the logger
-	 */
-	private Logger logger;
 	/**
 	 *
 	 */
@@ -129,8 +128,6 @@ public class AccessLogger {
 			return;
 		}
 
-		logger = new Logger(this);
-
 		try {
 			logPath = root;
 			server = s;
@@ -142,7 +139,7 @@ public class AccessLogger {
 			} catch (final IOException ioe) {
 				logPath = null;
 				out = System.out;
-				logger.exception(ioe);
+				logger.error("Caught exception: ", ioe);
 			}
 			setInstance(this);
 		} finally {

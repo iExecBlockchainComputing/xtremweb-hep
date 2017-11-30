@@ -32,13 +32,11 @@ import java.nio.channels.DatagramChannel;
 import java.rmi.RemoteException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
+import org.apache.log4j.Logger;
 
 import org.eclipse.jetty.server.Handler;
 
-import xtremweb.common.BytePacket;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
+import xtremweb.common.*;
 
 /**
  * <p>
@@ -56,6 +54,8 @@ import xtremweb.common.XWTools;
  */
 
 public class UDPServer extends CommServer {
+
+	private static final Logger logger = Logger.getLogger(UDPServer.class);
 
 	/**
 	 * This is this thread name
@@ -124,7 +124,8 @@ public class UDPServer extends CommServer {
 				}
 			});
 		} catch (final Exception e) {
-			getLogger().fatal("UDPServer: Could not listen on port " + getPort() + " : " + e);
+			logger.error("UDPServer: Could not listen on port " + getPort() + " : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -138,7 +139,7 @@ public class UDPServer extends CommServer {
 	@Override
 	public void run() {
 
-		getLogger().debug("UDPServer started, listen on port: " + getPort());
+		logger.debug("UDPServer started, listen on port: " + getPort());
 
 		while (true) {
 
@@ -146,7 +147,8 @@ public class UDPServer extends CommServer {
 				nio();
 				stdio();
 			} catch (final Exception e) {
-				getLogger().fatal("UDPServer error " + e);
+				logger.error("UDPServer error " + e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		}
 	}
@@ -170,10 +172,11 @@ public class UDPServer extends CommServer {
 				done = true;
 			} catch (final OutOfMemoryError ome) {
 				if (doing++ > 1000) {
-					getLogger().fatal("UDPServer memory error ; can't do more");
+					logger.error("UDPServer memory error ; can't do more");
+					System.exit(XWReturnCode.FATAL.ordinal());
 				}
 
-				getLogger().error("Still answering (" + doing + ") : " + ome);
+				logger.error("Still answering (" + doing + ") : " + ome);
 				sleep(100);
 			}
 		}
@@ -208,14 +211,14 @@ public class UDPServer extends CommServer {
 	 */
 	private void cleanup() {
 		try {
-			getLogger().debug("UDPServer cleanup");
+			logger.debug("UDPServer cleanup");
 			if (nio) {
 				nioServer.close();
 			} else {
 				ioServer.close();
 			}
 		} catch (final Exception e) {
-			getLogger().exception("can't clean up", e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

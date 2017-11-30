@@ -22,18 +22,14 @@
 
 package xtremweb.dispatcher;
 
+import xtremweb.common.CommCallback;
+import xtremweb.common.XMLable;
+import xtremweb.common.XMLtuple;
+import xtremweb.communications.XMLRPCCommand;
+
 import java.io.IOException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
-
-import xtremweb.common.CommCallback;
-import xtremweb.common.UID;
-import xtremweb.common.UserInterface;
-import xtremweb.common.XMLable;
-import xtremweb.common.XMLtuple;
-import xtremweb.communications.URI;
-import xtremweb.communications.XMLRPCCommand;
-import xtremweb.communications.XMLRPCCommandActivateHost;
 
 /**
  * @author Oleg Lodygensky

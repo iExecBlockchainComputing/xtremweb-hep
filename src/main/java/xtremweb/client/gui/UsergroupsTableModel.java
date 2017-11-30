@@ -41,6 +41,9 @@ import java.util.Vector;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.UID;
 import xtremweb.common.UserGroupInterface;
 import xtremweb.common.XMLVector;
@@ -51,6 +54,8 @@ import xtremweb.common.XMLVector;
  */
 
 class UsergroupsTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(UsergroupsTableModel.class);
 
 	/**
 	 * These defines submission parameters
@@ -114,7 +119,7 @@ class UsergroupsTableModel extends TableModel {
 
 			getParent().commClient().send(group);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -138,7 +143,7 @@ class UsergroupsTableModel extends TableModel {
 			return getParent().commClient().getUserGroups();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}

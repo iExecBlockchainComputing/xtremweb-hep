@@ -32,7 +32,6 @@ package xtremweb.services.nullservice;
  * @since RPCXW
  */
 
-import xtremweb.common.Logger;
 import xtremweb.common.MileStone;
 
 /**
@@ -44,16 +43,11 @@ public class NullService implements Interface {
 	 * This aims to display some time stamps
 	 */
 	MileStone mileStone;
-	/**
-	 * This is the logger
-	 */
-	Logger logger;
 
 	/**
 	 * This constructs a new object
 	 */
 	public NullService() {
-		logger = new Logger(this);
 		mileStone = new MileStone(getClass());
 	}
 

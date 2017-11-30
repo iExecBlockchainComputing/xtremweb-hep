@@ -23,13 +23,14 @@
 
 package xtremweb.worker;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Vector;
-
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
 import xtremweb.common.UID;
 import xtremweb.common.XWPropertyDefs;
+
+import org.apache.log4j.Logger;
+
+import java.util.Iterator;
+import java.util.Vector;
 
 /**
  * The <CODE>ThreadLaunch</CODE> class determines whether worker should compute
@@ -40,7 +41,7 @@ import xtremweb.common.XWPropertyDefs;
 
 public final class ThreadLaunch extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ThreadLaunch.class);
 
 	/**
 	 * This
@@ -94,8 +95,6 @@ public final class ThreadLaunch extends Thread {
 	public ThreadLaunch() throws InterruptedException, InstantiationException {
 
 		super("ThreadLaunch");
-
-		logger = new Logger(this);
 
 		unavailable = true;
 
@@ -199,7 +198,7 @@ public final class ThreadLaunch extends Thread {
 				logger.info("interrupted " + e.getMessage());
 				unavailable = true;
 			} catch (final RuntimeException e) {
-				logger.exception("run time exception", e);
+				logger.error("Caught exception: run time exception", e);
 			}
 		}
 	}
@@ -363,7 +362,7 @@ public final class ThreadLaunch extends Thread {
 
 			logger.debug("Activator = " + activator.getClass().getName());
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new InstantiationException(
 					"Error while instanciating activator " + activator.getClass().getName() + " " + e);
 		}

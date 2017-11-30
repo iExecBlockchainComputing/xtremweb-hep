@@ -49,6 +49,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.SAXException;
 
@@ -59,7 +60,6 @@ import xtremweb.common.CommonVersion;
 import xtremweb.common.DataInterface;
 import xtremweb.common.DataTypeEnum;
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
 import xtremweb.common.MD5;
 import xtremweb.common.MileStone;
 import xtremweb.common.OSEnum;
@@ -77,7 +77,7 @@ import xtremweb.communications.XMLRPCCommandSend;
 
 public final class CommManager extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(CommManager.class);
 
 	/**
 	 * This is a time stamp to keep how long we are waiting for a valid job
@@ -172,8 +172,6 @@ public final class CommManager extends Thread {
 		super("CommManager");
 		setPriority(Thread.MAX_PRIORITY);
 
-		logger = new Logger(this);
-
 		mileStone = new MileStone(getClass());
 
 		setSleeping(false);
@@ -229,7 +227,7 @@ public final class CommManager extends Thread {
 			setSleeping(true);
 			Thread.sleep(d);
 		} catch (final Exception e) {
-			logger.exception("was sleeping " + d, e);
+			logger.error("Caught exception, was sleeping " + d, e);
 			setSleeping(false);
 			resetTimeouts();
 		}
@@ -414,13 +412,13 @@ public final class CommManager extends Thread {
 		try {
 			commClient = Worker.getConfig().getCommClient(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.getMessage());
 		}
 
 		commClient.setAutoClose(true);
 
-		logger.finest("commClient(" + uri + ")");
+		logger.trace("commClient(" + uri + ")");
 
 		return commClient;
 	}
@@ -561,7 +559,7 @@ public final class CommManager extends Thread {
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download dirin (" + e.getMessage() + ")");
 		}
 
@@ -586,7 +584,7 @@ public final class CommManager extends Thread {
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download driven data (" + e.getMessage() + ")");
 		}
 	}
@@ -623,7 +621,7 @@ public final class CommManager extends Thread {
 		try {
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download binary (" + uri + ")");
 		}
 
@@ -632,7 +630,7 @@ public final class CommManager extends Thread {
 			uri = app.getLibrary(cpu, os);
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download library (" + uri + ")");
 		}
 
@@ -640,7 +638,7 @@ public final class CommManager extends Thread {
 			uri = app.getLaunchScript(os);
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download init script (" + uri + ")");
 		}
 
@@ -648,7 +646,7 @@ public final class CommManager extends Thread {
 			uri = app.getUnloadScript(os);
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download unload script (" + uri + ")");
 		}
 
@@ -656,7 +654,7 @@ public final class CommManager extends Thread {
 			uri = app.getBaseDirin();
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download base dirin (" + uri + ")");
 		}
 
@@ -664,7 +662,7 @@ public final class CommManager extends Thread {
 			uri = app.getDefaultDirin();
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download default dirin (" + uri + ")");
 		}
 
@@ -672,7 +670,7 @@ public final class CommManager extends Thread {
 			uri = app.getDefaultStdin();
 			downloadData(uri);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException("can't download default stdin (" + uri + ")");
 		}
 	}
@@ -811,7 +809,7 @@ public final class CommManager extends Thread {
 			logger.debug("downloadData(" + uri + "," + bypass + ")");
 
 			if ((uri == null) || (uri.isNull())) {
-				logger.finest("downloadData : uri is null");
+				logger.trace("downloadData : uri is null");
 				return;
 			}
 
@@ -870,7 +868,7 @@ public final class CommManager extends Thread {
 
 			if ((fdata.exists()) && (!bypass) && (data.getMD5().compareTo(MD5.asHex(MD5.getHash(fdata))) == 0)
 					&& (data.getSize() == fsize)) {
-				logger.config("Not necessary to download data " + data.getUID());
+				logger.info("Not necessary to download data " + data.getUID());
 				return;
 			}
 
@@ -982,7 +980,7 @@ public final class CommManager extends Thread {
 				if (io != null) {
 					io.close();
 				}
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				throw new IOException(e.getMessage());
 			}
 
@@ -1069,7 +1067,7 @@ public final class CommManager extends Thread {
 					if (e instanceof SAXException) {
 						logger.info("Server gave no work to compute");
 					} else {
-						logger.exception(e);
+						logger.error("Caught exception: ", e);
 					}
 					close();
 
@@ -1137,7 +1135,7 @@ public final class CommManager extends Thread {
 				} catch (final Exception e) {
 					close();
 
-					logger.exception("Downloading error", e);
+					logger.error("Caught exception, Downloading error", e);
 
 					if (newWork != null) {
 						newWork.setError();
@@ -1159,10 +1157,10 @@ public final class CommManager extends Thread {
 							uploadResults(finishedWork);
 						}
 					} catch (final Exception e) {
-						logger.exception(e);
+						logger.error("Caught exception: ", e);
 					}
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 
 					if (finishedWork != null) {
 						sendResult(finishedWork);
@@ -1182,10 +1180,10 @@ public final class CommManager extends Thread {
 							workSend(workToSend);
 						}
 					} catch (final Exception e) {
-						logger.exception(e);
+						logger.error("Caught exception: ", e);
 					}
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 
 					if (workToSend != null) {
 						sendWork(workToSend);
@@ -1241,17 +1239,16 @@ public final class CommManager extends Thread {
 				theWork.setStatus(StatusEnum.COMPLETED);
 			}
 		} catch (final Exception e) {
-			logger.exception("CommManager#uploadResults", e);
-			logger.exception(e);
+			logger.error("Caught exception, CommManager#uploadResults", e);
 			ioe = new IOException(e);
 			theWork.setStatus(StatusEnum.DATAREQUEST);
 		}
 
 		try {
-			logger.finest("CommManager#uploadResults : " + theWork.toXml());
+			logger.trace("CommManager#uploadResults : " + theWork.toXml());
 			workSend(theWork);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		getPoolWork().saveWork(theWork);

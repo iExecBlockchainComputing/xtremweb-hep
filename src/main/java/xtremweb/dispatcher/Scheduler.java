@@ -23,13 +23,12 @@
 
 package xtremweb.dispatcher;
 
-import java.io.IOException;
-import java.util.Collection;
-
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
 import xtremweb.common.UserInterface;
 import xtremweb.common.WorkInterface;
+
+import java.io.IOException;
+import java.util.Collection;
 
 /**
  * This is the abstract class that defines XtremWeb scheduler main methods set.
@@ -42,11 +41,7 @@ import xtremweb.common.WorkInterface;
  */
 public abstract class Scheduler {
 
-	private Logger logger;
-
-	protected Scheduler() {
-		setLogger(new Logger(this));
-	}
+	protected Scheduler() { }
 
 	/**
 	 * This retreives waiting jobs from DB
@@ -72,20 +67,5 @@ public abstract class Scheduler {
 	 *         pending work- found
 	 */
 	public abstract WorkInterface select(HostInterface host, UserInterface user) throws IOException;
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
-	}
 
 }

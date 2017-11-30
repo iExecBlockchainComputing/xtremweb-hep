@@ -28,6 +28,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.HostInterface;
 import xtremweb.common.StatusEnum;
@@ -50,6 +53,8 @@ import xtremweb.common.XWTools;
 
 public class HashTaskSet extends TaskSet {
 
+	private static final Logger logger = Logger.getLogger(HashTaskSet.class);
+
 	public HashTaskSet() {
 		super();
 	}
@@ -67,11 +72,11 @@ public class HashTaskSet extends TaskSet {
 
 			final Collection<WorkInterface> works = Dispatcher.getScheduler().retrieve();
 			if (works == null) {
-				getLogger().debug("refill works is null");
+				logger.debug("refill works is null");
 				return;
 			}
 
-			getLogger().debug("refill size = " + works.size());
+			logger.debug("refill size = " + works.size());
 
 			for (final Iterator<WorkInterface> worksEnum = works.iterator(); worksEnum.hasNext();) {
 
@@ -81,7 +86,7 @@ public class HashTaskSet extends TaskSet {
 						continue;
 					}
 
-					getLogger().debug("refill = " + theWork.getUID());
+					logger.debug("refill = " + theWork.getUID());
 
 					theWork.setPending();
 
@@ -99,11 +104,11 @@ public class HashTaskSet extends TaskSet {
 					rows.add(theWork);
 					db.update(rows);
 				} catch (final Exception e) {
-					getLogger().exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -133,7 +138,7 @@ public class HashTaskSet extends TaskSet {
 
 				final WorkInterface theWork = db.work(theTask.getWork());
 				if (theWork == null) {
-					getLogger().warn("No work found for task ; deleting " + theTask.getUID());
+					logger.warn("No work found for task ; deleting " + theTask.getUID());
 					theTask.delete();
 					return;
 				}
@@ -183,7 +188,7 @@ public class HashTaskSet extends TaskSet {
 				db.update(rows);
 			}
 		} catch (final Exception e) {
-			getLogger().exception("detecAbortedTasks_unitary : can't set tasks lost", e);
+			logger.error("Caught exception, detecAbortedTasks_unitary : can't set tasks lost", e);
 		}
 	}
 
@@ -219,7 +224,7 @@ public class HashTaskSet extends TaskSet {
 
 			try {
 				final Collection<TaskInterface> tasks = db.tasks(s.getStatus());
-				getLogger().debug("detectAbortedTasks " + s + " = " + (tasks == null ? "null" : tasks.size()));
+				logger.debug("detectAbortedTasks " + s + " = " + (tasks == null ? "null" : tasks.size()));
 				if (tasks != null) {
 					for (final Iterator<TaskInterface> enumeration = tasks.iterator(); enumeration.hasNext();) {
 						final TaskInterface theTask = enumeration.next();
@@ -230,7 +235,7 @@ public class HashTaskSet extends TaskSet {
 					}
 				}
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}

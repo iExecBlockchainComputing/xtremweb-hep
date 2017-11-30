@@ -34,6 +34,7 @@ package xtremweb.worker;
 
 import java.io.File;
 import java.io.IOException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.StatusEnum;
 import xtremweb.common.WorkInterface;
@@ -43,6 +44,8 @@ import xtremweb.common.XWTools;
  * This class describes a work to compute as managed by the worker
  */
 public final class Work extends WorkInterface {
+
+	private static final Logger logger = Logger.getLogger(Work.class);
 
 	/**
 	 * This is the work description file name
@@ -121,7 +124,7 @@ public final class Work extends WorkInterface {
 		final String extension = "" + getUID().toString() + "_cwd";
 		final File root = dataPackageName != null ? Worker.getConfig().getDataPackageDir(dataPackageName)
 				: Worker.getConfig().getWorksDir();
-		getLogger().debug("prepareDir packageName = " + dataPackageName + " ; " + root);
+		logger.debug("prepareDir packageName = " + dataPackageName + " ; " + root);
 		if (dataPackageName == null) {
 			setScratchDir(new File(root, extension));
 		} else {
@@ -142,7 +145,7 @@ public final class Work extends WorkInterface {
 		} else {
 			scratchDir = v;
 		}
-		getLogger().config("SCRATCHDIR = " + scratchDir);
+		logger.info("SCRATCHDIR = " + scratchDir);
 		XWTools.checkDir(scratchDir);
 		notifyAll();
 	}
@@ -172,21 +175,21 @@ public final class Work extends WorkInterface {
 	 */
 	public void clean(final boolean force) {
 		if ((force == false) && (hasPackage() == true)) {
-			getLogger().debug("don't clean " + force + ", " + hasPackage());
+			logger.debug("don't clean " + force + ", " + hasPackage());
 			return;
 		}
 		clean(scratchDir, force);
 		try {
 			scratchDir.delete();
-			getLogger().debug("cleaning deleted " + scratchDir);
+			logger.debug("cleaning deleted " + scratchDir);
 		} catch (final Exception e) {
-			getLogger().exception("Work clean can't delete scratchdir", e);
+			logger.error("Caught exception, Work clean can't delete scratchdir", e);
 		}
 		try {
 			scratchDir.getParentFile().delete();
-			getLogger().debug("cleaning deleted " + scratchDir.getParent());
+			logger.debug("cleaning deleted " + scratchDir.getParent());
 		} catch (final Exception e) {
-			getLogger().exception("Work clean can't delete scratchdir parent", e);
+			logger.error("Caught exception, Work clean can't delete scratchdir parent", e);
 		}
 	}
 
@@ -207,15 +210,15 @@ public final class Work extends WorkInterface {
 			return;
 		}
 		if ((force == false) && (hasPackage() == true)) {
-			getLogger().debug("do not clean " + force + ", " + hasPackage());
+			logger.debug("do not clean " + force + ", " + hasPackage());
 			return;
 		}
 
-		getLogger().debug("cleaning = " + dirWork);
+		logger.debug("cleaning = " + dirWork);
 		try {
 			XWTools.deleteDir(dirWork);
 		} catch (final Exception e) {
-			getLogger().exception("Work clean error", e);
+			logger.error("Caught exception, Work clean error", e);
 		}
 		notifyAll();
 	}

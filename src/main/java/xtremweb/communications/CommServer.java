@@ -29,10 +29,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jetty.server.Handler;
+import org.apache.log4j.Logger;
 
-import xtremweb.common.Logger;
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.XWReturnCode;
 
 /**
  * This is the communications server part. This listens to requests.
@@ -43,10 +44,7 @@ import xtremweb.common.XWPropertyDefs;
  */
 public abstract class CommServer extends Thread {
 
-	/**
-	 * This is the logger
-	 */
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(CommServer.class);
 	/**
 	 * This is the communication handler
 	 */
@@ -91,7 +89,6 @@ public abstract class CommServer extends Thread {
 	 */
 	protected CommServer(final String n) {
 		super(n);
-		setLogger(new Logger(this));
 		MAXCONNECTIONS = 0;
 		nbConnections = 0;
 	}
@@ -110,8 +107,8 @@ public abstract class CommServer extends Thread {
 		setConfig(p);
 		MAXCONNECTIONS = p.getInt(XWPropertyDefs.MAXCONNECTIONS);
 		connPool = Collections.synchronizedList(new LinkedList());
-		getLogger().config("MAXCONNECTIONS = " + MAXCONNECTIONS);
-		getLogger().finest("" + this + " CommServer#initComm() " + getHandler());
+		logger.info("MAXCONNECTIONS = " + MAXCONNECTIONS);
+		logger.trace("" + this + " CommServer#initComm() " + getHandler());
 
 		try {
 			for (int i = 0; i < MAXCONNECTIONS; i++) {
@@ -123,8 +120,8 @@ public abstract class CommServer extends Thread {
 				}
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
-			getLogger().fatal(e.toString());
+			logger.error("Caught exception: ", e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -156,16 +153,16 @@ public abstract class CommServer extends Thread {
 
 		while (connPool.size() <= 0) {
 			try {
-				getLogger().debug(msgWithRemoteAddresse(
+				logger.debug(msgWithRemoteAddresse(
 						"popConnection sleeping (" + nbConnections + " > " + MAXCONNECTIONS + ")"));
 				wait();
-				getLogger().debug(msgWithRemoteAddresse("popConnection woken up"));
+				logger.debug(msgWithRemoteAddresse("popConnection woken up"));
 			} catch (final InterruptedException e) {
 			}
 		}
 		final CommHandler myhandler = (CommHandler) connPool.remove(0);
 		nbConnections++;
-		getLogger().debug(
+		logger.debug(
 				msgWithRemoteAddresse("popConnection " + nbConnections + " (" + ((Thread) myhandler).getId() + ")"));
 		notifyAll();
 		return myhandler;
@@ -182,7 +179,7 @@ public abstract class CommServer extends Thread {
 		if (nbConnections < 0) {
 			nbConnections = 0;
 		}
-		getLogger().debug(msgWithRemoteAddresse("pushConnection " + nbConnections + " (" + ((Thread) h).getId() + ")"));
+		logger.debug(msgWithRemoteAddresse("pushConnection " + nbConnections + " (" + ((Thread) h).getId() + ")"));
 		notifyAll();
 	}
 
@@ -199,21 +196,6 @@ public abstract class CommServer extends Thread {
 	 */
 	public void setPort(final int port) {
 		this.port = port;
-	}
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
 	}
 
 	/**

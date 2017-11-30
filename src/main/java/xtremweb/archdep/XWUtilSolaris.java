@@ -28,7 +28,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 
 //
 //  XWUtilLinux.java
@@ -38,11 +39,11 @@ import xtremweb.common.Logger;
 
 public class XWUtilSolaris extends XWUtilDummy {
 
+	private static final Logger logger = Logger.getLogger(XWUtilSolaris.class);
 	private final Runtime machine = Runtime.getRuntime();
 
 	@Override
 	public int getSpeedProc() {
-		final Logger logger = new Logger(this);
 		String valStr = null;
 		Process workProcess;
 
@@ -68,7 +69,7 @@ public class XWUtilSolaris extends XWUtilDummy {
 		try {
 			workProcess.waitFor();
 		} catch (final InterruptedException e) {
-			logger.exception("ThreadLaunch in executeNativeJob: cannot wait for the end of the job ?!?", e);
+			logger.error("Caught exception: ThreadLaunch in executeNativeJob: cannot wait for the end of the job ?!?", e);
 			return -1;
 		}
 
@@ -87,7 +88,7 @@ public class XWUtilSolaris extends XWUtilDummy {
 				l = bufferFile.readLine();
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return 0;
 		}
 

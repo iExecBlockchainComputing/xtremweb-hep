@@ -46,7 +46,8 @@ import org.eclipse.jetty.server.Server;
 import xtremweb.common.BytePacket;
 import xtremweb.common.CommonVersion;
 import xtremweb.common.DataInterface;
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.Table;
 import xtremweb.common.UserInterface;
 import xtremweb.common.Version;
@@ -65,7 +66,7 @@ import xtremweb.communications.XMLRPCCommand;
 
 public class HTTPStatsHandler extends xtremweb.dispatcher.CommHandler {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(HTTPStatsHandler.class);
 
 	private HttpServletRequest request;
 	private HttpServletResponse response;
@@ -87,7 +88,6 @@ public class HTTPStatsHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	public HTTPStatsHandler() {
 		super(NAME);
-		logger = new Logger(this);
 	}
 
 	/**
@@ -102,7 +102,6 @@ public class HTTPStatsHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	public HTTPStatsHandler(final String n, final XWConfigurator c) {
 		super(n, c);
-		logger = new Logger(this);
 	}
 
 	/**
@@ -324,7 +323,7 @@ public class HTTPStatsHandler extends xtremweb.dispatcher.CommHandler {
 
 			baseRequest.setHandled(true);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		response.getWriter().flush();
 	}

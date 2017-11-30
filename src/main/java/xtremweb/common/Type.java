@@ -32,6 +32,7 @@ import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -53,6 +54,8 @@ import xtremweb.security.XWAccessRights;
  * @since 9.0.0
  */
 public abstract class Type extends XMLable {
+
+	private static final Logger logger = Logger.getLogger(Type.class);
 
 	/**
 	 * This is the table name
@@ -212,7 +215,7 @@ public abstract class Type extends XMLable {
 				value = column.fromString(XWTools.getSQLDateTime(val));
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return setValue(column.getOrdinal(), value);
 	}
@@ -268,7 +271,7 @@ public abstract class Type extends XMLable {
 			ret.append(getCloseTag());
 			return ret.toString();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return null;
 	}
@@ -333,8 +336,7 @@ public abstract class Type extends XMLable {
 			final String attribute = attrs.getQName(a);
 			String value = attrs.getValue(a);
 
-			getLogger()
-					.finest("Type  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
+			logger.trace("Type  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
 
 			if (value.compareToIgnoreCase(NULLVALUE) == 0) {
 				value = null;
@@ -343,7 +345,7 @@ public abstract class Type extends XMLable {
 			try {
 				setValue(attribute, value);
 			} catch (final IllegalArgumentException e) {
-				getLogger().exception(
+				logger.error("Caught exception " +
 						getClass().getCanonicalName() + " : '" + attribute
 								+ "' is not a valid attribute (you should use 'xwversion' to check your client version)",
 						e);
@@ -366,10 +368,10 @@ public abstract class Type extends XMLable {
 			super.xmlElementStart(uri, tag, qname, attrs);
 			return;
 		} catch (final SAXException ioe) {
-			getLogger().finest(ioe.toString());
+			logger.trace(ioe.toString());
 		}
 
-		getLogger().finest("Type#xmlElementStart(" + uri + ", " + tag + ", " + qname + ") " + attrs.getLength());
+		logger.trace("Type#xmlElementStart(" + uri + ", " + tag + ", " + qname + ") " + attrs.getLength());
 
 		if (qname.compareToIgnoreCase(getXMLTag()) == 0) {
 			fromXml(attrs);
@@ -403,7 +405,7 @@ public abstract class Type extends XMLable {
 
 		super.xmlElementStop(uri, tag, qname);
 
-		getLogger().finest("Type#xmlElementStop " + uri + ", " + tag + ", " + qname + " = " + getCurrentValue());
+		logger.trace("Type#xmlElementStop " + uri + ", " + tag + ", " + qname + " = " + getCurrentValue());
 		try {
 			setValue(qname, getCurrentValue());
 		} catch (final IllegalArgumentException e) {
@@ -546,7 +548,7 @@ public abstract class Type extends XMLable {
 			}
 			return ret.toString();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		return null;
@@ -598,7 +600,7 @@ public abstract class Type extends XMLable {
 				}
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return ret;
 	}
@@ -614,7 +616,7 @@ public abstract class Type extends XMLable {
 			for (int i = FIRST_ATTRIBUTE; i < getMaxAttribute(); i++) {
 
 				if (getColumnLabel(i) == null) {
-					getLogger().error("getColumnLabel(" + i + ") = null?!?!");
+					logger.error("getColumnLabel(" + i + ") = null?!?!");
 					continue;
 				}
 
@@ -687,7 +689,7 @@ public abstract class Type extends XMLable {
 			}
 			return ret;
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return null;
 	}
@@ -738,8 +740,9 @@ public abstract class Type extends XMLable {
 		}
 
 		if (getColumnLabel(KEYINDEX) == null) {
-			getLogger().error("\n\n\nWe got a huuuge problem, folks");
-			getLogger().fatal(this.getClass().getName() + "#crietrias() : getColumnLabel(KEYINDEX) == null");
+			logger.error("\n\n\nWe got a huuuge problem, folks");
+			logger.error(this.getClass().getName() + "#crietrias() : getColumnLabel(KEYINDEX) == null");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		final Object value = getValueAt(KEYINDEX);
 		if (value != null) {
@@ -760,9 +763,10 @@ public abstract class Type extends XMLable {
 	final public boolean setValue(final int index, final Object v) {
 
 		if ((index > getLastAttribute()) || (index < KEYINDEX)) {
-			getLogger().error("\n\n\nWe got a huuuge problem, folks");
-			getLogger().fatal(this.getClass().getName() + "#setValue() : invalid index " + index + " ("
+			logger.error("\n\n\nWe got a huuuge problem, folks");
+			logger.error(this.getClass().getName() + "#setValue() : invalid index " + index + " ("
 					+ FIRST_ATTRIBUTE + ", " + getLastAttribute() + ")");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		boolean change = false;
@@ -781,8 +785,9 @@ public abstract class Type extends XMLable {
 				setValueAt(index, v);
 			}
 		} catch (final Exception e) {
-			getLogger().error("\n\n\nWe got a huuuge problem, folks");
-			getLogger().fatal(this.getClass().getName() + "#setValue() " + e);
+			logger.error("\n\n\nWe got a huuuge problem, folks");
+			logger.error(this.getClass().getName() + "#setValue() " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		if (change == true) {
@@ -813,19 +818,21 @@ public abstract class Type extends XMLable {
 	public final Object getValue(final int index) {
 
 		if ((index > getLastAttribute()) || (index < FIRST_ATTRIBUTE)) {
-			getLogger().error("\n\n\nWe got a huuuge problem, folks");
+			logger.error("\n\n\nWe got a huuuge problem, folks");
 			Thread.currentThread();
 			Thread.dumpStack();
-			getLogger().fatal(this.getClass().getName() + "#getValue() : invalid index " + index + " ("
+			logger.error(this.getClass().getName() + "#getValue() : invalid index " + index + " ("
 					+ FIRST_ATTRIBUTE + ", " + getLastAttribute() + ")");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		try {
 			return getValueAt(index);
 		} catch (final Exception e) {
-			getLogger().error("\n\n\nWe got a huuuge problem, folks");
+			logger.error("\n\n\nWe got a huuuge problem, folks");
 			Thread.currentThread();
 			Thread.dumpStack();
-			getLogger().fatal(this.getClass().getName() + "#getValue() " + e);
+			logger.error(this.getClass().getName() + "#getValue() " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		return null;
 	}
@@ -930,7 +937,7 @@ public abstract class Type extends XMLable {
 		try {
 			DBConnPoolThread.getInstance().select(this);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -1015,8 +1022,7 @@ public abstract class Type extends XMLable {
 			final Type itf = Type.newType(new ByteArrayInputStream(argv[0].getBytes(XWTools.UTF8)));
 			System.out.println(itf.openXmlRootElement() + itf.toXml() + itf.closeXmlRootElement());
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception("Usage : java -cp " + XWTools.JARFILENAME
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME
 					+ " xtremweb.common.TableInterface [anXMLDescriptionFile]", e);
 		}
 	}

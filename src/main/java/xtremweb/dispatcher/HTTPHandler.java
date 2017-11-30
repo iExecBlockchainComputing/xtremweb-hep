@@ -23,31 +23,20 @@
 
 package xtremweb.dispatcher;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.URISyntaxException;
-import java.nio.channels.DatagramChannel;
-import java.nio.charset.Charset;
-import java.rmi.RemoteException;
-import java.security.AccessControlException;
-import java.security.InvalidKeyException;
-import java.security.cert.X509Certificate;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Vector;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import xtremweb.common.*;
+import xtremweb.communications.*;
+import xtremweb.communications.URI;
+import xtremweb.database.SQLRequest;
+import xtremweb.dispatcher.HTTPOAuthHandler.OAuthException;
+import xtremweb.security.XWAccessRights;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.SSLSocket;
 import javax.servlet.ServletException;
@@ -55,48 +44,16 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
-
-import xtremweb.common.BytePacket;
-import xtremweb.common.DataInterface;
-import xtremweb.common.DataTypeEnum;
-import xtremweb.common.Logger;
-import xtremweb.common.MD5;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.StreamIO;
-import xtremweb.common.Table;
-import xtremweb.common.UID;
-import xtremweb.common.UserInterface;
-import xtremweb.common.UserRightEnum;
-import xtremweb.common.XMLHashtable;
-import xtremweb.common.XMLable;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
-import xtremweb.communications.Connection;
-import xtremweb.communications.IdRpc;
-import xtremweb.communications.URI;
-import xtremweb.communications.XMLRPCCommand;
-import xtremweb.communications.XMLRPCCommandActivateHost;
-import xtremweb.communications.XMLRPCCommandChmod;
-import xtremweb.communications.XMLRPCCommandGet;
-import xtremweb.communications.XMLRPCCommandUploadData;
-import xtremweb.communications.XMLRPCCommandWorkAlive;
-import xtremweb.communications.XWPostParams;
-import xtremweb.database.SQLRequest;
-import xtremweb.dispatcher.HTTPOAuthHandler.OAuthException;
-import xtremweb.security.XWAccessRights;
+import java.io.*;
+import java.net.*;
+import java.nio.channels.DatagramChannel;
+import java.nio.charset.Charset;
+import java.rmi.RemoteException;
+import java.security.AccessControlException;
+import java.security.InvalidKeyException;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
+import java.util.*;
 
 /**
  * This handles incoming communications through TCP<br>
@@ -110,6 +67,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
+
+	private static final Logger logger = Logger.getLogger(HTTPHandler.class);
 
 	public static final String PATH = "/";
 
@@ -297,13 +256,13 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	private IdRpc idRpc;
 
 	private synchronized void resetIdRpc() {
-		getLogger().debug(Thread.currentThread().getId() + " : resetIdRpc");
+		logger.debug(Thread.currentThread().getId() + " : resetIdRpc");
 		idRpc = null;
 		notifyAll();
 	}
 
 	private synchronized void setIdRpc(final IdRpc i) {
-		getLogger().debug(Thread.currentThread().getId() + " : setIdRpc " + i);
+		logger.debug(Thread.currentThread().getId() + " : setIdRpc " + i);
 		idRpc = i;
 		notifyAll();
 	}
@@ -311,9 +270,9 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	private synchronized void waitIdRpc(final IdRpc i) {
 		while (getIdRpc() != null) {
 			try {
-				getLogger().debug(Thread.currentThread().getId() + " : waitIdRpc " + i);
+				logger.debug(Thread.currentThread().getId() + " : waitIdRpc " + i);
 				wait();
-				getLogger().debug(Thread.currentThread().getId() + " : waitIdRpc woken up");
+				logger.debug(Thread.currentThread().getId() + " : waitIdRpc woken up");
 			} catch (final InterruptedException e) {
 			}
 		}
@@ -322,8 +281,8 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	}
 
 	private synchronized IdRpc getIdRpc() {
-		getLogger().warn(Thread.currentThread().getId() + " : getIdRpc a ete synchronise ! " + idRpc);
-		getLogger().debug(Thread.currentThread().getId() + " : getIdRpc " + idRpc);
+		logger.warn(Thread.currentThread().getId() + " : getIdRpc a ete synchronise ! " + idRpc);
+		logger.debug(Thread.currentThread().getId() + " : getIdRpc " + idRpc);
 		return idRpc;
 	}
 
@@ -391,7 +350,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		diskFactory = new DiskFileItemFactory();
 		servletUpload = new ServletFileUpload(diskFactory);
 		servletUpload.setSizeMax(XWPostParams.MAXUPLOADSIZE);
-		getLogger().debug("new Thread " + Thread.currentThread().getId());
+		logger.debug("new Thread " + Thread.currentThread().getId());
 	}
 
 	/**
@@ -411,7 +370,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		diskFactory = new DiskFileItemFactory();
 		servletUpload = new ServletFileUpload(diskFactory);
 		servletUpload.setSizeMax(XWPostParams.MAXUPLOADSIZE);
-		getLogger().debug("new Thread " + Thread.currentThread().getId());
+		logger.debug("new Thread " + Thread.currentThread().getId());
 	}
 
 	/**
@@ -559,7 +518,6 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	@Override
 	protected synchronized void write(final XMLable answer) throws IOException {
 
-		final Logger logger = getLogger();
 		mileStone("<write>");
 
 		if (getIdRpc() == IdRpc.DOWNLOADDATA) {
@@ -595,7 +553,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			response.setHeader(CONTENTLENGTHLABEL, Integer.toString(msg.length()));
 			response.getWriter().println(msg);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='write' msg='" + e.getMessage() + "' />");
 			throw new IOException(e.toString());
 		} finally {
@@ -613,14 +571,14 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	private void setFacebookAppCookie() {
 		if (HTTPOAuthHandler.Operator.FACEBOOK.getAppId() == null) {
-			getLogger().debug("Facebook AppId not set");
+			logger.debug("Facebook AppId not set");
 			return;
 		}
 		final String facebookAppID = Dispatcher.getConfig().getProperty(XWPropertyDefs.FACEBOOKAPPID);
 		final boolean facebookApp = (facebookAppID != null) && (facebookAppID.length() > 0);
 		if (facebookApp) {
 			final Cookie cookiefacebook = new Cookie(COOKIE_FACEBOOKAPP, facebookAppID);
-			getLogger().debug(COOKIE_FACEBOOKAPP + " = " + facebookAppID);
+			logger.debug(COOKIE_FACEBOOKAPP + " = " + facebookAppID);
 			response.addCookie(cookiefacebook);
 		}
 	}
@@ -632,15 +590,15 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	private void setGoogleAppCookie() {
 		if (HTTPOAuthHandler.Operator.GOOGLE.getAppId() == null) {
-			getLogger().debug("Google AppId not set");
+			logger.debug("Google AppId not set");
 			return;
 		}
 		final String googleAppID = Dispatcher.getConfig().getProperty(XWPropertyDefs.GOOGLEAPPID);
-		getLogger().debug("googleAppID = " + googleAppID);
+		logger.debug("googleAppID = " + googleAppID);
 		final boolean googleApp = (googleAppID != null) && (googleAppID.length() > 0);
 		if (googleApp) {
 			final Cookie cookieGoogle = new Cookie(COOKIE_GOOGLEAPP, googleAppID);
-			getLogger().debug(COOKIE_GOOGLEAPP + " = " + googleAppID);
+			logger.debug(COOKIE_GOOGLEAPP + " = " + googleAppID);
 			response.addCookie(cookieGoogle);
 		}
 	}
@@ -652,14 +610,14 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	private void setTwitterAppCookie() {
 		if (HTTPOAuthHandler.Operator.TWITTER.getAppId() == null) {
-			getLogger().debug("Twitter AppId not set");
+			logger.debug("Twitter AppId not set");
 			return;
 		}
 		final String twitterAppID = Dispatcher.getConfig().getProperty(XWPropertyDefs.TWITTERAPPID);
 		final boolean twitterApp = (twitterAppID != null) && (twitterAppID.length() > 0);
 		if (twitterApp) {
 			final Cookie cookieTwitter = new Cookie(COOKIE_TWITTERAPP, twitterAppID);
-			getLogger().debug(COOKIE_TWITTERAPP + " = " + twitterAppID);
+			logger.debug(COOKIE_TWITTERAPP + " = " + twitterAppID);
 			response.addCookie(cookieTwitter);
 		}
 	}
@@ -671,14 +629,14 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	private void setYahooAppCookie() {
 		if (HTTPOAuthHandler.Operator.YAHOO.getAppId() == null) {
-			getLogger().debug("Yahoo AppId not set");
+			logger.debug("Yahoo AppId not set");
 			return;
 		}
 		final String yahooAppID = Dispatcher.getConfig().getProperty(XWPropertyDefs.YAHOOAPPID);
 		final boolean yahooApp = (yahooAppID != null) && (yahooAppID.length() > 0);
 		if (yahooApp) {
 			final Cookie cookieYahoo = new Cookie(COOKIE_YAHOOAPP, yahooAppID);
-			getLogger().debug(COOKIE_YAHOOAPP + " = " + yahooAppID);
+			logger.debug(COOKIE_YAHOOAPP + " = " + yahooAppID);
 			response.addCookie(cookieYahoo);
 		}
 	}
@@ -703,7 +661,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	private void sendDashboard(final UserInterface client) throws IOException {
 
 		final Cookie cookieUser = new Cookie(COOKIE_USERUID, client.getUID().toString());
-		getLogger().debug("setCookie " + COOKIE_USERUID + " = " + client.getUID().toString());
+		logger.debug("setCookie " + COOKIE_USERUID + " = " + client.getUID().toString());
 		response.addCookie(cookieUser);
 		setAppCookies();
 		sendResource(Resources.DASHBOARDHTML);
@@ -716,7 +674,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	private void sendResource(final Resources r) throws IOException {
 
-		getLogger().debug("sendind " + r + " ; " + (r.getMimeType() != null ? r.getMimeType() : "unkown mime type"));
+		logger.debug("sendind " + r + " ; " + (r.getMimeType() != null ? r.getMimeType() : "unkown mime type"));
 		if (r.getMimeType() != null) {
 			response.setContentType(r.getMimeType());
 		}
@@ -733,7 +691,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 * @since 8.2.0
 	 */
 	private void redirectPage(final Request baseRequest, final Resources res) throws IOException {
-		getLogger().debug("redirectPage " + res);
+		logger.debug("redirectPage " + res);
 		setAppCookies();
 		response.setContentType(TEXTHTML);
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -777,7 +735,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			writer.println(msg);
 			response.setStatus(HttpServletResponse.SC_OK);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='writeapi' msg='" + e.getMessage() + "' />");
 			throw new IOException(e.toString());
 		} finally {
@@ -814,9 +772,9 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 				}
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='writeRows' msg='" + e.getMessage() + "' />");
-			getLogger().error(e.toString());
+			logger.error(e.toString());
 			throw new IOException(e.toString());
 		} finally {
 			response.setStatus(HttpServletResponse.SC_OK);
@@ -842,7 +800,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			// DataOutputStream(response.getOutputStream()), null, false);
 			io.writeFileContent(f);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='writeFile' msg='" + e.getMessage() + "' />");
 			throw new IOException(e.toString());
 		} finally {
@@ -900,7 +858,6 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			final HttpServletResponse _response) throws IOException, ServletException {
 
 		XMLRPCCommand command = null;
-		final Logger logger = getLogger();
 		Table obj = null;
 		dataUpload = null;
 
@@ -915,7 +872,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			logger.debug("Handling user principal = " + request.getUserPrincipal().getName());
 		}
 		logger.debug("Handling target         = " + target);
-		logger.finest("Handling request        = " + request.getContentLength() + " " + request.getContentType());
+		logger.trace("Handling request        = " + request.getContentLength() + " " + request.getContentType());
 		logger.debug("Handling request auth   = " + request.getAuthType());
 		logger.debug("Handling request user   = " + request.getRemoteUser());
 		logger.debug("Handling parameter size = " + request.getParameterMap().size());
@@ -927,11 +884,11 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		// logger.debug("Authorization = " +
 		// request.getHeader(HttpHeaders.AUTHORIZATION));
 		for (final Enumeration<String> e = request.getParameterNames(); e.hasMoreElements();) {
-			logger.finest("parameter " + e.nextElement());
+			logger.trace("parameter " + e.nextElement());
 		}
 		for (final Enumeration<String> e = request.getHeaderNames(); e.hasMoreElements();) {
 			final String headerName = e.nextElement();
-			logger.finest("header " + headerName + " : " + request.getHeader(headerName));
+			logger.trace("header " + headerName + " : " + request.getHeader(headerName));
 		}
 
 		final Cookie[] cookies = request.getCookies();
@@ -939,7 +896,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		if(cookies != null) {
 			for (int c = 0; c < cookies.length; c++) {
 				final Cookie cookie = cookies[c];
-				logger.finest("cookie " + cookie.getName() + " : " + cookie.getValue());
+				logger.trace("cookie " + cookie.getName() + " : " + cookie.getValue());
 			}
 		}
 		if (request.getParameterMap().size() <= 0) {
@@ -973,9 +930,9 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 				? request.getParameter(XWPostParams.AUTH_IDENTITY.toString())
 						: (String) session.getAttribute(XWPostParams.AUTH_IDENTITY.toString()));
 
-		getLogger().debug("oauthState = " + authState);
-		getLogger().debug("oauthEmail= " + authEmail);
-		getLogger().debug("oauthId= " + authId);
+		logger.debug("oauthState = " + authState);
+		logger.debug("oauthEmail= " + authEmail);
+		logger.debug("oauthId= " + authId);
 
 		final UserInterface user = getUser();
 
@@ -1053,7 +1010,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 								break;
 							}
 						} catch (final Exception e) {
-							logger.exception(e);
+							logger.error("Caught exception: ", e);
 						}
 					}
 				}
@@ -1111,7 +1068,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			logger.debug("URI = " + uri);
 
 			final String objXmlDesc = request.getParameter(XWPostParams.XMLDESC.toString());
-			logger.finest("objXmlDesc = " + objXmlDesc);
+			logger.trace("objXmlDesc = " + objXmlDesc);
 
 			if (objXmlDesc != null) {
 				final ByteArrayInputStream in = new ByteArrayInputStream(objXmlDesc.getBytes());
@@ -1163,7 +1120,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			command.getUser().setUID(user.getUID());
 		} catch (final Exception e) {
 			command = null;
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			logger.error(e.toString());
 		}
 
@@ -1192,9 +1149,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 							contentTypeValue = dataType.getMimeType();
 						}
 					} catch (final Exception e) {
-						if (logger.debug()) {
-							logger.exception(e);
-						}
+						logger.error("Caught exception: ", e);
 					}
 
 					logger.debug("set " + CONTENTTYPELABEL + " : " + contentTypeValue);
@@ -1225,8 +1180,6 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		if (certChain == null) {
 			return null;
 		}
-
-		final Logger logger = getLogger();
 
 		final UserInterface client = new UserInterface();
 
@@ -1354,7 +1307,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			session.setAttribute(XWPostParams.AUTH_NONCE.toString(), authNonce);
 			session.setAttribute(XWPostParams.AUTH_EMAIL.toString(), authEmail);
 		} catch (final Exception e) {
-			getLogger().exception("openid delegation error", e);
+			logger.error("Caught exception, openid delegation error", e);
 			throw new IOException("openid delegation error : " + e.getMessage());
 		}
 
@@ -1373,7 +1326,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 				? request.getParameter(XWPostParams.AUTH_STATE.toString())
 						: (String) session.getAttribute(XWPostParams.AUTH_STATE.toString()));
 
-		getLogger().debug("eth auth state = " + ethauthState);
+		logger.debug("eth auth state = " + ethauthState);
 
 		if (ethauthState == null) {
 			return null;
@@ -1386,12 +1339,12 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		final String authAddr = ((HTTPJWTEthereumAuthHandler)HTTPJWTEthereumAuthHandler.getInstance()).getEthereumAddress(jwt);
 
 		UserInterface ret = DBInterface.getInstance().user(UserInterface.Columns.LOGIN.toString() + "= '" + authAddr + "'");
-		getLogger().debug("userFromJWTEthereumAuth ret = " + (ret == null ? "null" :ret.toXml()));
+		logger.debug("userFromJWTEthereumAuth ret = " + (ret == null ? "null" :ret.toXml()));
 		if (ret == null) {
 			try {
 				ret = newUser(authAddr);
 			} catch (InvalidKeyException | AccessControlException e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 				throw new IOException (e.toString());
 			}
 		}
@@ -1419,9 +1372,9 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 				? request.getParameter(XWPostParams.AUTH_IDENTITY.toString())
 						: (String) session.getAttribute(XWPostParams.AUTH_IDENTITY.toString()));
 
-		getLogger().debug("oauthState = " + authState);
-		getLogger().debug("oauthEmail= " + authEmail);
-		getLogger().debug("oauthId= " + authId);
+		logger.debug("oauthState = " + authState);
+		logger.debug("oauthEmail= " + authEmail);
+		logger.debug("oauthId= " + authId);
 
 		if ((authState == null) || (authEmail == null)) {
 			return null;
@@ -1640,10 +1593,10 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 					theData.update();
 				}
 			} catch (final Exception e2) {
-				getLogger().exception(e2);
+				logger.error("Caught exception: ", e2);
 			}
 
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='uploadData' msg='" + e.getMessage() + "' />");
 			throw new RemoteException(e.toString());
 		} finally {

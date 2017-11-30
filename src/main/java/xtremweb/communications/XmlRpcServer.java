@@ -37,7 +37,8 @@ import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 
 /**
  * A multithreaded, reusable XML-RPC server object. The name may be misleading
@@ -47,12 +48,8 @@ import xtremweb.common.Logger;
  */
 public class XmlRpcServer {
 
-	/**
-	 *
-	 */
-
 	private final Hashtable handlers;
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XmlRpcServer.class);
 
 	/**
 	 * Construct a new XML-RPC server. You have to register handlers to make it
@@ -60,7 +57,6 @@ public class XmlRpcServer {
 	 */
 	public XmlRpcServer() {
 		handlers = new Hashtable();
-		logger = new Logger(this);
 	}
 
 	/**
@@ -184,7 +180,7 @@ public class XmlRpcServer {
 				result = writer.getBytes();
 
 			} catch (final Exception x) {
-				logger.exception(x);
+				logger.error("Caught exception: ", x);
 				final XmlWriter writer = new XmlWriter(strbuf);
 				final String message = x.toString();
 				final int code = x instanceof XmlRpcException ? ((XmlRpcException) x).getCode() : 0;
@@ -244,12 +240,11 @@ class Invoker implements XmlRpcHandler {
 
 	private final Object invokeTarget;
 	private final Class targetClass;
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Invoker.class);
 
 	public Invoker(final Object target) {
 		invokeTarget = target;
 		targetClass = invokeTarget instanceof Class ? (Class) invokeTarget : invokeTarget.getClass();
-		logger = new Logger(this);
 		logger.debug("Target object is " + targetClass);
 	}
 
@@ -277,11 +272,9 @@ class Invoker implements XmlRpcHandler {
 
 		Method method = null;
 
-		if (logger.debug()) {
-			logger.debug("Searching for method: " + methodName);
-			for (int i = 0; i < argClasses.length; i++) {
-				logger.debug("Parameter " + i + ": " + argClasses[i] + " = " + argValues[i]);
-			}
+		logger.debug("Searching for method: " + methodName);
+		for (int i = 0; i < argClasses.length; i++) {
+			logger.debug("Parameter " + i + ": " + argClasses[i] + " = " + argValues[i]);
 		}
 
 		try {
@@ -300,7 +293,7 @@ class Invoker implements XmlRpcHandler {
 		} catch (final IllegalArgumentException iarg_e) {
 			throw iarg_e;
 		} catch (final InvocationTargetException it_e) {
-			logger.exception(it_e);
+			logger.error("Caught exception: ", it_e);
 			throw new Exception(it_e.getTargetException().toString());
 		}
 

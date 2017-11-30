@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.sql.ResultSet;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -54,6 +55,8 @@ import xtremweb.security.XWAccessRights;
  * This class describes a row of the works SQL table.
  */
 public final class UserGroupInterface extends xtremweb.common.Table {
+
+	private static final Logger logger = Logger.getLogger(UserGroupInterface.class);
 
 	/**
 	 * This is the database table name This was stored in
@@ -502,7 +505,6 @@ public final class UserGroupInterface extends xtremweb.common.Table {
 		try {
 			final UserGroupInterface itf = new UserGroupInterface();
 			itf.setUID(UID.getMyUid());
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			if (argv.length > 0) {
 				try {
 					final XMLReader reader = new XMLReader(itf);
@@ -514,8 +516,7 @@ public final class UserGroupInterface extends xtremweb.common.Table {
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception("Usage : java -cp " + XWTools.JARFILENAME
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME
 					+ " xtremweb.common.UserGroupInterface [anXMLDescriptionFile]", e);
 		}
 	}

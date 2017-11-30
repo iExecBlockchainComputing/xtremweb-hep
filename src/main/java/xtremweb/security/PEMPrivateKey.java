@@ -48,7 +48,9 @@ import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
 import org.bouncycastle.util.encoders.Hex;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+import xtremweb.common.XWReturnCode;
 
 /**
  * This reads X509 private key from PEM files
@@ -56,6 +58,8 @@ import xtremweb.common.Logger;
  * @since 7.4.0
  */
 public final class PEMPrivateKey {
+
+	private static final Logger logger = Logger.getLogger(PEMPrivateKey.class);
 
 	static {
 		Security.addProvider(new BouncyCastleProvider());
@@ -78,10 +82,6 @@ public final class PEMPrivateKey {
 	}
 
 	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
-	/**
 	 * This is the read public key, if any This is for testing only
 	 */
 	private PublicKey publicKey;
@@ -95,7 +95,6 @@ public final class PEMPrivateKey {
 	 */
 	public PEMPrivateKey() {
 		publicKey = null;
-		logger = new Logger(this);
 	}
 
 	/**
@@ -180,7 +179,7 @@ public final class PEMPrivateKey {
 			final char[] p = password.toCharArray();
 			store.setKeyEntry(cert.getSubjectX500Principal().getName(), privateKey, p, chain);
 		} catch (final KeyStoreException e) {
-			logger.exception("Can't insert key into keystore", e);
+			logger.error("Caught exception, Can't insert key into keystore", e);
 		}
 		return store;
 	}
@@ -212,7 +211,6 @@ public final class PEMPrivateKey {
 	 */
 	public static void main(final String[] args) throws Exception {
 
-		final Logger logger = new Logger();
 		if (args.length < 2) {
 			logger.info("Usage : PrivateKey file password [--connect]");
 			logger.info("Where : file is the private key file");
@@ -239,7 +237,8 @@ public final class PEMPrivateKey {
 		if (verifier.verify(signatureBytes)) {
 			logger.info("Signature is valid");
 		} else {
-			logger.fatal("Signature is invalid");
+			logger.error("Signature is invalid");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		if (args.length > 2) {

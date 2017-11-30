@@ -32,6 +32,7 @@ import java.security.InvalidKeyException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -57,6 +58,8 @@ import org.xml.sax.SAXException;
  * </ul>
  */
 public final class XMLVector extends XMLValue {
+
+	private static final Logger logger = Logger.getLogger(XMLVector.class);
 
 	public static final String THISTAG = "XMLVector";
 
@@ -323,15 +326,14 @@ public final class XMLVector extends XMLValue {
 		} catch (final SAXException ioe) {
 		}
 
-		final Logger logger = getLogger();
 		final Object value = getValue();
-		logger.finest("xmlElementStart (" + qname + ") " + "expectedSize = " + expectedSize + "  values.size = "
+		logger.trace("xmlElementStart (" + qname + ") " + "expectedSize = " + expectedSize + "  values.size = "
 				+ (value != null ? ((Vector<XMLValue>) value).size() : 0) + "  currentIndex = " + currentIndex
 				+ "  nested = " + nested);
 
 		if (((value == null) || (((Vector<XMLValue>) value).size() == 0))
 				&& (qname.compareToIgnoreCase(getXMLTag()) == 0)) {
-			logger.finest("" + qname + ".fromXml(attrs)");
+			logger.trace("" + qname + ".fromXml(attrs)");
 			fromXml(attrs);
 		} else {
 
@@ -346,7 +348,7 @@ public final class XMLVector extends XMLValue {
 			}
 
 			if (currentIndex >= ((Vector<XMLValue>) value).size()) {
-				logger.finest("values[" + currentIndex + "]  = new XMValue(" + qname + ")");
+				logger.trace("values[" + currentIndex + "]  = new XMValue(" + qname + ")");
 				if (qname.compareToIgnoreCase(XMLHashtable.THISTAG) == 0) {
 					((Vector<XMLValue>) value).add(new XMLHashtable(attrs));
 				} else if (qname.compareToIgnoreCase(XMLVector.THISTAG) == 0) {
@@ -389,7 +391,7 @@ public final class XMLVector extends XMLValue {
 			}
 		}
 
-		getLogger().finest("xmlElementStop (" + qname + ") " + "expectedSize = " + expectedSize + "  currentIndex = "
+		logger.trace("xmlElementStop (" + qname + ") " + "expectedSize = " + expectedSize + "  currentIndex = "
 				+ currentIndex + "  nested = " + nested);
 
 		super.xmlElementStop(uri, tag, qname);
@@ -444,8 +446,6 @@ public final class XMLVector extends XMLValue {
 
 			System.out.println(xmlv.toXml());
 
-			xmlv.getLogger().setLoggerLevel(LoggerLevel.DEBUG);
-
 			final Vector<XMLValue> ret = xmlv.getXmlValues();
 			System.out.println(ret);
 			final Enumeration<XMLValue> myenum = ret.elements();
@@ -457,7 +457,7 @@ public final class XMLVector extends XMLValue {
 					continue;
 				}
 
-				xmlv.getLogger().debug("[" + k + "] " + k.getClass());
+				logger.debug("[" + k + "] " + k.getClass());
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();

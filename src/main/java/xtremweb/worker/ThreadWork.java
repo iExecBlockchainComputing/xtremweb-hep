@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import javax.net.SocketFactory;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.SAXException;
 
@@ -54,7 +55,6 @@ import xtremweb.common.AppTypeEnum;
 import xtremweb.common.CPUEnum;
 import xtremweb.common.DataInterface;
 import xtremweb.common.DataTypeEnum;
-import xtremweb.common.Logger;
 import xtremweb.common.MD5;
 import xtremweb.common.MileStone;
 import xtremweb.common.OSEnum;
@@ -82,10 +82,8 @@ import xtremweb.exec.ExecutorLaunchException;
 public class ThreadWork extends Thread {
 
 	private static final String WARNNOAPPLI = "work has no application";
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
+
+	private static final Logger logger = Logger.getLogger(ThreadWork.class);
 
 	/**
 	 * This tells whether the process has been killed If false, the process is
@@ -231,7 +229,6 @@ public class ThreadWork extends Thread {
 	ThreadWork() {
 		super("ThreadWork");
 
-		logger = new Logger(this);
 		smartSocketsProxies = null;
 		mileStone = new MileStone(getClass());
 
@@ -254,7 +251,7 @@ public class ThreadWork extends Thread {
 
 	private synchronized void waitForCompute() throws InterruptedException {
 		if (ThreadLaunch.getInstance().getActivator() instanceof AlwaysActive) {
-			logger.finest("is AlwaysActive");
+			logger.trace("is AlwaysActive");
 			notifyAll();
 			return;
 		}
@@ -324,7 +321,7 @@ public class ThreadWork extends Thread {
 					status = executeJob();
 				} catch (final Throwable e) {
 					killed = true;
-					logger.exception("job launch error", new Exception(e));
+					logger.error("Caught exception, job launch error", new Exception(e));
 					status = StatusEnum.ERROR;
 					currentWork.clean();
 					currentWork.setErrorMsg(e.getMessage());
@@ -343,7 +340,7 @@ public class ThreadWork extends Thread {
 						logger.debug("killed == true ; " + currentWork.toXml());
 						CommManager.getInstance().sendWork(currentWork);
 					} catch (final Exception ioe) {
-						logger.exception(ioe);
+						logger.error("Caught exception: ", ioe);
 					}
 					CommManager.getInstance().workRequest();
 				}
@@ -356,7 +353,7 @@ public class ThreadWork extends Thread {
 				}
 				envvars = null;
 			} catch (final InterruptedException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}
@@ -405,7 +402,7 @@ public class ThreadWork extends Thread {
 
 				ThreadLaunch.getInstance().raz();
 			} catch (final Exception e) {
-				logger.exception("ThreadWork.stopProcess() error ", e);
+				logger.error("Caught exception, ThreadWork.stopProcess() error ", e);
 			}
 		}
 	}
@@ -488,7 +485,7 @@ public class ThreadWork extends Thread {
 						ports.append("" + Integer.toString(fport));
 					} catch (final Exception e) {
 						XWTools.releasePort(fport);
-						logger.exception("Can't start new SmartSocket server proxy", e);
+						logger.error("Caught exception, Can't start new SmartSocket server proxy", e);
 					}
 				}
 
@@ -522,7 +519,7 @@ public class ThreadWork extends Thread {
 						smartSocketsProxies.add(smartSocketsProxy);
 						smartSocketsProxy.start();
 					} catch (final Exception e) {
-						logger.exception("Can't start new SmartSocket client proxy", e);
+						logger.error("Caught exception, Can't start new SmartSocket client proxy", e);
 					}
 				}
 			}
@@ -542,7 +539,7 @@ public class ThreadWork extends Thread {
 		if (smartSocketsProxies == null) {
 			return;
 		}
-		logger.config("stopProxy");
+		logger.info("stopProxy");
 
 		final Iterator<SmartSocketsProxy> proxiesEnum = smartSocketsProxies.iterator();
 
@@ -565,7 +562,7 @@ public class ThreadWork extends Thread {
 				so.write('\n'); // just write something to wake up the thread
 				logger.info("SmartSocket proxy stopped");
 			} catch (final Exception e) {
-				logger.exception("Cant' stop SmartSocket proxy " + smartSocketsProxy.getListenPort(), e);
+				logger.error("Caught exception, Cant' stop SmartSocket proxy " + smartSocketsProxy.getListenPort(), e);
 			} finally {
 				XWTools.releasePort(listenPort);
 			}
@@ -592,7 +589,7 @@ public class ThreadWork extends Thread {
 		final StringBuilder command = new StringBuilder(unloadpath);
 		command.append(" " + currentWork.getCmdLine());
 
-		logger.config("unload");
+		logger.info("unload");
 
 		final File scratchDir = currentWork.getScratchDir();
 		try (final FileOutputStream out = new FileOutputStream(new File(scratchDir, "unloadout.txt"));
@@ -604,7 +601,7 @@ public class ThreadWork extends Thread {
 			try {
 				unloader.startAndWait();
 			} catch (final ExecutorLaunchException | InterruptedException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 
 		} finally {
@@ -631,7 +628,7 @@ public class ThreadWork extends Thread {
 			try {
 				currentWork.prepareDir();
 			} catch (final Exception e) {
-				logger.exception("can't prepare dir", e);
+				logger.error("Caught exception, can't prepare dir", e);
 				try {
 					notifyAll();
 					this.finalize();
@@ -699,7 +696,7 @@ public class ThreadWork extends Thread {
 		try {
 			unload();
 		} catch (final Exception e) {
-			logger.exception("unload error", e);
+			logger.error("Caught exception, unload error", e);
 		}
 
 		ThreadLaunch.getInstance().raz();
@@ -720,7 +717,7 @@ public class ThreadWork extends Thread {
 				ret = StatusEnum.ERROR;
 				currentWork.clean();
 				currentWork.setErrorMsg("Worker result error : " + e);
-				logger.exception("Result error(" + workUID + ")", e);
+				logger.error("Caught exception, Result error(" + workUID + ")", e);
 			}
 		} else {
 			ret = StatusEnum.ABORTED;
@@ -796,7 +793,7 @@ public class ThreadWork extends Thread {
 
 		logger.debug("Worker.getConfig().getBaseEnvVars().length = " + Worker.getConfig().getBaseEnvVars().length);
 		for (int bevi = 0; bevi < Worker.getConfig().getBaseEnvVars().length; bevi++) {
-			logger.finest("tuple[" + i + "] = " + Worker.getConfig().getBaseEnvVars()[bevi]);
+			logger.trace("tuple[" + i + "] = " + Worker.getConfig().getBaseEnvVars()[bevi]);
 			ret[i++] = Worker.getConfig().getBaseEnvVars()[bevi];
 		}
 
@@ -806,7 +803,7 @@ public class ThreadWork extends Thread {
 			final String value = envvars.get(key);
 			final String tuple = key + "=" + value;
 			ret[i++] = tuple;
-			logger.finest("tuple[" + i + "] = " + tuple);
+			logger.trace("tuple[" + i + "] = " + tuple);
 		}
 
 		return ret;
@@ -1087,7 +1084,7 @@ public class ThreadWork extends Thread {
 			}
 			fData = null;
 			theData = null;
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return null;
 		}
 
@@ -1098,7 +1095,7 @@ public class ThreadWork extends Thread {
 			zipper.unzip(home.getCanonicalPath());
 			return home;
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		// this is not a zip file
@@ -1147,7 +1144,7 @@ public class ThreadWork extends Thread {
 		try {
 			app = (AppInterface) CommManager.getInstance().commClient().get(appUID, false);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			app = null;
 		}
 		if (app == null) {
@@ -1182,7 +1179,7 @@ public class ThreadWork extends Thread {
 				}
 				addEnvVar(XWDIRINPATHNAME, dirinFile.getCanonicalPath());
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		} else {
 			logger.debug("prepareWorkingDirectory : job has no dirin");
@@ -1374,7 +1371,7 @@ public class ThreadWork extends Thread {
 		try {
 			XWTools.checkDir(scratchDir);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 
@@ -1389,7 +1386,6 @@ public class ThreadWork extends Thread {
 			exec = new Executor(command.toString(), envvarsArray, currentWork.getScratchDirName(), in, out, err,
 					Long.parseLong(Worker.getConfig().getProperty(XWPropertyDefs.TIMEOUT)));
 			exec.setMaxWallClockTime(currentWork.getMaxWallClockTime());
-			exec.setLoggerLevel(logger.getLoggerLevel());
 
 			if ((Boolean.getBoolean(Worker.getConfig().getProperty(XWPropertyDefs.JAVARUNTIME))) && (stdin == null)) {
 				mileStone.println("executing (Runtime)", workUID);

@@ -23,6 +23,9 @@
 
 package xtremweb.common;
 
+import org.apache.log4j.Logger;
+
+
 /**
  * XWRole.java
  *
@@ -77,7 +80,7 @@ public enum XWRole {
 	 */
 	public static void setRole(final XWRole r) {
 		if (getMyRole() != UNKNOWN) {
-			final Logger logger = new Logger();
+			final Logger logger = Logger.getLogger(XWRole.class);
 			logger.error("setRole : role redefined ?! (was " + getMyRole() + ")");
 		}
 		setMyRole(r);

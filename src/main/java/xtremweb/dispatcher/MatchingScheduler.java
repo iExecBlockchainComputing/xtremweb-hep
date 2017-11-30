@@ -28,6 +28,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.HostInterface;
 import xtremweb.common.Table;
@@ -58,6 +61,8 @@ import xtremweb.database.SQLRequestWorkRequest;
  */
 
 public class MatchingScheduler extends SimpleScheduler {
+
+	private static final Logger logger = Logger.getLogger(MatchingScheduler.class);
 
 	/**
 	 * This constructor only calls its parent constructor
@@ -119,8 +124,8 @@ public class MatchingScheduler extends SimpleScheduler {
 				}
 			}
 
-			getLogger().debug("host      = " + host.toXml());
-			getLogger().debug("criterias = " + criterias);
+			logger.debug("host      = " + host.toXml());
+			logger.debug("criterias = " + criterias);
 			theWork = db.selectOne(workSelection, criterias);
 
 			if (theWork != null) {
@@ -154,7 +159,7 @@ public class MatchingScheduler extends SimpleScheduler {
 				db.update(rows);
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			ioe = new IOException(e.toString());
 			if (theWork != null) {
 				theWork.setError("sched error " + e);

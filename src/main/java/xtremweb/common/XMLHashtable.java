@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -58,6 +59,8 @@ import org.xml.sax.SAXException;
  * </ul>
  */
 public final class XMLHashtable extends XMLValue {
+
+	private static final Logger logger = Logger.getLogger(XMLHashtable.class);
 
 	public static final String THISTAG = "XMLHashtable";
 
@@ -166,7 +169,7 @@ public final class XMLHashtable extends XMLValue {
 		try (final XMLReader reader = new XMLReader(this)) {
 			reader.read(input);
 		} catch (final InvalidKeyException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -274,7 +277,7 @@ public final class XMLHashtable extends XMLValue {
 			final String attribute = attrs.getQName(a);
 			final String value = attrs.getValue(a);
 
-			getLogger().finest("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
+			logger.trace("     attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
 
 			if (attribute.compareToIgnoreCase(getColumnLabel(SIZEIDX)) == 0) {
 				size = Integer.parseInt(value);
@@ -303,12 +306,11 @@ public final class XMLHashtable extends XMLValue {
 		} catch (final SAXException ioe) {
 		}
 
-		final Logger logger = getLogger();
-		logger.finest("xmlElementStart (" + qname + ") " + "size = " + size + "  currentIndex = " + currentIndex
+		logger.trace("xmlElementStart (" + qname + ") " + "size = " + size + "  currentIndex = " + currentIndex
 				+ "  nested = " + nested);
 
 		if ((size == 0) && (qname.compareToIgnoreCase(getXMLTag()) == 0)) {
-			logger.finest("" + qname + ".fromXml(attrs)");
+			logger.trace("" + qname + ".fromXml(attrs)");
 			fromXml(attrs);
 		} else {
 
@@ -323,14 +325,14 @@ public final class XMLHashtable extends XMLValue {
 			}
 
 			if (tuples[currentIndex] == null) {
-				logger.finest("tuples[" + currentIndex + "]  = new XMLtuple(" + qname + ")");
+				logger.trace("tuples[" + currentIndex + "]  = new XMLtuple(" + qname + ")");
 				tuples[currentIndex] = new XMLtuple(attrs);
 			}
 
 			//
 			// XMLtuple manages XMLKey and XMLValue
 			//
-			logger.finest("tuples[" + currentIndex + "].xmlElementStart(" + qname + ")");
+			logger.trace("tuples[" + currentIndex + "].xmlElementStart(" + qname + ")");
 			tuples[currentIndex].xmlElementStart(uri, tag, qname, attrs);
 		}
 	}
@@ -361,7 +363,7 @@ public final class XMLHashtable extends XMLValue {
 			currentIndex++;
 		}
 
-		getLogger().finest("xmlElementStop (" + qname + ") " + "size = " + size + "  currentIndex = " + currentIndex
+		logger.trace("xmlElementStop (" + qname + ") " + "size = " + size + "  currentIndex = " + currentIndex
 				+ "  nested = " + nested);
 
 		super.xmlElementStop(uri, tag, qname);
@@ -443,8 +445,6 @@ public final class XMLHashtable extends XMLValue {
 
 			System.out.println(xmlh.toXml());
 
-			xmlh.getLogger().setLoggerLevel(LoggerLevel.DEBUG);
-
 			final Hashtable ret = xmlh.getHashtable();
 			System.out.println(ret);
 			final Enumeration myenum = ret.keys();
@@ -456,7 +456,7 @@ public final class XMLHashtable extends XMLValue {
 					continue;
 				}
 
-				xmlh.getLogger().debug("(" + k.toString() + "," + ret.get(k) + ") " + ret.get(k).getClass());
+				logger.debug("(" + k.toString() + "," + ret.get(k) + ") " + ret.get(k).getClass());
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();

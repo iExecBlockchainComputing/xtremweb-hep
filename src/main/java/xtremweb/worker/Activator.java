@@ -27,9 +27,12 @@ package xtremweb.worker;
 //
 // Created: Thu Mar 21 2002.
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.MileStone;
 import xtremweb.common.XWConfigurator;
+import xtremweb.common.XWReturnCode;
 
 /**
  * Subclasses of the <CODE>Activator</CODE> class can be used to control the
@@ -51,14 +54,7 @@ public abstract class Activator {
 
 	private int activityMask;
 
-	private final Logger logger;
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
+	private static final Logger logger = Logger.getLogger(Activator.class);
 
 	/**
 	 * This aims to display some time stamps
@@ -98,7 +94,6 @@ public abstract class Activator {
 	private String params;
 
 	public Activator() {
-		logger = new Logger(this);
 
 		try {
 			mileStone = new MileStone(getClass());
@@ -250,7 +245,8 @@ public abstract class Activator {
 					notifyAll();
 				}
 			} catch (final IllegalMonitorStateException e) {
-				logger.fatal("unrecoverable exception" + e);
+				logger.error("unrecoverable exception" + e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 			newm = getMask(mask);
 		}

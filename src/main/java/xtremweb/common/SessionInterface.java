@@ -33,6 +33,7 @@ import java.sql.ResultSet;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.database.SQLRequest;
 import xtremweb.security.XWAccessRights;
@@ -50,6 +51,8 @@ import xtremweb.security.XWAccessRights;
  * This class describes a row of the works SQL table.
  */
 public final class SessionInterface extends xtremweb.common.Table {
+
+	private static final Logger logger = Logger.getLogger(SessionInterface.class);
 
 	/**
 	 * This is the database table name This was stored in
@@ -381,13 +384,11 @@ public final class SessionInterface extends xtremweb.common.Table {
 				} catch (final XMLEndParseException e) {
 				}
 			}
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			itf.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception("Usage : java -cp " + XWTools.JARFILENAME
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME
 					+ " xtremweb.common.SessionInterface [anXMLDescriptionFile]", e);
 		}
 	}

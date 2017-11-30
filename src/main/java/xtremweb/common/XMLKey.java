@@ -26,6 +26,7 @@ package xtremweb.common;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -47,6 +48,7 @@ import org.xml.sax.SAXException;
  */
 public class XMLKey extends XMLObject {
 
+	private static final Logger logger = Logger.getLogger(XMLKey.class);
 	public static final String THISTAG = "XMLKEY";
 
 	/**
@@ -79,7 +81,7 @@ public class XMLKey extends XMLObject {
 		try (final XMLReader reader = new XMLReader(this)) {
 			reader.read(input);
 		} catch (final InvalidKeyException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

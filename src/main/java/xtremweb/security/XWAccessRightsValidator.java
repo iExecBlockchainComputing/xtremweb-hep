@@ -25,7 +25,9 @@ package xtremweb.security;
 import java.io.IOException;
 import java.security.AccessControlException;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.Table;
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
@@ -43,7 +45,7 @@ import xtremweb.common.UserRightEnum;
 
 public class XWAccessRightsValidator {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XWAccessRightsValidator.class);
 
 	/**
 	 * This is the row to protect
@@ -51,7 +53,6 @@ public class XWAccessRightsValidator {
 	private final Table row;
 
 	public XWAccessRightsValidator(final Table r) {
-		logger = new Logger(this);
 		row = r;
 	}
 
@@ -68,19 +69,19 @@ public class XWAccessRightsValidator {
 			throws AccessControlException, IOException {
 
 		if ((row == null) || (user == null)) {
-			logger.finest("XWAccessRights#checkUserRights() user is null");
+			logger.trace("XWAccessRights#checkUserRights() user is null");
 			return false;
 		}
 		final UID thisUid = row.getUID();
 		final UID thisOwner = row.getOwner();
 		final UID userUid = user.getUID();
 		if ((thisOwner.equals(userUid)) || (userUid.equals(thisUid))) {
-			logger.finest("XWAccessRights#checkUserRights() : owner equals user " + row.getAccessRights() + " & " + rights
+			logger.trace("XWAccessRights#checkUserRights() : owner equals user " + row.getAccessRights() + " & " + rights
 					+ " & " + XWAccessRights.USERALL + " = "
 					+ ((row.getAccessRights().value() & rights.value() & XWAccessRights.USERALL.value()) != 0));
 			return ((row.getAccessRights().value() & rights.value() & XWAccessRights.USERALL.value()) != 0);
 		}
-		logger.finest("XWAccessRights#checkUserRights() user and owner differ : returns false");
+		logger.trace("XWAccessRights#checkUserRights() user and owner differ : returns false");
 		return false;
 	}
 
@@ -101,7 +102,7 @@ public class XWAccessRightsValidator {
 
 		if (ownerGroup != null) {
 			if ((userGroup == null) || (ownerGroup.equals(userGroup) == false)) {
-				logger.finest("XWAccessRights#checkGroupRights() : returns false");
+				logger.trace("XWAccessRights#checkGroupRights() : returns false");
 				return false;
 			}
 		}
@@ -109,7 +110,7 @@ public class XWAccessRightsValidator {
 		final String f = String.format("XWAccessRights#checkGroupRights(%s) : %x & %x & %x = %s", row.getUID(), row.getAccessRights().value(),
 				rights.value(), XWAccessRights.GROUPALL.value(),
 				"" + ((row.getAccessRights().value() & rights.value() & XWAccessRights.GROUPALL.value()) != 0));
-		logger.finest(f);
+		logger.trace(f);
 		return ((row.getAccessRights().value() & rights.value() & XWAccessRights.GROUPALL.value()) != 0);
 	}
 
@@ -126,7 +127,7 @@ public class XWAccessRightsValidator {
 				rights.value(),
 				XWAccessRights.OTHERALL.value(),
 				"" + ((row.getAccessRights().value() & rights.value() & XWAccessRights.OTHERALL.value()) != 0));
-		logger.finest(f);
+		logger.trace(f);
 
 		return ((row.getAccessRights().value() & rights.value() & XWAccessRights.OTHERALL.value()) != 0);
 	}
@@ -151,7 +152,7 @@ public class XWAccessRightsValidator {
 		final boolean stickyBitAccess = ((user.getRights().doesEqual(UserRightEnum.VWORKER_USER)) 
 				&& ((row.getAccessRights().value() & XWAccessRights.STICKYBIT_INT) == XWAccessRights.STICKYBIT_INT));
 		final String f = String.format("XWAccessRights#canRead(%s) : %b || %b", row.getUID(), readable, stickyBitAccess);
-		logger.finest(f);
+		logger.trace(f);
 		return readable || stickyBitAccess;
 	}
 
@@ -175,7 +176,7 @@ public class XWAccessRightsValidator {
 				&& ((row.getAccessRights().value() & XWAccessRights.STICKYBIT_INT) == XWAccessRights.STICKYBIT_INT));
 		final boolean writable = userCanWrite(user) || groupCanWrite(ownerGroup, userGroup) || otherCanWrite();
 		final String f = String.format("XWAccessRights#canWrite(%s) : %b || %b", row.getUID(), writable, stickyBitAccess);
-		logger.finest(f);
+		logger.trace(f);
 		return writable || stickyBitAccess;
 	}
 
@@ -199,7 +200,7 @@ public class XWAccessRightsValidator {
 		final boolean stickyBitAccess = ((user.getRights().doesEqual(UserRightEnum.VWORKER_USER)) 
 				&& ((row.getAccessRights().value() & XWAccessRights.STICKYBIT_INT) == XWAccessRights.STICKYBIT_INT));
 		final String f = String.format("XWAccessRights#canExec(%s) : %b || %b", row.getUID(), executable, stickyBitAccess);
-		logger.finest(f);
+		logger.trace(f);
 		return executable || stickyBitAccess;
 	}
 	/**

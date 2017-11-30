@@ -34,16 +34,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
-import xtremweb.common.AppInterface;
-import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.MileStone;
-import xtremweb.common.SessionInterface;
-import xtremweb.common.UID;
-import xtremweb.common.XMLValue;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.*;
 import xtremweb.communications.CommClient;
 import xtremweb.communications.URI;
 import xtremweb.services.rpc.Packet;
@@ -54,7 +47,7 @@ import xtremweb.services.rpc.rpcdefs;
  */
 public class Callback {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Callback.class);
 
 	/**
 	 * @return the logger
@@ -210,9 +203,7 @@ public class Callback {
 	 */
 	protected Callback(final String argv[], final XWConfigurator c) {
 
-		logger = new Logger(this);
 		config = c;
-		logger.setLoggerLevel(config.getLoggerLevel());
 		serverId = null;
 		serverUID = null;
 		comm = null;
@@ -242,7 +233,8 @@ public class Callback {
 					}
 				});
 			} catch (final Exception e) {
-				logger.fatal("Can't init comm :  " + e);
+				logger.error("Can't init comm :  " + e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 
 			try {
@@ -254,22 +246,25 @@ public class Callback {
 					logger.warn("Looking for any server");
 					final Vector<XMLValue> workers = (Vector<XMLValue>) comm.getHosts().getXmlValues();
 					if ((workers == null) || (workers.size() < 1)) {
-						logger.fatal("can't find any server");
+						logger.error("can't find any server");
+						System.exit(XWReturnCode.FATAL.ordinal());
 					}
 					serverUID = (UID) ((XMLValue) workers.get(0)).getValue();
 				}
 				final HostInterface host = (HostInterface) comm.get(serverUID);
 				if (host == null) {
-					logger.fatal("can't find server " + serverId);
+					logger.error("can't find server " + serverId);
+					System.exit(XWReturnCode.FATAL.ordinal());
 				}
 				serverName = host.getName();
 			} catch (final Exception e) {
-				logger.exception(e);
-				logger.fatal(e.toString());
+				logger.error("Caught exception: ", e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 
 			if ((comm == null) || (serverUID == null)) {
-				logger.fatal("Can't init comm");
+				logger.error("Can't init comm");
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 
 			new Cleaner(config, this).start();
@@ -291,8 +286,9 @@ public class Callback {
 				session.setName("RPCXWC");
 				comm.send(session);
 			} catch (final Exception e) {
-				logger.exception(e);
-				logger.fatal("can't retreive app " + appName);
+				logger.error("Caught exception: ", e);
+				logger.error("can't retreive app " + appName);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		}
 
@@ -348,9 +344,9 @@ public class Callback {
 
 		Packet request = null;
 		try {
-			request = new Packet(clientPacket.getData(), clientPacket.getLength(), logger.getLoggerLevel(), serverName);
+			request = new Packet(clientPacket.getData(), clientPacket.getLength(), serverName);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw e;
 		}
 		final byte[] newDatas = request.getBuffer();

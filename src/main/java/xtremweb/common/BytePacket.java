@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.rmi.RemoteException;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import xtremweb.communications.XMLRPCCommand;
 
@@ -43,7 +44,7 @@ import xtremweb.communications.XMLRPCCommand;
 
 public final class BytePacket {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(BytePacket.class);
 
 	/**
 	 * This is the buffer length
@@ -62,7 +63,6 @@ public final class BytePacket {
 	 * @see #setData(byte [])
 	 */
 	public BytePacket() {
-		logger = new Logger(this);
 		final byte[] b = new byte[BUFFERLENGTH];
 		setData(b);
 	}
@@ -468,9 +468,9 @@ public final class BytePacket {
 			}
 
 			b1.setData(b0.getData());
-			b1.logger.info("b1.getInt    = " + b1.getInt());
-			b1.logger.info("b1.getInt    = " + b1.getInt());
-			b1.logger.info("b1.getString = " + b1.getString());
+			logger.info("b1.getInt    = " + b1.getInt());
+			logger.info("b1.getInt    = " + b1.getInt());
+			logger.info("b1.getString = " + b1.getString());
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}

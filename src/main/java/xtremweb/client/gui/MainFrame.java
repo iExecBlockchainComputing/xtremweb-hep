@@ -63,12 +63,13 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.client.Client;
 import xtremweb.common.Browser;
 import xtremweb.common.CommonVersion;
 import xtremweb.common.JarClassLoader;
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
 import xtremweb.common.MileStone;
 import xtremweb.common.UserInterface;
 import xtremweb.common.UserRightEnum;
@@ -102,44 +103,9 @@ public final class MainFrame extends JFrame implements ActionListener {
 	 */
 	private final JTextField linesInfo;
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(MainFrame.class);
 
 	private final Dimension DEFAULTSIZE = new Dimension(800, 600);
-	public LoggerLevel getLoggerLevel() {
-		return logger.getLoggerLevel();
-	}
-
-	/**
-	 * This sets the logger level. This also sets the logger levels checkboxes
-	 * menu item.
-	 */
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-		client.setLoggerLevel(l);
-		myPanel.setLoggerLevel(l);
-
-		itemError.setSelected(false);
-		itemWarn.setSelected(false);
-		itemInfo.setSelected(false);
-		itemDebug.setSelected(false);
-
-		switch (l) {
-		case ERROR:
-			itemError.setSelected(true);
-			break;
-		case WARN:
-			itemWarn.setSelected(true);
-			break;
-		case INFO:
-			itemInfo.setSelected(true);
-			break;
-		case DEBUG:
-			itemDebug.setSelected(true);
-			break;
-		default:
-			break;
-		}
-	}
 
 	/**
 	 * This is the client
@@ -244,8 +210,6 @@ public final class MainFrame extends JFrame implements ActionListener {
 	public MainFrame(final Client c) {
 
 		super("XWHEP Client");
-
-		logger = new Logger(this);
 
 		this.client = c;
 
@@ -623,18 +587,6 @@ public final class MainFrame extends JFrame implements ActionListener {
 			processVersion();
 		} else if (src == itemHelp) {
 			processHelp();
-		} else if (src == itemError) {
-			setLoggerLevel(LoggerLevel.ERROR);
-		} else if (src == itemWarn) {
-			setLoggerLevel(LoggerLevel.WARN);
-		} else if (src == itemInfo) {
-			setLoggerLevel(LoggerLevel.INFO);
-		} else if (src == itemConfig) {
-			setLoggerLevel(LoggerLevel.CONFIG);
-		} else if (src == itemDebug) {
-			setLoggerLevel(LoggerLevel.DEBUG);
-		} else if (src == itemFinest) {
-			setLoggerLevel(LoggerLevel.FINEST);
 		} else if (src == itemClearCache) {
 			processClearCache();
 		}
@@ -714,8 +666,9 @@ public final class MainFrame extends JFrame implements ActionListener {
 			}
 			client.getConfig().addDispatcher("");
 		} catch (final Exception e) {
-			logger.exception(e);
-			logger.fatal("Can instanciate new communication layer (this is a huuuuuge bug, folks)");
+			logger.error("Caught exception: ", e);
+			logger.error("Can instanciate new communication layer (this is a huuuuuge bug, folks)");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		dlg.getServer().setText(client.getConfig().getCurrentDispatcher());
@@ -799,7 +752,7 @@ public final class MainFrame extends JFrame implements ActionListener {
 		try {
 			serverVersion = commClient().version();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		System.out.println("currentVersion " + CommonVersion.getCurrent().toString());
@@ -856,7 +809,7 @@ public final class MainFrame extends JFrame implements ActionListener {
 			commClient();
 			CommClient.changeConfig(client.getConfig());
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			setTitleNotConnected();
 			startWorker.setEnabled(false);
 			myPanel.setEnabled(false);
@@ -891,7 +844,7 @@ public final class MainFrame extends JFrame implements ActionListener {
 			myPanel.setEnabled(true);
 			startWorker.setEnabled(true);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			setTitleNotConnected();
 			myPanel.setEnabled(false);
 			startWorker.setEnabled(false);
@@ -948,7 +901,7 @@ public final class MainFrame extends JFrame implements ActionListener {
 
 				validJarUrl = true;
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				final String strurl = JOptionPane.showInputDialog(this,
 						"Invalid launch URL : " + launchURL + "\n" + "Do you have a valid URL ?", TableModel.WARNING,
 						JOptionPane.WARNING_MESSAGE);
@@ -992,7 +945,7 @@ public final class MainFrame extends JFrame implements ActionListener {
 
 							pane.setMessage("Please wait   " + cursors[++i % 4]);
 						} catch (final Exception e) {
-							logger.exception(e);
+							logger.error("Caught exception: ", e);
 							success = true;
 						}
 					}
@@ -1071,7 +1024,7 @@ public final class MainFrame extends JFrame implements ActionListener {
 			final URL url = new URL("http://localhost:" + workerPort + "/?exit=1");
 			url.openStream();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

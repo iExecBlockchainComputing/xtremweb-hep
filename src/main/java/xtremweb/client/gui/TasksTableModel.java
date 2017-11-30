@@ -39,6 +39,9 @@ import java.util.Hashtable;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.Table;
 import xtremweb.common.TaskInterface;
 import xtremweb.common.UID;
@@ -50,6 +53,8 @@ import xtremweb.common.XMLVector;
  */
 
 class TasksTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(TasksTableModel.class);
 
 	/**
 	 * This is the default constructor.
@@ -122,7 +127,7 @@ class TasksTableModel extends TableModel {
 			return getParent().commClient().getTasks();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}
@@ -140,9 +145,8 @@ class TasksTableModel extends TableModel {
 			return getParent().commClient().get(uid);
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}
-
-} // class TasksTableModel
+}

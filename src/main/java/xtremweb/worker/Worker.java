@@ -30,14 +30,10 @@ import java.util.Properties;
 
 import javax.naming.ConfigurationException;
 
-import xtremweb.common.CommandLineOptions;
-import xtremweb.common.CommandLineParser;
-import xtremweb.common.Logger;
-import xtremweb.common.UID;
-import xtremweb.common.UserGroupInterface;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
+import org.apache.log4j.Logger;
+
+
+import xtremweb.common.*;
 import xtremweb.communications.HTTPServer;
 
 /**
@@ -50,7 +46,7 @@ import xtremweb.communications.HTTPServer;
 
 public class Worker {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Worker.class);
 
 	/**
 	 * This stores and tests the command line parameters
@@ -74,7 +70,6 @@ public class Worker {
 		if (System.getProperty(XWPropertyDefs.CACHEDIR.toString()) == null) {
 			System.setProperty(XWPropertyDefs.CACHEDIR.toString(), (new File("cache")).getAbsolutePath());
 		}
-		logger = new Logger(this);
 		running = true;
 	}
 
@@ -100,7 +95,8 @@ public class Worker {
 			XWTools.checkDir(System.getProperty(XWPropertyDefs.CACHEDIR.toString()));
 			XWTools.checkDir(System.getProperty(XWPropertyDefs.CACHEDIR.toString()) + "/logs");
 		} catch (final IOException e) {
-			logger.fatal("Worker::initialize () : unrecoverable exception " + e.toString());
+			logger.error("Worker::initialize () : unrecoverable exception " + e.toString());
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		if (System.getProperty(XWPropertyDefs.ALONE.toString()) == null) {
 			status |= NEEDS_CHECK_ALONE;
@@ -130,7 +126,8 @@ public class Worker {
 				setConfig((XWConfigurator) args.getOption(CommandLineOptions.CONFIG));
 				getConfig().store();
 			} catch (final Exception e) {
-				logger.fatal("can retreive config file");
+				logger.error("\"Caught exception, can retrieve config file: ", e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		}
 
@@ -180,7 +177,7 @@ public class Worker {
 			} catch (final Exception e) {
 				configerror = true;
 				configerrmsg = e.getMessage();
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 				try {
 					Thread.sleep(5000);
 				} catch (final Exception es) {
@@ -188,8 +185,9 @@ public class Worker {
 			}
 		}
 		if (configerror) {
-			logger.fatal("Configuration error : can not compute jobs for the project \"" + project + "\""
+			logger.error("Configuration error : can not compute jobs for the project \"" + project + "\""
 					+ (configerrmsg != null ? " (" + configerrmsg + ")" : ""));
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		configerrmsg = null;
@@ -202,7 +200,8 @@ public class Worker {
 		try {
 			launch = new ThreadLaunch();
 		} catch (final Exception ex) {
-			logger.fatal("Worker::run () uncaught exception" + ex);
+			logger.error("Caught exception, Worker::run (): " , ex);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		final ThreadAlive aliveThread = new ThreadAlive(getConfig());
@@ -221,7 +220,7 @@ public class Worker {
 				httpServer.addHandler(HTTPSharedDataHandler.PATH, new HTTPSharedDataHandler());
 				httpServer.start();
 			} catch (final Exception ex) {
-				logger.exception("Worker::run () can't init HTTP Server for the worker page", ex);
+				logger.error("Caught exception, Worker::run () can't init HTTP Server for the worker page", ex);
 			}
 		}
 
@@ -238,7 +237,8 @@ public class Worker {
 					try {
 						launch = new ThreadLaunch();
 					} catch (final Exception ex) {
-						logger.fatal("Worker::run () uncaught exception " + ex);
+						logger.error("Caught exception: Worker::run (): ", ex);
+						System.exit(XWReturnCode.FATAL.ordinal());
 					}
 				}
 				launch.start();

@@ -42,7 +42,8 @@ import org.xml.sax.SAXException;
 
 import xtremweb.common.CommonVersion;
 import xtremweb.common.DataInterface;
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.MD5;
 import xtremweb.common.StreamIO;
 import xtremweb.common.UID;
@@ -90,7 +91,7 @@ import xtremweb.communications.XWPostParams;
 
 public class ThreadAlive extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ThreadAlive.class);
 
 	/** Time between workAlive in seconds */
 	private int alivePeriod = 300;
@@ -108,7 +109,6 @@ public class ThreadAlive extends Thread {
 	public ThreadAlive(final XWConfigurator conf) {
 
 		super("ThreadAlive");
-		logger = new Logger(this);
 		config = conf;
 		alivePeriod = 300;
 	}
@@ -135,12 +135,12 @@ public class ThreadAlive extends Thread {
 				synchronize();
 			} catch (InvalidKeyException | AccessControlException | ClassNotFoundException | IOException
 					| URISyntaxException | SAXException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 			try {
 				// we don't sleep for the whole timeout as we need to
 				// take care that the computation is still on.
-				logger.config("Sleep until the next alive (" + alivePeriod + " seconds)");
+				logger.info("Sleep until the next alive (" + alivePeriod + " seconds)");
 				java.lang.Thread.sleep(alivePeriod * 1000);
 
 				final Vector<Work> wal = CommManager.getInstance().getPoolWork().getAliveWork();
@@ -153,14 +153,14 @@ public class ThreadAlive extends Thread {
 				for (int i = 0; i < wal.size(); i++) {
 
 					final Work w = wal.elementAt(i);
-					logger.finest("ThreadAlive  calling checkJob()");
+					logger.trace("ThreadAlive  calling checkJob()");
 					checkJob(w);
 				}
 				wal.clear();
 			} catch (final InterruptedException e) {
 				break;
 			} catch (final IOException e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -283,7 +283,7 @@ public class ThreadAlive extends Thread {
 		try {
 			rmiResults = workAlive(rmiParams);
 		} catch (final Exception e) {
-			logger.exception("workAlive : connection error", e);
+			logger.error("Caught exception, workAlive : connection error", e);
 			return;
 		}
 
@@ -351,7 +351,7 @@ public class ThreadAlive extends Thread {
 						threadWork.zipResult();
 						theWork = threadWork.getCurrentWork();
 					} catch (final Exception e) {
-						logger.exception(e);
+						logger.error("Caught exception: ", e);
 						theWork = null;
 					}
 				}
@@ -393,7 +393,7 @@ public class ThreadAlive extends Thread {
 					io.writeFileContent(newKeystoreFile);
 					newkeystore = true;
 				} catch (final Exception e) {
-					logger.exception("can't download KEYSTOREURI", e);
+					logger.error("Caught exception: can't download KEYSTOREURI", e);
 				} finally {
 					if (newkeystore == true) {
 						logger.info("**********  **********  **********");
@@ -483,7 +483,7 @@ public class ThreadAlive extends Thread {
 			commClient = commClient();
 			result = commClient.workAlive(jobUID).getHashtable();
 		} catch (final SAXException | IOException ce) {
-			logger.exception(ce);
+			logger.error("Caught exception: ", ce);
 		} finally {
 			if (commClient != null) {
 				commClient.close();
@@ -509,9 +509,9 @@ public class ThreadAlive extends Thread {
 			commClient = commClient();
 			result = commClient.workAlive(rmiParams).getHashtable();
 		} catch (final RemoteException ce) {
-			logger.exception(ce);
+			logger.error("Caught exception: ", ce);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		} finally {
 			if (commClient != null) {
 				commClient.close();
@@ -538,7 +538,7 @@ public class ThreadAlive extends Thread {
 			logger.info("Ping = " + pingdelai + " ms");
 			config.getHost().incAvgPing(pingdelai);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		} finally {
 			if (commClient != null) {
 				commClient.close();

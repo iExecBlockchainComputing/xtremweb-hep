@@ -36,11 +36,11 @@ package xtremweb.services.rpc;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import org.apache.log4j.Logger;
 
 import xtremweb.archdep.ArchDepFactory;
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
 import xtremweb.common.MileStone;
+import xtremweb.common.XWReturnCode;
 
 /**
  * This class forwards RCP on UDP.
@@ -49,7 +49,7 @@ import xtremweb.common.MileStone;
  */
 public class rpc implements Interface {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(rpc.class);
 
 	/**
 	 * This aims to display some time printlns
@@ -90,18 +90,17 @@ public class rpc implements Interface {
 	/**
 	 * This contructs a new object, retreiving this host name and this
 	 * application user and group ID<br />
-	 * Logger level is set to Level.INFO
 	 */
 	public rpc() {
 
 		datas = null;
-		logger = new Logger(LoggerLevel.INFO);
 
 		try {
 			serverHost = InetAddress.getLocalHost();
 			hostName = serverHost.getHostName();
 		} catch (final Exception e) {
-			logger.fatal("InetAddress.getLocalHost() : " + e);
+			logger.error("InetAddress.getLocalHost() : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		groupID = ArchDepFactory.xwutil().getGid();
 		logger.debug("GID = " + groupID);
@@ -109,28 +108,6 @@ public class rpc implements Interface {
 		logger.debug("UID = " + userID);
 
 		mileStone = new MileStone(getClass());
-	}
-
-	/**
-	 * This calls the default constructor and set logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 * @see #rpc()
-	 */
-	public rpc(final LoggerLevel l) {
-		this();
-		logger.setLoggerLevel(l);
-	}
-
-	/**
-	 * This sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 */
-	public void setLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -157,11 +134,12 @@ public class rpc implements Interface {
 			if (cmdLine.indexOf("--udp") != -1) {
 				ret = udp(dirin);
 			} else {
-				logger.fatal("unknwon command line : " + cmdLine);
+				logger.error("unknwon command line : " + cmdLine);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		} catch (final Exception e) {
 			ret = -1;
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		return ret;
@@ -197,7 +175,7 @@ public class rpc implements Interface {
 
 		logger.debug("Callback length 00 = " + newDatas.length);
 
-		final Packet request = new Packet(newDatas, newDatas.length, logger.getLoggerLevel(), hostName, userID,
+		final Packet request = new Packet(newDatas, newDatas.length, hostName, userID,
 				groupID);
 
 		mileStone.println("XW RPC service packet ready");

@@ -51,6 +51,9 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.xml.sax.SAXException;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.DataInterface;
 import xtremweb.common.GroupInterface;
@@ -73,6 +76,8 @@ import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
 
 public class TCPClient extends CommClient {
+
+	private static final Logger logger = Logger.getLogger(TCPClient.class);
 
 	/**
 	 * This is the NIO socket channel
@@ -174,7 +179,7 @@ public class TCPClient extends CommClient {
 			for (nbopens = 0; nbopens < getSocketRetries(); nbopens++) {
 				try {
 					if ((keyFile == null) || (keyFile.exists() == false)) {
-						getLogger().warn("unsecured communications : not using SSL");
+						logger.warn("unsecured communications : not using SSL");
 
 						if (nio) {
 							nioSocket = SocketChannel.open();
@@ -183,7 +188,7 @@ public class TCPClient extends CommClient {
 							nioSocket.connect(new InetSocketAddress(serverName, serverPort));
 
 							while (!nioSocket.finishConnect()) {
-								getLogger().info("still connecting");
+								logger.info("still connecting");
 							}
 							socket = nioSocket.socket();
 						} else {
@@ -200,14 +205,14 @@ public class TCPClient extends CommClient {
 				} catch(SSLHandshakeException e) {
 					throw e;
 				} catch (final IOException e) {
-					getLogger().exception("open", e);
+					logger.error("Caught exception: ", e);
 					try {
 						Thread.sleep(1000);
 					} catch (final Exception es) {
 					}
 					continue;
 				}
-				getLogger().debug("*************************************** Socket opened");
+				logger.debug("*************************************** Socket opened");
 				break;
 			}
 
@@ -229,7 +234,7 @@ public class TCPClient extends CommClient {
 
 			setOpened(true);
 		} catch (final IOException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='open' msg='" + e.getMessage() + "' />");
 			throw e;
 		} finally {
@@ -249,12 +254,12 @@ public class TCPClient extends CommClient {
 
 		boolean forceClose = false;
 		if ((getNbMessages() % XWTools.MAXMESSAGES) == 0) {
-			getLogger().debug("Enough messages : closing socket");
+			logger.debug("Enough messages : closing socket");
 			forceClose = true;
 			setNbMessages(0);
 		}
 		if ((isAutoClose() == false) && (forceClose == false)) {
-			getLogger().debug("not closing");
+			logger.debug("not closing");
 			return;
 		}
 
@@ -268,7 +273,7 @@ public class TCPClient extends CommClient {
 			}
 
 		} catch (final IOException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		} finally {
 			setOpened(false);
 			io = null;
@@ -298,7 +303,7 @@ public class TCPClient extends CommClient {
 
 			try {
 				cmd.setMandatingLogin(getConfig().getMandate());
-				getLogger().finest("TCPClient#write writing " + cmd.toXml());
+				logger.trace("TCPClient#write writing " + cmd.toXml());
 				writer.writeWithTags(cmd);
 			} catch (final IOException brokenpipe) {
 				// Oct 26th, 2011 : the socket may have been closed;
@@ -307,7 +312,7 @@ public class TCPClient extends CommClient {
 				// then may compress the data and finally send the data;
 				// compression takes some time, and the server may have
 				// closed the socket
-				getLogger().exception(brokenpipe);
+				logger.error("Caught exception: ", brokenpipe);
 				final boolean ac = isAutoClose();
 				setAutoClose(true);
 				close();
@@ -325,7 +330,7 @@ public class TCPClient extends CommClient {
 				}
 			}
 		} catch (final IOException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='write' msg='" + e.getMessage() + "' />");
 			ioe = e;
 		} finally {

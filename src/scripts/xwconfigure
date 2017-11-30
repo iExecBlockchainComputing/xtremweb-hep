@@ -2174,7 +2174,6 @@ cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$JETTYSERVLETAPI
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 
-
 #
 # Preparing virtualized worker conf file for macosx packages
 #
@@ -2235,7 +2234,6 @@ SOURCE=$JETTYIO
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$JETTYSERVLETAPI
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
-
 
 echo "Done"
 
@@ -2621,8 +2619,6 @@ SOURCE=$LIBDIR/smartsockets-1.4.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$LIBDIR/log4j-1.2.17.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
-
-
 
 if [ "$PKGS" = "YES" ] ; then
   (cd $INSTALLERSDIR && zip -r xwhep-client-$VERSION.zip xwhep.client)
@@ -3504,11 +3500,7 @@ SOURCE=$LIBDIR/ibis-util-2.1.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$LIBDIR/slf4j-api-1.7.2.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
-SOURCE=$LIBDIR/slf4j-log4j12-1.7.2.jar
-cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$LIBDIR/smartsockets-1.4.jar
-cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
-SOURCE=$LIBDIR/log4j-1.2.17.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 
 cp -Rf $DOCDIR/* $wkrRpmDir/doc/                                                > /dev/null 2>&1 || fatal "Can't copy docs to $wkrRpmDir/bin"
@@ -3706,11 +3698,7 @@ SOURCE=$LIBDIR/ibis-util-2.1.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$LIBDIR/slf4j-api-1.7.2.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
-SOURCE=$LIBDIR/slf4j-log4j12-1.7.2.jar
-cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$LIBDIR/smartsockets-1.4.jar
-cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
-SOURCE=$LIBDIR/log4j-1.2.17.jar
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"
 SOURCE=$JETTY
 cp $SOURCE $DEST > /dev/null 2>&1 || fatal "Can't copy $SOURCE to $DEST"

@@ -32,9 +32,9 @@ import java.security.InvalidKeyException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
 import xtremweb.common.XMLReader;
@@ -54,6 +54,8 @@ import xtremweb.common.XWConfigurator;
  * This class defines the XMLRPCCommand heartbeat monitor
  */
 public class XMLRPCCommandWorkAliveByUID extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandWorkAliveByUID.class);
 
 	/**
 	 * This is the RPC id
@@ -152,7 +154,6 @@ public class XMLRPCCommandWorkAliveByUID extends XMLRPCCommand {
 			if (argv.length > 1) {
 				cmd = new XMLRPCCommandWorkAliveByUID(new FileInputStream(argv[1]));
 			}
-			final Logger logger = cmd.getLogger();
 			logger.info(cmd.openXmlRootElement() + cmd.toXml() + cmd.closeXmlRootElement());
 		} catch (final Exception e) {
 			e.printStackTrace();

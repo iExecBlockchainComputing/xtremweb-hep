@@ -31,6 +31,7 @@ import java.security.InvalidKeyException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
@@ -51,6 +52,8 @@ import xtremweb.common.XWConfigurator;
  * This class defines the XMLRPCCommand to activate host
  */
 public final class XMLRPCCommandActivateHost extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandActivateHost.class);
 
 	/**
 	 * This is the RPC id
@@ -201,7 +204,7 @@ public final class XMLRPCCommandActivateHost extends XMLRPCCommand {
 				try {
 					setURI(new URI(value));
 				} catch (final Exception e) {
-					getLogger().error("not a valid URI " + value);
+					logger.error("not a valid URI " + value);
 					setURI(null);
 				}
 			} else if (attribute.compareToIgnoreCase(getColumnLabel(ACTIVATION)) == 0) {

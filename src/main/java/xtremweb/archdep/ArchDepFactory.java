@@ -33,9 +33,11 @@ import java.io.InputStream;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.CPUEnum;
 import xtremweb.common.CommonVersion;
-import xtremweb.common.Logger;
 import xtremweb.common.OSEnum;
 import xtremweb.common.Version;
 import xtremweb.common.XWPropertyDefs;
@@ -54,7 +56,7 @@ import xtremweb.common.XWPropertyDefs;
 
 public class ArchDepFactory {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ArchDepFactory.class);
 
 	private static final String JAVALIBPATH="java.library.path";
 
@@ -75,8 +77,6 @@ public class ArchDepFactory {
 	 * Libraries accordingly to the OS
 	 */
 	protected ArchDepFactory() {
-
-		logger = new Logger(this);
 
 		final Map<OSEnum, String> mapUtil = new Hashtable<OSEnum, String>(10);
 		final Map<OSEnum, String> mapTracer = new Hashtable<OSEnum, String>(10);
@@ -168,14 +168,14 @@ public class ArchDepFactory {
 		try {
 			final String libResName = mapLibraryName(s);
 
-			logger.finest("libResName  = " + libResName);
-			logger.finest("ArchDepFactory::loadLibrary (" + libResName + ") CACHEDIR = "
+			logger.trace("libResName  = " + libResName);
+			logger.trace("ArchDepFactory::loadLibrary (" + libResName + ") CACHEDIR = "
 					+ System.getProperty(XWPropertyDefs.CACHEDIR.toString()));
 
 			final File f = new File(System.getProperty(XWPropertyDefs.CACHEDIR.toString()), libResName);
 			f.deleteOnExit();
 
-			logger.finest("Copying " + libResName + " to " + f.getCanonicalPath());
+			logger.trace("Copying " + libResName + " to " + f.getCanonicalPath());
 
 			String libpath = System.getProperty(JAVALIBPATH);
 
@@ -191,7 +191,7 @@ public class ArchDepFactory {
 			}
 
 			System.setProperty(JAVALIBPATH, libpath);
-			logger.finest("java.library.path = " + System.getProperty(JAVALIBPATH));
+			logger.trace("java.library.path = " + System.getProperty(JAVALIBPATH));
 
 			if (f.exists()) {
 				f.delete();
@@ -208,12 +208,12 @@ public class ArchDepFactory {
 					System.loadLibrary(libResName);
 				}
 
-				logger.finest("Loaded jni library : " + s);
+				logger.trace("Loaded jni library : " + s);
 				loaded = true;
 			}
 
 			if (!loaded) {
-				logger.finest("Not loaded jni library : " + s);
+				logger.trace("Not loaded jni library : " + s);
 			}
 
 		} catch (final Throwable e) {
@@ -233,7 +233,7 @@ public class ArchDepFactory {
 					lf.write(buf, 0, n);
 				}
 			} else {
-				logger.finest("Archive does not contains " + resName);
+				logger.trace("Archive does not contains " + resName);
 			}
 		}
 	}
@@ -257,7 +257,7 @@ public class ArchDepFactory {
 			throw error;
 		}
 
-		logger.finest("ifname = " + ifname + "  OS = " + OSEnum.getOs());
+		logger.trace("ifname = " + ifname + "  OS = " + OSEnum.getOs());
 		implclass = map.get(OSEnum.getOs());
 
 		if (implclass == null) {

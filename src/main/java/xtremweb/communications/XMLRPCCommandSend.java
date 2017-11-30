@@ -31,6 +31,7 @@ import java.security.InvalidKeyException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.Table;
 import xtremweb.common.UID;
@@ -52,6 +53,8 @@ import xtremweb.common.XWConfigurator;
  * This class defines the XMLRPCCommand to send application definition
  */
 public class XMLRPCCommandSend extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandSend.class);
 
 	/**
 	 * This is the RPC id
@@ -146,7 +149,7 @@ public class XMLRPCCommandSend extends XMLRPCCommand {
 		} catch (final SAXException ioe) {
 		}
 
-		getLogger().finest("XMLRPCCommandSend#xmlElementStartCheckUser(" + uri + ", " + thetag + ", " + qname + ")  "
+		logger.trace("XMLRPCCommandSend#xmlElementStartCheckUser(" + uri + ", " + thetag + ", " + qname + ")  "
 				+ attrs.getLength());
 
 		try {
@@ -178,7 +181,7 @@ public class XMLRPCCommandSend extends XMLRPCCommand {
 
 		super.xmlElementStop(uri, tag, qname);
 
-		getLogger().finest(
+		logger.trace(
 				"XMLRPCCommandSend#xmlElementStop " + uri + ", " + tag + ", " + qname + " = " + getCurrentValue());
 
 		try {

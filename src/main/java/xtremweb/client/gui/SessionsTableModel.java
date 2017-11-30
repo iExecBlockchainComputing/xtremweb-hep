@@ -42,6 +42,9 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.SessionInterface;
 import xtremweb.common.UID;
 import xtremweb.common.XMLVector;
@@ -52,6 +55,8 @@ import xtremweb.common.XMLVector;
  */
 
 class SessionsTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(SessionsTableModel.class);
 
 	/**
 	 * These defines submission parameters
@@ -114,7 +119,7 @@ class SessionsTableModel extends TableModel {
 		try {
 			userUID = getParent().getClient().getConfig().getUser().getUID();
 		} catch (final Exception e) {
-			getLogger().error("user UID is not set ?!?!");
+			logger.error("user UID is not set ?!?!");
 			return;
 		}
 		final List newRow = new Vector();
@@ -146,7 +151,7 @@ class SessionsTableModel extends TableModel {
 
 			getParent().commClient().send(session);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			JOptionPane.showMessageDialog(getParent(), "Can't send session : " + e, ERROR, JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -171,7 +176,7 @@ class SessionsTableModel extends TableModel {
 			return getParent().commClient().getSessions();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}

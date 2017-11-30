@@ -52,7 +52,9 @@ import javax.net.ssl.TrustManagerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+
 
 /**
  * A multithreaded, reusable XML-RPC client object. This version uses a
@@ -61,6 +63,8 @@ import xtremweb.common.Logger;
  */
 
 public final class XwXmlRpcClient extends XmlRpcClient {
+
+	private static final Logger logger = Logger.getLogger(XwXmlRpcClient.class);
 
 	/**
 	 * Construct a XML-RPC client with this URL.
@@ -152,7 +156,6 @@ public final class XwXmlRpcClient extends XmlRpcClient {
 			final long now = System.currentTimeMillis();
 			fault = false;
 
-			final Logger logger = getLogger();
 			logger.debug("XwXmlRpcClient::execute() params.len = " + params.size());
 
 			try {
@@ -189,7 +192,7 @@ public final class XwXmlRpcClient extends XmlRpcClient {
 				throw iox;
 
 			} catch (final Exception x) {
-				logger.exception(x);
+				logger.error("Caught exception: ", x);
 				String msg = x.getMessage();
 				if ((msg == null) || (msg.length() == 0)) {
 					msg = x.toString();
@@ -277,11 +280,9 @@ public final class XwXmlRpcClient extends XmlRpcClient {
 		private BufferedInputStream input;
 		private boolean keepalive;
 		private boolean fresh;
-		private final Logger logger;
 		private static final boolean debug = false;
 
 		public HttpClient(final String socketType, final URL url) throws IOException {
-			logger = new Logger(this);
 			hostname = url.getHost();
 			port = url.getPort();
 			if (port < 1) {
@@ -330,7 +331,7 @@ public final class XwXmlRpcClient extends XmlRpcClient {
 					output = new BufferedOutputStream(sslSocket.getOutputStream());
 					input = new BufferedInputStream(sslSocket.getInputStream());
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			} else {
 				socket = new Socket(hostname, port);
@@ -395,7 +396,7 @@ public final class XwXmlRpcClient extends XmlRpcClient {
 			} catch (final IOException iox) {
 				throw iox;
 			} catch (final Exception x) {
-				logger.exception(x);
+				logger.error("Caught exception: ", x);
 				throw new IOException("Server returned invalid Response.");
 			}
 			do {

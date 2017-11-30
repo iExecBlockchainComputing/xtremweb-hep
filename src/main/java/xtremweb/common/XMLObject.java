@@ -27,6 +27,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.security.InvalidKeyException;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -45,6 +46,8 @@ import org.xml.sax.SAXException;
  * ones; nor a Vector, neither Hashtable etc.
  */
 public class XMLObject extends XMLable {
+
+	private static final Logger logger = Logger.getLogger(XMLObject.class);
 
 	public static final String XMLTYPE = "type";
 	public static final String XMLVALUE = "value";
@@ -108,7 +111,7 @@ public class XMLObject extends XMLable {
 		try (final XMLReader reader = new XMLReader(this)) {
 			reader.read(input);
 		} catch (final InvalidKeyException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -200,7 +203,6 @@ public class XMLObject extends XMLable {
 	@Override
 	public void fromXml(final Attributes attrs) {
 
-		final Logger logger = getLogger();
 		try {
 			for (int a = 0; a < attrs.getLength(); a++) {
 				final String attribute = attrs.getQName(a);
@@ -213,12 +215,12 @@ public class XMLObject extends XMLable {
 					if (constructor != null) {
 						final Object[] args = new Object[1];
 						args[0] = v;
-						logger.finest("type = " + type + " ; constructor = " + constructor);
+						logger.trace("type = " + type + " ; constructor = " + constructor);
 						try {
 							value = constructor.newInstance(args);
-							logger.finest("value = " + value);
+							logger.trace("value = " + value);
 						} catch (final Exception e) {
-							logger.exception(e);
+							logger.error("Caught exception: ", e);
 							value = null;
 						}
 					}
@@ -229,7 +231,7 @@ public class XMLObject extends XMLable {
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

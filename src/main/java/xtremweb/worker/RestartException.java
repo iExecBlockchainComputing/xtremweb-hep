@@ -41,4 +41,4 @@ public class RestartException extends Exception {
 		super(s);
 	}
 
-}// RestartException
+}

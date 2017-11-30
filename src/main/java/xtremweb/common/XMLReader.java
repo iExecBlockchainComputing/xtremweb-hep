@@ -31,6 +31,7 @@ import java.security.InvalidKeyException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -49,7 +50,7 @@ import xtremweb.communications.XWCommException;
 
 public class XMLReader implements AutoCloseable {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XMLReader.class);
 
 	private final XMLable xmlObject;
 
@@ -57,14 +58,6 @@ public class XMLReader implements AutoCloseable {
 	 * This default constructor
 	 */
 	public XMLReader(final XMLable o) {
-		LoggerLevel logLevel = LoggerLevel.DEBUG;
-		final String p = System.getProperty(XWPropertyDefs.LOGGERLEVEL.toString());
-		if (p != null) {
-			logLevel = LoggerLevel.valueOf(p);
-		} else {
-			logLevel = LoggerLevel.INFO;
-		}
-		logger = new Logger(logLevel);
 		xmlObject = o;
 		xmlObject.resetCurrentVersion();
 	}
@@ -93,7 +86,7 @@ public class XMLReader implements AutoCloseable {
 			final DescriptionHandler handler = new DescriptionHandler(dtd);
 			parser.parse(input, handler);
 		} catch (final SAXException saxe) {
-			logger.finest(saxe.getMessage());
+			logger.trace(saxe.getMessage());
 			if (!(saxe instanceof XMLEndParseException)) {
 				input.reset();
 				final XMLRPCResult theresult = new XMLRPCResult();

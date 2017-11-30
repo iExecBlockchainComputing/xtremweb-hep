@@ -32,12 +32,6 @@ import java.io.FileOutputStream;
 
 import org.junit.Test;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.XMLtuple;
-import xtremweb.common.XMLReader;
-import xtremweb.common.XMLWriter;
-
 /**
  * This tests XML serialization
  * 
@@ -48,11 +42,6 @@ import xtremweb.common.XMLWriter;
  */
 
 public class XMLtupleTest {
-	private final Logger logger;
-
-	public XMLtupleTest () {
-		logger = new Logger(this);
-	}
 
 	/**
 	 * This tests object XML serialization by writing then reading back an object.
@@ -66,7 +55,6 @@ public class XMLtupleTest {
 			final File temp = File.createTempFile("xw-junit", "itf");
 			final FileOutputStream fout = new FileOutputStream(temp);
 			final DataOutputStream dos = new DataOutputStream(fout);
-			tWrite.setLoggerLevel(LoggerLevel.DEBUG);
 			tWrite.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(dos);
 			writer.write(tWrite);

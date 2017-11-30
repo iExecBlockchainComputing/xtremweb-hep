@@ -39,18 +39,16 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import xtremweb.common.Logger;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.UID;
-import xtremweb.common.WorkInterface;
-import xtremweb.common.XWTools;
+import org.apache.log4j.Logger;
+
+import xtremweb.common.*;
 
 /**
  * This class describes works managed by worker as a vector
  */
 public class PoolWork {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(PoolWork.class);
 
 	/** This is the vector of works (ready to be or beeing computed). */
 	private final Hashtable<UID, Work> poolWorks;
@@ -67,8 +65,6 @@ public class PoolWork {
 	 */
 	public PoolWork() {
 
-		logger = new Logger(this);
-
 		poolWorks = new Hashtable<>();
 		savingWorks = new Hashtable<>();
 
@@ -78,8 +74,8 @@ public class PoolWork {
 			XWTools.deleteDir(worksDir);
 			XWTools.checkDir(worksDir);
 		} catch (final IOException e) {
-			logger.exception(e);
-			logger.fatal("unrecoverable exception " + e);
+			logger.error("Caught exception, unrecoverable exception " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 		worksDir = null;
 	}

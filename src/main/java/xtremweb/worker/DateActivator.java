@@ -39,7 +39,8 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
 
@@ -100,6 +101,8 @@ import xtremweb.common.XWPropertyDefs;
  */
 
 public class DateActivator extends PollingActivator {
+
+	private static final Logger logger = Logger.getLogger(DateActivator.class);
 
 	/**
 	 * This inner class contains one gap : hour and day
@@ -274,13 +277,13 @@ public class DateActivator extends PollingActivator {
 		super.initialize(c);
 
 		if (getConfig() == null) {
-			getLogger().error("config is null");
+			logger.error("config is null");
 		}
 		setParams(getConfig().getProperty(XWPropertyDefs.ACTIVATIONDATE));
 		try {
 			this.parse(getParams());
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -301,14 +304,14 @@ public class DateActivator extends PollingActivator {
 			parse();
 			return;
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		try {
 			super.setParams(oldp);
 			getConfig().setProperty(XWPropertyDefs.ACTIVATIONDATE, oldp);
 			parse();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -482,7 +485,6 @@ public class DateActivator extends PollingActivator {
 			if (diffDay < 0) {
 				diffDay = MAX_DAY + diffDay;
 			}
-			final Logger logger = getLogger();
 
 			if ((aGap.firstDay() <= curDay) && (aGap.lastDay() >= curDay)) {
 				logger.info("[" + aGap + "] This day(" + curDay + ") applies");
@@ -564,7 +566,7 @@ public class DateActivator extends PollingActivator {
 		while (theIterator.hasNext()) {
 			final Gap aGap = theIterator.next();
 
-			getLogger().info("[" + i++ + "] fd " + aGap.firstDay() + " ld " + aGap.lastDay() + " fh " + aGap.firstHour()
+			logger.info("[" + i++ + "] fd " + aGap.firstDay() + " ld " + aGap.lastDay() + " fh " + aGap.firstHour()
 					+ " lh " + aGap.lastHour());
 		}
 	}
@@ -594,11 +596,10 @@ public class DateActivator extends PollingActivator {
 	public static void main(final String[] args) {
 
 		final DateActivator c = new DateActivator();
-		final Logger logger = new Logger();
 		try {
 			c.parse(args);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			System.exit(1);
 		}
 

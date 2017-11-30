@@ -25,10 +25,12 @@ package xtremweb.database;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.DataInterface;
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
 import xtremweb.common.StatusEnum;
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
@@ -47,6 +49,8 @@ import xtremweb.security.XWAccessRights;
  * @since 5.8.0
  */
 public class SQLRequestWorkRequest extends SQLRequest {
+
+	private static final Logger logger = Logger.getLogger(SQLRequestWorkRequest.class);
 
 	/**
 	 * This contains table names for the FROM part of the SQL request. There
@@ -309,8 +313,7 @@ public class SQLRequestWorkRequest extends SQLRequest {
 			throw new IOException("SQLRequestWorkRequest : host is null ?!?!");
 		}
 
-		final Logger logger = getLogger();
-		logger.finest("criterias = " + getCriterias());
+		logger.trace("criterias = " + getCriterias());
 
 		final String binaryFieldName = AppInterface.getBinaryField(host.getCpu(), host.getOs());
 
@@ -334,10 +337,10 @@ public class SQLRequestWorkRequest extends SQLRequest {
 		final boolean incomingConnections = host.incomingConnections();
 		final UID hostUid = host.getUID();
 
-		logger.finest("hostSharedAppNames  = " + hostSharedAppNames);
-		logger.finest("hostSharedPkgNames  = " + hostSharedPkgNames);
-		logger.finest("hostSharedDataNames = " + hostSharedData);
-		logger.finest("projectLabel        = " + projectLabel);
+		logger.trace("hostSharedAppNames  = " + hostSharedAppNames);
+		logger.trace("hostSharedPkgNames  = " + hostSharedPkgNames);
+		logger.trace("hostSharedDataNames = " + hostSharedData);
+		logger.trace("projectLabel        = " + projectLabel);
 
 		String ret = null;
 		if ((projectLabel == null) || (projectLabel.length() <= 0)) {

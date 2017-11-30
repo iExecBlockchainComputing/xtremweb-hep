@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Enumeration;
@@ -48,8 +46,8 @@ import org.expressme.openid.Endpoint;
 import org.expressme.openid.OpenIdException;
 import org.expressme.openid.OpenIdManager;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
 import xtremweb.communications.Connection;
@@ -70,7 +68,7 @@ import xtremweb.communications.XWPostParams;
 @Deprecated
 public class HTTPOpenIdHandler extends Thread implements org.eclipse.jetty.server.Handler {
 
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(HTTPOpenIdHandler.class);
 
 	private HttpServletRequest request;
 	private HttpServletResponse response;
@@ -126,7 +124,6 @@ public class HTTPOpenIdHandler extends Thread implements org.eclipse.jetty.serve
 			return;
 		}
 		loginTimeout = Dispatcher.getConfig().getInt(XWPropertyDefs.LOGINTIMEOUT) * 1000;
-		logger = new Logger(this);
 		manager = new OpenIdManager();
 		try {
 			localRootUrl = new URL(Connection.HTTPSSLSCHEME + "://" + XWTools.getLocalHostName() + ":"
@@ -140,17 +137,6 @@ public class HTTPOpenIdHandler extends Thread implements org.eclipse.jetty.serve
 		logger.debug("Return to = " + returnto);
 		manager.setReturnTo(returnto);
 		instance = this;
-	}
-
-	/**
-	 * This constructor call the default constructor and sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 */
-	public HTTPOpenIdHandler(final LoggerLevel l) {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -307,7 +293,7 @@ public class HTTPOpenIdHandler extends Thread implements org.eclipse.jetty.serve
 					"<html><head><title>OpenId delegation error</title></head><body><h1>OpenId delegation error</h1><p>Error message: "
 							+ e.getMessage()
 							+ "</p><p>Please contact the administrator of this XtremWeb-HEP server</p></body></html>");
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		baseRequest.setHandled(true);

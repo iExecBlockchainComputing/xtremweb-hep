@@ -47,15 +47,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import xtremweb.common.Logger;
-import xtremweb.common.MileStone;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.Table;
-import xtremweb.common.Type;
-import xtremweb.common.UID;
-import xtremweb.common.WorkInterface;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
+import org.apache.log4j.Logger;
+
+import xtremweb.common.*;
 
 /**
  * This is a threaded version of DBConnPool to improve performances This acts as
@@ -81,7 +75,8 @@ public class DBConnPoolThread extends Thread {
 	 */
 	private XWConfigurator config;
 
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(DBConnPoolThread.class);
+
 	/**
 	 * This contains the complete reference to the database location
 	 */
@@ -124,24 +119,24 @@ public class DBConnPoolThread extends Thread {
 			return;
 		}
 
-		logger = new Logger(this);
 
 		config = c;
 
 		MAXX_CONNECTIONS = config.getInt(XWPropertyDefs.DBCONNECTIONS);
-		logger.config("MAXX_CONNECTIONS = " + MAXX_CONNECTIONS);
+		logger.info("MAXX_CONNECTIONS = " + MAXX_CONNECTIONS);
 		try {
 			dburl = "jdbc:" + config.getProperty(XWPropertyDefs.DBVENDOR) + "://"
 					+ config.getProperty(XWPropertyDefs.DBHOST) + "/" + config.getProperty(XWPropertyDefs.DBNAME);
-			logger.config("org.gjt.mm.mysql.Driver");
+			logger.info("org.gjt.mm.mysql.Driver");
 			Class.forName("org.gjt.mm.mysql.Driver");
 		} catch (final java.lang.ClassNotFoundException e) {
-			logger.fatal("ClassNotFoundException: " + e.getMessage());
+			logger.error("ClassNotFoundException: " + e.getMessage());
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		className = getClass().getName();
 
-		logger.config("dburl      = '" + dburl + "' " + "dbuser     = '" + config.getProperty(XWPropertyDefs.DBUSER)
+		logger.info("dburl      = '" + dburl + "' " + "dbuser     = '" + config.getProperty(XWPropertyDefs.DBUSER)
 				+ "' dbpassword = '" + config.getProperty(XWPropertyDefs.DBPASS) + "'");
 
 		connPool = Collections.synchronizedList(new LinkedList<Connection>());
@@ -156,7 +151,8 @@ public class DBConnPoolThread extends Thread {
 					pushConnection(conn);
 				}
 			} catch (final Exception e) {
-				logger.fatal(e.toString());
+				logger.error("Caught exception: ", e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		}
 
@@ -189,9 +185,9 @@ public class DBConnPoolThread extends Thread {
 
 		while (connPool.size() <= 0) {
 			try {
-				logger.finest("DBConnPool#popConnection sleeping (pool size <= 0)");
+				logger.trace("DBConnPool#popConnection sleeping (pool size <= 0)");
 				wait();
-				logger.finest("DBConnPool#popConnection woken up");
+				logger.trace("DBConnPool#popConnection woken up");
 			} catch (final InterruptedException e) {
 			}
 		}
@@ -221,9 +217,9 @@ public class DBConnPoolThread extends Thread {
 	public synchronized void run() {
 		while (true) {
 			try {
-				logger.finest("DBConnPoolThread is waiting");
+				logger.trace("DBConnPoolThread is waiting");
 				this.wait();
-				logger.finest("DBConnPoolThread woken up");
+				logger.trace("DBConnPoolThread woken up");
 			} catch (final InterruptedException e) {
 			}
 			try {
@@ -231,7 +227,7 @@ public class DBConnPoolThread extends Thread {
 					executeQuery(updateFifo.remove(0), null);
 				}
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}
@@ -293,8 +289,8 @@ public class DBConnPoolThread extends Thread {
 			try {
 				dbConn = popConnection();
 			} catch (final Exception e) {
-				logger.exception(e);
-				logger.fatal(e.toString());
+				logger.error("Caught exception: ", e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		}
 
@@ -302,7 +298,7 @@ public class DBConnPoolThread extends Thread {
 		try (final Statement stmt = dbConn.createStatement()) {
 			Vector<T> ret = null;
 
-			logger.finest(query);
+			logger.trace(query);
 
 			if (stmt.execute(query)) {
 				rs = stmt.getResultSet();
@@ -331,7 +327,7 @@ public class DBConnPoolThread extends Thread {
 			return ret;
 
 		} catch (final Exception ex2) {
-			logger.exception("ExecuteQuery  (" + query + ")", ex2);
+			logger.error("Caught exceptionm ExecuteQuery  (" + query + ")", ex2);
 			mileStone.println("<executeQueryError />");
 			throw new IOException(ex2);
 		} finally {
@@ -340,7 +336,7 @@ public class DBConnPoolThread extends Thread {
 					rs.close();
 				}
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 			if (conn == null) {
 				pushConnection(dbConn);
@@ -371,15 +367,15 @@ public class DBConnPoolThread extends Thread {
 		try {
 			dbConn = popConnection();
 		} catch (final Exception e) {
-			logger.exception(e);
-			logger.fatal(e.toString());
+			logger.error("Caught exception: ", e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		ResultSet rs = null;
 
 		try (Statement stmt = dbConn.createStatement()) {
 
-			logger.finest(query);
+			logger.trace(query);
 
 			if (stmt.execute(query)) {
 				rs = stmt.getResultSet();
@@ -402,7 +398,7 @@ public class DBConnPoolThread extends Thread {
 			}
 			return ret;
 		} catch (final Exception e) {
-			logger.exception("ExecuteQuery  (" + query + ")", e);
+			logger.error("Caught exception, ExecuteQuery  (" + query + ")", e);
 
 			mileStone.println("<executeQueryError />");
 			throw new IOException(e);
@@ -412,7 +408,7 @@ public class DBConnPoolThread extends Thread {
 					rs.close();
 				}
 			} catch (final Exception e2) {
-				logger.exception(e2);
+				logger.error("Caught exception: ", e2);
 			}
 
 			pushConnection(dbConn);
@@ -462,7 +458,7 @@ public class DBConnPoolThread extends Thread {
 				update(row, criterias, true);
 			}
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -487,7 +483,7 @@ public class DBConnPoolThread extends Thread {
 					+ rowset + " WHERE " + theCriteria;
 
 			if (pool == true) {
-				logger.finest("updateFifo.add(" + query + ")");
+				logger.trace("updateFifo.add(" + query + ")");
 				updateFifo.add(query);
 			} else {
 				executeQuery(query, row);
@@ -495,7 +491,7 @@ public class DBConnPoolThread extends Thread {
 			notify();
 
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -634,7 +630,7 @@ public class DBConnPoolThread extends Thread {
 			final Vector<UID> ret = (Vector<UID>) queryUID(query);
 			return ret;
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -687,7 +683,7 @@ public class DBConnPoolThread extends Thread {
 			updateFifo.add(query);
 			notify();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 	}
@@ -711,7 +707,7 @@ public class DBConnPoolThread extends Thread {
 			updateFifo.add(query);
 			notify();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 

@@ -23,22 +23,14 @@ package xtremweb.common;
  *
  */
 
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.Vector;
 
-import org.junit.Test;
-
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.StreamIO;
-import xtremweb.common.XMLVector;
-import xtremweb.common.UID;
-import xtremweb.common.XMLReader;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests XML serialization
@@ -50,11 +42,6 @@ import xtremweb.common.XMLReader;
  */
 
 public class XMLVectorTest {
-	private final Logger logger;
-
-	public XMLVectorTest() {
-		logger = new Logger(this);
-	}
 
 	/**
 	 * This tests object XML serialization by writing then reading back an object.
@@ -68,7 +55,6 @@ public class XMLVectorTest {
 			final File temp = File.createTempFile("xw-junit", "itf");
 			final FileOutputStream fout = new FileOutputStream(temp);
 			final DataOutputStream out = new DataOutputStream(fout);
-			v1.setLoggerLevel(LoggerLevel.DEBUG);
 			v1.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(out);
 			writer.write(v1);
@@ -78,7 +64,6 @@ public class XMLVectorTest {
 			v2.setDUMPNULLS(true);
 			assertTrue(v1.toXml().equals(v2.toXml()));
 		} catch (final Exception e) {
-			logger.exception(e);
 			assert(false);
 		}
 	}

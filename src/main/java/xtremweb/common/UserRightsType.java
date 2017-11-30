@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.sql.ResultSet;
+import org.apache.log4j.Logger;
+
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -45,6 +47,8 @@ import xtremweb.database.SQLRequest;
  */
 
 public final class UserRightsType extends Type {
+
+	private static final Logger logger = Logger.getLogger(UserRightsType.class);
 
 	/**
 	 * This is the database table name
@@ -353,14 +357,11 @@ public final class UserRightsType extends Type {
 				} catch (final XMLEndParseException e) {
 				}
 			}
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			itf.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.AppInterface [anXMLDescriptionFile]",
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.AppInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

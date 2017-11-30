@@ -34,8 +34,6 @@ package xtremweb.exec;
  */
 public class ExecutorLaunchException extends Exception {
 
-	public ExecutorLaunchException() {
+	public ExecutorLaunchException() {}
 
-	} // ExecutorLaunchException constructor
-
-} // ExecutorLaunchException
+}

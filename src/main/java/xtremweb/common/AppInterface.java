@@ -36,6 +36,7 @@ import java.text.ParseException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.communications.URI;
 import xtremweb.database.SQLRequest;
@@ -54,6 +55,8 @@ import xtremweb.security.XWAccessRights;
  * This class describes a row of the apps SQL table.
  */
 public final class AppInterface extends Table {
+
+	private static final Logger logger = Logger.getLogger(AppInterface.class);
 
 	/**
 	 * This is the database table name This was stored in
@@ -1427,7 +1430,7 @@ public final class AppInterface extends Table {
 		try (final XMLReader reader = new XMLReader(this)) {
 			reader.read(input);
 		} catch (final InvalidKeyException e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -2914,7 +2917,7 @@ public final class AppInterface extends Table {
 		String value = v;
 		if ((value != null) && (value.length() > APPNAMELENGTH)) {
 			value = value.substring(0, APPNAMELENGTH - 1);
-			getLogger().warn("Name too long; truncated to " + value);
+			logger.warn("Name too long; truncated to " + value);
 		}
 		return setValue(Columns.NAME, value == null ? null : value);
 	}
@@ -3028,11 +3031,6 @@ public final class AppInterface extends Table {
 	 */
 	public static void main(final String[] argv) {
 		try {
-			LoggerLevel logLevel = LoggerLevel.DEBUG;
-			try {
-				logLevel = LoggerLevel.valueOf(System.getProperty(XWPropertyDefs.LOGGERLEVEL.toString()));
-			} catch (final Exception e) {
-			}
 			final AppInterface itf = new AppInterface();
 			itf.setUID(UID.getMyUid());
 			if (argv.length > 0) {
@@ -3042,14 +3040,11 @@ public final class AppInterface extends Table {
 				} catch (final XMLEndParseException e) {
 				}
 			}
-			itf.setLoggerLevel(logLevel);
 			itf.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.AppInterface [anXMLDescriptionFile]",
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.AppInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

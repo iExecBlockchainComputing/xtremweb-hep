@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.util.StringTokenizer;
+import org.apache.log4j.Logger;
+
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -41,8 +43,9 @@ public class Version extends XMLable {
 	private String version;
 	private String build;
 	private String branch;
-
 	private int[] intVersion;
+
+	private static final Logger logger = Logger.getLogger(Version.class);
 
 	public Version() {
 		setXMLTag("Version");
@@ -200,7 +203,7 @@ public class Version extends XMLable {
 		} catch (final SAXException ioe) {
 		}
 
-		getLogger().finest("     xmlElementStart() qname=\"" + qname + "\"");
+		logger.trace("     xmlElementStart() qname=\"" + qname + "\"");
 
 		if (qname.compareToIgnoreCase(getXMLTag()) == 0) {
 			fromXml(attrs);

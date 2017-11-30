@@ -33,10 +33,13 @@ import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import java.text.ParseException;
 
+import org.apache.log4j.Logger;
+
+
 import org.xml.sax.SAXException;
 
-import xtremweb.common.Logger;
 import xtremweb.common.StreamIO;
+import xtremweb.common.XWReturnCode;
 import xtremweb.communications.Connection;
 import xtremweb.communications.SmartSocketsProxy;
 import xtremweb.communications.XMLRPCCommand;
@@ -54,7 +57,8 @@ import xtremweb.communications.XMLRPCCommand;
 
 public class Shell extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Shell.class);
+
 	/**
 	 * This is this thread name
 	 */
@@ -75,7 +79,6 @@ public class Shell extends Thread {
 	 */
 	public Shell(final String label) {
 		super(label);
-		logger = new Logger(this);
 		port = -1;
 	}
 
@@ -108,7 +111,8 @@ public class Shell extends Thread {
 				}
 			});
 		} catch (final Exception e) {
-			logger.fatal(getName() + ": could not listen on port " + port + " : " + e);
+			logger.error(getName() + ": could not listen on port " + port + " : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -125,7 +129,7 @@ public class Shell extends Thread {
 			try (Socket socket = socketServer.accept()) {
 				process(socket);
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -150,7 +154,7 @@ public class Shell extends Thread {
 
 		} catch (final ClassNotFoundException | InvalidKeyException | AccessControlException | InstantiationException
 				| SAXException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -163,7 +167,7 @@ public class Shell extends Thread {
 			logger.debug("cleanup");
 			socketServer.close();
 		} catch (final Exception e) {
-			logger.exception("can't clean up", e);
+			logger.error("can't clean up", e);
 		}
 	}
 

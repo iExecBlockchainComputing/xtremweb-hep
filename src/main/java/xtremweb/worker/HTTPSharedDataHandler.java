@@ -33,8 +33,8 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 
 /**
  * This handles incoming communications through HTTP. This class aims to help
@@ -51,7 +51,7 @@ public class HTTPSharedDataHandler extends Thread implements Handler {
 
 	public static final String PATH = "/shareddata";
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(HTTPSharedDataHandler.class);
 
 	private HttpServletRequest request;
 	private HttpServletResponse response;
@@ -86,18 +86,6 @@ public class HTTPSharedDataHandler extends Thread implements Handler {
 	 */
 	public HTTPSharedDataHandler() {
 		super("HTTPSharedHandler");
-		logger = new Logger(this);
-	}
-
-	/**
-	 * This constructor call the default constructor and sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 */
-	public HTTPSharedDataHandler(final LoggerLevel l) {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -244,7 +232,7 @@ public class HTTPSharedDataHandler extends Thread implements Handler {
 
 			baseRequest.setHandled(true);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		response.getWriter().flush();
 	}
@@ -269,7 +257,7 @@ public class HTTPSharedDataHandler extends Thread implements Handler {
 				CommManager.getInstance().interrupt();
 			}
 		} catch (final Exception e) {
-			logger.exception("Can't manage data package", e);
+			logger.error("Caught exception, Can't manage data package", e);
 		}
 	}
 }

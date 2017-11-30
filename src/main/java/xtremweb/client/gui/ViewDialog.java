@@ -49,13 +49,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.Browser;
-import xtremweb.common.Logger;
 import xtremweb.security.XWAccessRights;
 
 public class ViewDialog extends JDialog implements ActionListener {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ViewDialog.class);
 
 	public static final String OK = "Ok";
 	public static final String EDIT = "Edit";
@@ -113,7 +115,6 @@ public class ViewDialog extends JDialog implements ActionListener {
 		super(f, title, true);
 
 		final String[] cc = thecolumns.clone();
-		logger = new Logger(this);
 
 		setHelpString("No help available");
 		setCancelled(true);
@@ -286,7 +287,7 @@ public class ViewDialog extends JDialog implements ActionListener {
 						JOptionPane.INFORMATION_MESSAGE);
 
 			} catch (final Exception ex) {
-				logger.exception(ex);
+				logger.error("Caught exception: ", ex);
 			}
 		}
 	}

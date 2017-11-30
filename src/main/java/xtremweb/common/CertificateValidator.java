@@ -80,10 +80,14 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.Vector;
+import org.apache.log4j.Logger;
+
 
 /**
  */
 public final class CertificateValidator {
+
+	private static final Logger logger = Logger.getLogger(CertificateValidator.class);
 
 	/**
 	 * This class contains CA cert path and its most trusted certificate. Both
@@ -242,7 +246,6 @@ public final class CertificateValidator {
 					for (int kui = 0; kui < 9; kui++) {
 						System.out.print((ku[kui] == false ? "0" : "1"));
 					}
-					logger.info();
 					logger.info("Validating <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
 				}
@@ -340,8 +343,6 @@ public final class CertificateValidator {
 		}
 	}
 
-	private final Logger logger;
-
 	/**
 	 * This is the certificate factory to retreive certificate from file,
 	 * certificate paths etc.
@@ -369,9 +370,6 @@ public final class CertificateValidator {
 	 *                directory of certificates
 	 */
 	public CertificateValidator() throws CertificateException, IOException, NoSuchAlgorithmException {
-
-		logger = new Logger(this);
-		logger.setLoggerLevel(LoggerLevel.INFO);
 
 		certFactory = CertificateFactory.getInstance("X.509");
 		pathValidator = CertPathValidator.getInstance("PKIX");

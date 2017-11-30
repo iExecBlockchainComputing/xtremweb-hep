@@ -52,7 +52,8 @@ import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 
 public final class X509Proxy {
 	public static final String BEGINCERT = "-----BEGIN CERTIFICATE-----";
@@ -65,10 +66,7 @@ public final class X509Proxy {
 	public static final String BEGINPRIVATEKEY_NOSPACE = "-----BEGIN_RSA_PRIVATE_KEY-----";
 	public static final String ENDPRIVATEKEY_NOSPACE = "-----END_RSA_PRIVATE_KEY-----";
 
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(X509Proxy.class);
 	/**
 	 * This contains certs found from X509 proxy, linked by IssuerDN
 	 */
@@ -92,8 +90,6 @@ public final class X509Proxy {
 		content = "";
 		certsList = new LinkedList<>();
 		certFactory = CertificateFactory.getInstance("X.509");
-
-		logger = new Logger(this);
 	}
 
 	/**
@@ -211,12 +207,12 @@ public final class X509Proxy {
 		//
 		// dump
 		//
-		logger.config("> Found certificates");
+		logger.info("> Found certificates");
 
 		final Iterator<X509Certificate> certsit = certsList.listIterator();
 		while (certsit.hasNext()) {
 			final X509Certificate cert = certsit.next();
-			logger.config(">> Subject=\"" + cert.getSubjectDN() + "\" Issuer=\"" + cert.getIssuerDN() + "\"");
+			logger.info(">> Subject=\"" + cert.getSubjectDN() + "\" Issuer=\"" + cert.getIssuerDN() + "\"");
 		}
 	}
 
@@ -235,15 +231,15 @@ public final class X509Proxy {
 			X500Principal issuer = theCert.getIssuerX500Principal();
 			final String certIssuerName = issuer.getName();
 
-			logger.finest(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ");
-			logger.finest("SubjectDN = " + certSubjectName);
-			logger.finest("IssuerDN  = " + certIssuerName);
-			logger.finest("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< [" + size() + "]  ");
+			logger.trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ");
+			logger.trace("SubjectDN = " + certSubjectName);
+			logger.trace("IssuerDN  = " + certIssuerName);
+			logger.trace("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< [" + size() + "]  ");
 
 			theCert.checkValidity();
 
 			if (size() == 0) {
-				logger.finest(">>>>>>>>>> add " + certSubjectName);
+				logger.trace(">>>>>>>>>> add " + certSubjectName);
 				add(theCert);
 				return;
 			}
@@ -260,13 +256,13 @@ public final class X509Proxy {
 
 			if (certIssuerName.compareTo(firstSubjectName) == 0) {
 				addFirst(theCert);
-				logger.finest(">>>>>>>>>> addFirst " + certSubjectName + " is issued by " + firstSubjectName);
+				logger.trace(">>>>>>>>>> addFirst " + certSubjectName + " is issued by " + firstSubjectName);
 				return;
 			}
 
 			if (certSubjectName.compareTo(lastIssuerName) == 0) {
 				addLast(theCert);
-				logger.finest(">>>>>>>>>> addLast  " + certSubjectName + " is issuer of " + lastSubjectName);
+				logger.trace(">>>>>>>>>> addLast  " + certSubjectName + " is issuer of " + lastSubjectName);
 				return;
 			}
 

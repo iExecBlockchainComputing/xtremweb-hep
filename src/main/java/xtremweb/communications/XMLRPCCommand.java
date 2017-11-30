@@ -35,18 +35,9 @@ import java.security.InvalidKeyException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
-import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.StreamIO;
-import xtremweb.common.UserInterface;
-import xtremweb.common.XMLEndParseException;
-import xtremweb.common.XMLReader;
-import xtremweb.common.XMLWriter;
-import xtremweb.common.XMLable;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
+import xtremweb.common.*;
 
 /**
  * XMLRPCCommand.java
@@ -61,6 +52,8 @@ import xtremweb.common.XWTools;
  * This class defines XMLRPC command
  */
 public abstract class XMLRPCCommand extends XMLable {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommand.class);
 
 	private enum XMLTAGS {
 		NONE, USER, HOST
@@ -413,13 +406,12 @@ public abstract class XMLRPCCommand extends XMLable {
 		if (attrs == null) {
 			return;
 		}
-		final Logger logger = getLogger();
 
 		for (int a = 0; a < attrs.getLength(); a++) {
 			final String attribute = attrs.getQName(a);
 			final String value = attrs.getValue(a);
 
-			logger.finest("XMLRPCCommand  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value
+			logger.trace("XMLRPCCommand  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value
 					+ "\"");
 //			System.out.println("XMLRPCCommand  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value
 //					+ "\"");
@@ -428,20 +420,20 @@ public abstract class XMLRPCCommand extends XMLable {
 //			System.out.println ("attribute.compareToIgnoreCase(" + getColumnLabel(MANDATINGLOGIN) + " = " + attribute.compareToIgnoreCase(getColumnLabel(MANDATINGLOGIN)));
 
 			if (attribute.compareToIgnoreCase(getColumnLabel(MANDATINGLOGIN)) == 0) {
-				logger.finest("XMLRPCCommand  ##  creating mandating login from " + value);
+				logger.trace("XMLRPCCommand  ##  creating mandating login from " + value);
 				try {
 					setValueAt(MANDATINGLOGIN, value);
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 				continue;
 			}
 			if (attribute.compareToIgnoreCase(getColumnLabel(URI)) == 0) {
-				logger.finest("XMLRPCCommand  ##  creating uri from " + value);
+				logger.trace("XMLRPCCommand  ##  creating uri from " + value);
 				try {
 					setValueAt(URI, new URI(value));
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 				continue;
 			}
@@ -483,7 +475,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final SAXException se) {
 		}
 
-		getLogger().finest("XMLRPCCommand#xmlElementStartCheckUser(" + uri + ", " + tag + ", " + qname + ")  "
+		logger.trace("XMLRPCCommand#xmlElementStartCheckUser(" + uri + ", " + tag + ", " + qname + ")  "
 				+ attrs.getLength());
 		if (qname.compareToIgnoreCase(getXMLTag()) == 0) {
 			fromXml(attrs);
@@ -495,7 +487,7 @@ public abstract class XMLRPCCommand extends XMLable {
 				currentTag = XMLTAGS.USER;
 				user = new UserInterface(attrs);
 				user.setCurrentVersion(getCurrentVersion());
-				getLogger().finest("XMLRPCCommand#xmlElementStartCheckUser " + user.toXml());
+				logger.trace("XMLRPCCommand#xmlElementStartCheckUser " + user.toXml());
 			} else {
 				throw new SAXException(
 						"XMLRPCCommand not a " + getXMLTag() + " command (" + qname + ") (user already set)");
@@ -532,7 +524,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final SAXException ioe) {
 		}
 
-		getLogger().finest("XMLRPCCommand#xmlElementStartCheckUserAndHost(" + uri + ", " + tag + ", " + qname + ")");
+		logger.trace("XMLRPCCommand#xmlElementStartCheckUserAndHost(" + uri + ", " + tag + ", " + qname + ")");
 
 		if (qname.compareToIgnoreCase(HostInterface.THISTAG) == 0) {
 			if (host == null) {
@@ -540,7 +532,7 @@ public abstract class XMLRPCCommand extends XMLable {
 				host = new HostInterface(attrs);
 				host.setCurrentVersion(getCurrentVersion());
 
-				getLogger().finest("XMLRPCCommand#xmlElementStartCheckUserAndHost " + host.toXml());
+				logger.trace("XMLRPCCommand#xmlElementStartCheckUserAndHost " + host.toXml());
 			} else {
 				throw new SAXException(
 						"XMLRPCCommand not a " + getXMLTag() + " command (" + qname + ") (host already set)");
@@ -574,14 +566,13 @@ public abstract class XMLRPCCommand extends XMLable {
 
 		super.xmlElementStop(uri, tag, qname);
 
-		getLogger()
-				.finest("XMLRPCCommand#xmlElementStop " + uri + ", " + tag + ", " + qname + " = " + getCurrentValue());
+		logger.trace("XMLRPCCommand#xmlElementStop " + uri + ", " + tag + ", " + qname + " = " + getCurrentValue());
 
 		switch (currentTag) {
 		case USER:
 			if (user != null) {
 				try {
-					getLogger().finest("XMLRPCCommand#xmlElementStop set user value " + uri + ", " + tag + ", " + qname
+					logger.trace("XMLRPCCommand#xmlElementStop set user value " + uri + ", " + tag + ", " + qname
 							+ " = " + getCurrentValue());
 					user.setValue(qname, getCurrentValue());
 					resetCurrentValue();
@@ -592,7 +583,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		case HOST:
 			if (host != null) {
 				try {
-					getLogger().finest("XMLRPCCommand#xmlElementStop set host value " + uri + ", " + tag + ", " + qname
+					logger.trace("XMLRPCCommand#xmlElementStop set host value " + uri + ", " + tag + ", " + qname
 							+ " = " + getCurrentValue());
 					host.setValue(qname, getCurrentValue());
 					resetCurrentValue();
@@ -601,7 +592,7 @@ public abstract class XMLRPCCommand extends XMLable {
 			}
 			break;
 		case NONE:
-			getLogger().finest("currentTag = NONE ???");
+			logger.trace("currentTag = NONE ???");
 			break;
 		}
 
@@ -647,7 +638,6 @@ public abstract class XMLRPCCommand extends XMLable {
 		}
 		final BufferedInputStream input = new BufferedInputStream(in);
 		XMLRPCCommand ret = null;
-		final Logger logger = new Logger(XMLRPCCommand.class);
 
 		try {
 			input.mark(XWTools.BUFFEREND);
@@ -659,7 +649,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command version");
+		logger.trace("not a command version");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -671,7 +661,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command ping");
+		logger.trace("not a command ping");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -683,7 +673,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command disconnect");
+		logger.trace("not a command disconnect");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -695,7 +685,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getuserby login");
+		logger.trace("not a command getuserby login");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -707,7 +697,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command get");
+		logger.trace("not a command get");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -719,7 +709,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a XMLRPCCommandGetWorkByExternalId");
+		logger.trace("not a XMLRPCCommandGetWorkByExternalId");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -731,7 +721,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command gettask");
+		logger.trace("not a command gettask");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -743,7 +733,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getworks");
+		logger.trace("not a command getworks");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -755,7 +745,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command gethubaddr");
+		logger.trace("not a command gethubaddr");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -767,7 +757,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command send");
+		logger.trace("not a command send");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -779,7 +769,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command gettasks");
+		logger.trace("not a command gettasks");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -791,7 +781,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command download data");
+		logger.trace("not a command download data");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -803,7 +793,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getapps");
+		logger.trace("not a command getapps");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -815,7 +805,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getdatas");
+		logger.trace("not a command getdatas");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -827,7 +817,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getgroupworks");
+		logger.trace("not a command getgroupworks");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -839,7 +829,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getgroups");
+		logger.trace("not a command getgroups");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -851,7 +841,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command gethosts");
+		logger.trace("not a command gethosts");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -863,7 +853,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getsessionworks");
+		logger.trace("not a command getsessionworks");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -875,7 +865,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getsessions");
+		logger.trace("not a command getsessions");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -887,7 +877,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command activatehost");
+		logger.trace("not a command activatehost");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -899,7 +889,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command broadcastwork");
+		logger.trace("not a command broadcastwork");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -911,7 +901,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getusergroups");
+		logger.trace("not a command getusergroups");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -923,7 +913,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command getusers");
+		logger.trace("not a command getusers");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -935,7 +925,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command remove");
+		logger.trace("not a command remove");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -947,7 +937,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command uploaddata");
+		logger.trace("not a command uploaddata");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -959,7 +949,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command chmod");
+		logger.trace("not a command chmod");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -971,7 +961,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command workrequest");
+		logger.trace("not a command workrequest");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -983,7 +973,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command workalive");
+		logger.trace("not a command workalive");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -995,7 +985,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		logger.finest("not a command workalivebyuid");
+		logger.trace("not a command workalivebyuid");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
@@ -1052,13 +1042,12 @@ public abstract class XMLRPCCommand extends XMLable {
 	 * The object is finally dumped.
 	 */
 	public static void main(final String[] argv) {
-		final Logger logger = new Logger();
 		try (final DataInputStream dis = new DataInputStream(new FileInputStream(argv[1]));
 				final StreamIO streamIO = new StreamIO(null, new DataInputStream(dis))) {
 			final XMLRPCCommand cmd = XMLRPCCommand.newCommand(streamIO);
-			cmd.getLogger().info(cmd.openXmlRootElement() + cmd.toXml() + cmd.closeXmlRootElement());
+			logger.info(cmd.openXmlRootElement() + cmd.toXml() + cmd.closeXmlRootElement());
 		} catch (final Exception e) {
-			logger.exception("Usage : java -cp " + XWTools.JARFILENAME
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME
 					+ " xtremweb.communications.XMLRPCCommand <aConfigFile> <anXMLDescriptionFile>", e);
 		}
 	}
@@ -1071,24 +1060,19 @@ public abstract class XMLRPCCommand extends XMLable {
 	public void test(final String[] argv) {
 		try (final XMLReader reader = new XMLReader(this);
 				final DataOutputStream dos = new DataOutputStream(System.out)) {
-			LoggerLevel logLevel = LoggerLevel.INFO;
-			try {
-				logLevel = LoggerLevel.valueOf(System.getProperty(XWPropertyDefs.LOGGERLEVEL.toString()));
-			} catch (final Exception e) {
-			}
+
 			if (argv.length > 1) {
 				resetParameter();
 
 				reader.read(new FileInputStream(argv[1]));
 			}
-			setLoggerLevel(logLevel);
 			setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(dos);
 			writer.write(this);
 		} catch (final Exception e) {
 			e.printStackTrace();
-			final Logger logger = new Logger();
-			logger.fatal("Usage : java -cp " + XWTools.JARFILENAME + " a_class <aConfigFile> [anXMLDescriptionFile]");
+			logger.error("Usage : java -cp " + XWTools.JARFILENAME + " a_class <aConfigFile> [anXMLDescriptionFile]");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 }

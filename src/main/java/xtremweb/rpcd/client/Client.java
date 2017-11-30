@@ -32,8 +32,8 @@ package xtremweb.rpcd.client;
  * @version
  */
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.Zipper;
 import xtremweb.communications.CommClient;
@@ -44,13 +44,14 @@ import xtremweb.communications.CommClient;
  */
 public class Client {
 
+	private static final Logger logger = Logger.getLogger(Client.class);
+
 	public static final int ERROK = 0;
 	public static final int ERRCONNECTION = 1;
 	public static final int ERRDISK = 2;
 	public static final int ERRUID = 3;
 	public static final int ERR = 4;
 
-	private Logger logger;
 	/**
 	 * RMI communication channel
 	 */
@@ -77,7 +78,7 @@ public class Client {
 	public Client(final String argv[]) {
 		discovering = false;
 		parse(argv);
-		zipper = new Zipper(LoggerLevel.INFO);
+		zipper = new Zipper();
 	}
 
 	/**
@@ -99,7 +100,6 @@ public class Client {
 		}
 		if (config == null) {
 			config = new XWConfigurator(null, false);
-			logger.setLoggerLevel(LoggerLevel.INFO);
 		}
 	}
 

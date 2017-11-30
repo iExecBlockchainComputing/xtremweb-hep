@@ -32,8 +32,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 
 /**
  * XWUtilLinux.java Samuel Heriard
@@ -58,12 +58,10 @@ public class XWUtilLinux extends XWUtilImpl {
 	private long totalPidUserOld = 0;
 
 	private LinkedList<Integer> pids = null;
-	private final Logger logger;
 
-	public XWUtilLinux() {
-		logger = new Logger(this);
-		logger.setLoggerLevel(LoggerLevel.INFO);
-	}
+	private static final Logger logger = Logger.getLogger(XWUtilLinux.class);
+
+	public XWUtilLinux() {}
 
 	/**
 	 * This retrieves family PIDs
@@ -123,7 +121,7 @@ public class XWUtilLinux extends XWUtilImpl {
 			}
 
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		return;
@@ -339,7 +337,7 @@ public class XWUtilLinux extends XWUtilImpl {
 				return new Float(valStr).intValue();
 			}
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return 0;
 		}
 
@@ -371,7 +369,7 @@ public class XWUtilLinux extends XWUtilImpl {
 			}
 			bufferFile.close();
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return "";
 		}
 
@@ -451,7 +449,7 @@ public class XWUtilLinux extends XWUtilImpl {
 				return new Float(valStr).longValue();
 			}
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return 0;
 		}
 		return 0;

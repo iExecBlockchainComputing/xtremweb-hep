@@ -32,8 +32,9 @@ package xtremweb.rpcd.client;
  * @version
  */
 
-import xtremweb.common.Logger;
 import xtremweb.common.XWConfigurator;
+import org.apache.log4j.Logger;
+
 
 /**
  * This aims to fake sun RPC by interposing between RPC client and sun RPC This
@@ -48,7 +49,8 @@ import xtremweb.common.XWConfigurator;
  */
 public abstract class rpc extends Thread {
 
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(rpc.class);
+
 	/**
 	 * This is the handler for RPC messages
 	 */
@@ -87,7 +89,6 @@ public abstract class rpc extends Thread {
 	protected rpc(final String n, final String[] a, final XWConfigurator c) {
 
 		super(n);
-		setLogger(new Logger(c.getLoggerLevel()));
 		config = c;
 
 		argv = a.clone();
@@ -119,21 +120,6 @@ public abstract class rpc extends Thread {
 	 */
 	public int getBUFSIZE() {
 		return BUFSIZE;
-	}
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
 	}
 
 	/**

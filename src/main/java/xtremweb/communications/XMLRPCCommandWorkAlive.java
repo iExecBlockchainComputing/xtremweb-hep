@@ -35,6 +35,7 @@ import java.util.Vector;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.HostInterface;
 import xtremweb.common.UID;
@@ -57,6 +58,8 @@ import xtremweb.common.XWConfigurator;
  * This class defines the XMLRPCCommand hearbeat monitor
  */
 public class XMLRPCCommandWorkAlive extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandWorkAlive.class);
 
 	/**
 	 * This is the RPC id
@@ -195,7 +198,7 @@ public class XMLRPCCommandWorkAlive extends XMLRPCCommand {
 
 		super.xmlElementStop(uri, tag, qname);
 
-		getLogger().finest(
+		logger.trace(
 				"XMLRPCCommandWorkAlive#xmlElementStop " + uri + ", " + tag + ", " + qname + " = " + getCurrentValue());
 
 		if (getParameter() != null) {
@@ -259,7 +262,7 @@ public class XMLRPCCommandWorkAlive extends XMLRPCCommand {
 			if (argv.length > 1) {
 				cmd = new XMLRPCCommandWorkAlive(new FileInputStream(argv[1]));
 			}
-			cmd.getLogger().info(cmd.openXmlRootElement() + cmd.toXml() + cmd.closeXmlRootElement());
+			logger.info(cmd.openXmlRootElement() + cmd.toXml() + cmd.closeXmlRootElement());
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}

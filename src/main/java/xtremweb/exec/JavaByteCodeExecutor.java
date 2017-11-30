@@ -34,9 +34,12 @@ package xtremweb.exec;
  */
 
 import java.io.File;
+import org.apache.log4j.Logger;
+
 
 public class JavaByteCodeExecutor extends Executor {
 
+	private static final Logger logger = Logger.getLogger(JavaByteCodeExecutor.class);
 	private final String jarNameOrClassName;
 	private final String args;
 	private final boolean isJar;
@@ -57,7 +60,7 @@ public class JavaByteCodeExecutor extends Executor {
 		try {
 			jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
 		} catch (final Exception e) {
-			getLogger().debug("Can't acces to property java.home");
+			logger.debug("Can't acces to property java.home");
 			throw new ExecutorLaunchException();
 		} // end of try-catch
 	}

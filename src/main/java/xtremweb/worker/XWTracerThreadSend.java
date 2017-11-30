@@ -39,7 +39,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 
 /**
  * The <CODE>XWTracerThreadSend</CODE> class describes the XtremWeb thread which
@@ -48,7 +49,7 @@ import xtremweb.common.Logger;
 
 public class XWTracerThreadSend extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XWTracerThreadSend.class);
 
 	/**
 	 * This variable stores date when current traces has been started.
@@ -74,7 +75,6 @@ public class XWTracerThreadSend extends Thread {
 	XWTracerThreadSend(final String fName, final long start, final long end) {
 
 		super("XWTracerThreadSend");
-		logger = new Logger(this);
 		fileName = fName;
 		dateStart = start;
 		dateEnd = end;
@@ -95,7 +95,7 @@ public class XWTracerThreadSend extends Thread {
 		try (final FileInputStream fInpS = new FileInputStream(f);) {
 			fInpS.read(file, 0, (int) f.length());
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		try {

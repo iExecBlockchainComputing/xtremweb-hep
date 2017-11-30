@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.util.Hashtable;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -48,6 +49,7 @@ import org.xml.sax.SAXException;
  */
 public final class XMLtuple extends XMLable {
 
+	private static final Logger logger = Logger.getLogger(XMLtuple.class);
 	public static final String THISTAG = "XMLTUPLE";
 
 	/**
@@ -211,14 +213,14 @@ public final class XMLtuple extends XMLable {
 		} else {
 			if ((qname.compareToIgnoreCase(XMLKey.THISTAG) == 0) && (key == null)) {
 
-				getLogger().finest("new " + qname);
+				logger.trace("new " + qname);
 				key = new XMLKey(attrs);
 				return;
 			}
 		}
 
 		if (value == null) {
-			getLogger().finest("new " + qname);
+			logger.trace("new " + qname);
 			if (qname.compareToIgnoreCase(XMLValue.THISTAG) == 0) {
 				value = new XMLValue(attrs);
 			} else if (qname.compareToIgnoreCase(XMLHashtable.THISTAG) == 0) {
@@ -237,7 +239,7 @@ public final class XMLtuple extends XMLable {
 	@Override
 	public void xmlElementStop(final String uri, final String tag, final String qname) throws SAXException {
 
-		getLogger().finest("xmlElementStop (" + qname + ")");
+		logger.trace("xmlElementStop (" + qname + ")");
 
 		if (qname.compareToIgnoreCase(XMLKey.THISTAG) == 0) {
 			key.xmlElementStop(uri, tag, qname);

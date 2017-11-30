@@ -27,12 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.StreamIO;
 import xtremweb.common.XMLReader;
 import xtremweb.common.XMLWriter;
-import xtremweb.communications.XMLRPCCommand;
 
 import org.junit.Test; 
 
@@ -49,7 +45,6 @@ import static org.junit.Assert.assertTrue;
  */
 
 public abstract class XMLRPCCommandTest {
-	private Logger logger;
 
 	/**
 	 * This is written to disk
@@ -61,7 +56,6 @@ public abstract class XMLRPCCommandTest {
 	private XMLRPCCommand cmd2;
 
 	protected XMLRPCCommandTest() {
-		logger = new Logger(this);
 		setCmd(null);
 		setCmd2(null);
 	}
@@ -75,7 +69,6 @@ public abstract class XMLRPCCommandTest {
 			final File temp = File.createTempFile("xw-junit", "rpccommanditf");
 			final FileOutputStream fout = new FileOutputStream(temp);
 			final DataOutputStream out = new DataOutputStream(fout);
-			getCmd().setLoggerLevel(LoggerLevel.DEBUG);
 			getCmd().setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(out);
 			writer.write(getCmd());
@@ -85,7 +78,7 @@ public abstract class XMLRPCCommandTest {
 			getCmd2().setDUMPNULLS(true);
 			assertTrue(getCmd().toXml().equals(getCmd2().toXml()));
 		} catch (final Exception e) {
-			logger.exception(e);
+			e.printStackTrace();
 			assert(false);
 		}
 	}

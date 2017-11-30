@@ -44,14 +44,9 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.xml.sax.SAXException;
 
-import xtremweb.common.AppInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.UID;
-import xtremweb.common.UserGroupInterface;
-import xtremweb.common.UserRightEnum;
-import xtremweb.common.XMLValue;
-import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.*;
+import org.apache.log4j.Logger;
+
 import xtremweb.communications.CommClient;
 
 /**
@@ -67,7 +62,7 @@ import xtremweb.communications.CommClient;
 
 public class HTTPStatHandler extends Thread implements Handler {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(HTTPStatHandler.class);
 
 	public static final String PATH = "/";
 
@@ -147,7 +142,6 @@ public class HTTPStatHandler extends Thread implements Handler {
 	 */
 	public HTTPStatHandler() {
 		super("HTTPStatHandler");
-		logger = new Logger(this);
 		activators = new Hashtable();
 		activatorHelps = new Hashtable();
 		activatorParams = new Hashtable();
@@ -160,17 +154,6 @@ public class HTTPStatHandler extends Thread implements Handler {
 		activatorParams.put("always", new Boolean(false));
 		activatorParams.put("crontab", new Boolean(true));
 		projectLabel = null;
-	}
-
-	/**
-	 * This constructor call the default constructor and sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 */
-	public HTTPStatHandler(final LoggerLevel l) {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -305,7 +288,7 @@ public class HTTPStatHandler extends Thread implements Handler {
 			index();
 			baseRequest.setHandled(true);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		response.getWriter().flush();
 	}
@@ -437,7 +420,8 @@ public class HTTPStatHandler extends Thread implements Handler {
 						+ "<p style='font-size:14px'><i>It will restart on next reboot (if installed)</i></p>"
 						+ "</div>");
 		response.getWriter().flush();
-		logger.fatal("HTTPStatHandler : exit on user request");
+		logger.error("HTTPStatHandler : exit on user request");
+		System.exit(XWReturnCode.FATAL.ordinal());
 	}
 
 	/**

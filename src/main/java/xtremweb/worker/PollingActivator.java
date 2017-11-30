@@ -23,7 +23,8 @@
 
 package xtremweb.worker;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
 
@@ -48,6 +49,8 @@ import xtremweb.common.XWPropertyDefs;
  */
 
 public abstract class PollingActivator extends Activator {
+
+	private static final Logger logger = Logger.getLogger(PollingActivator.class);
 
 	/** milliseconds to wait between each probe when the worker is active */
 	private long workingProbeInterval = 1000;
@@ -95,7 +98,7 @@ public abstract class PollingActivator extends Activator {
 				setActivationDelay(60000 * Integer.parseInt(getConfig().getProperty(XWPropertyDefs.ACTIVATORDELAY)));
 			}
 		} catch (final NumberFormatException e) {
-			getLogger().warn("'activator.poll.delay' is not an integer ("
+			logger.warn("'activator.poll.delay' is not an integer ("
 					+ getConfig().getProperty(XWPropertyDefs.ACTIVATORDELAY) + ")");
 		}
 
@@ -103,7 +106,7 @@ public abstract class PollingActivator extends Activator {
 			setActivationDelay(60000);
 		}
 
-		getLogger().debug("PollingActivator::initilize() " + getActivationDelay());
+		logger.debug("PollingActivator::initilize() " + getActivationDelay());
 
 		setMask(~CPU_ACTIVITY);
 	}
@@ -116,7 +119,6 @@ public abstract class PollingActivator extends Activator {
 	 */
 	@Override
 	public int waitForEvent(final int mask) throws InterruptedException {
-		final Logger logger = getLogger();
 		try {
 			if ((getMask() & CPU_ACTIVITY) != 0) {
 

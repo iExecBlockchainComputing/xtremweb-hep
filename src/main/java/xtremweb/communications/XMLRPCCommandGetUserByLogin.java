@@ -29,6 +29,7 @@ import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
@@ -49,6 +50,8 @@ import xtremweb.common.XWConfigurator;
  * This class defines the XMLRPCCommand to send user definition
  */
 public class XMLRPCCommandGetUserByLogin extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandGetUserByLogin.class);
 
 	/**
 	 * This is the RPC id
@@ -137,7 +140,7 @@ public class XMLRPCCommandGetUserByLogin extends XMLRPCCommand {
 			}
 			return uri.getPath().substring(1, uri.getPath().length());
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return null;
 	}

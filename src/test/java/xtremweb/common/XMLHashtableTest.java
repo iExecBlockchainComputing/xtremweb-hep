@@ -23,7 +23,7 @@ package xtremweb.common;
  *
  */
 
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -33,14 +33,7 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.junit.Test;
-
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.StreamIO;
-import xtremweb.common.XMLHashtable;
-import xtremweb.common.UID;
-import xtremweb.common.XMLReader;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests XML serialization
@@ -52,11 +45,6 @@ import xtremweb.common.XMLReader;
  */
 
 public class XMLHashtableTest {
-	private final Logger logger;
-
-	public XMLHashtableTest () {
-		logger = new Logger(this);
-	}
 
 	/**
 	 * This tests object XML serialization by writing then reading back an object.
@@ -86,7 +74,6 @@ public class XMLHashtableTest {
 			final File temp = File.createTempFile("xw-junit", "itf");
 			final FileOutputStream fout = new FileOutputStream(temp);
 			final DataOutputStream out = new DataOutputStream(fout);
-			hWrite.setLoggerLevel(LoggerLevel.DEBUG);
 			hWrite.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(out);
 			writer.write(hWrite);
@@ -96,7 +83,6 @@ public class XMLHashtableTest {
 			hRead.setDUMPNULLS(true);
 			assertTrue(hWrite.toXml().equals(hRead.toXml()));
 		} catch (final Exception e) {
-			logger.exception(e);
 			assert(false);
 		}
 	}

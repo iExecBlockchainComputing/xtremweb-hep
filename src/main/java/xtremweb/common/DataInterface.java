@@ -32,6 +32,8 @@ import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 import java.util.Date;
+import org.apache.log4j.Logger;
+
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -50,6 +52,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 public final class DataInterface extends Table {
+
+	private static final Logger logger = Logger.getLogger(DataInterface.class);
 
 	/**
 	 * This is the database table name This was stored in
@@ -718,7 +722,7 @@ public final class DataInterface extends Table {
 			}
 			return ret.toString();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		return null;
@@ -1169,14 +1173,11 @@ public final class DataInterface extends Table {
 				} catch (final XMLEndParseException e) {
 				}
 			}
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			itf.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.DataInterface [anXMLDescriptionFile]",
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.DataInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

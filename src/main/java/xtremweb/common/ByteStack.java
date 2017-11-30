@@ -26,6 +26,8 @@ package xtremweb.common;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Vector;
+import org.apache.log4j.Logger;
+
 
 /**
  * Created: Sept 20th, 2005<br />
@@ -46,7 +48,8 @@ import java.util.Vector;
 
 public final class ByteStack {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ByteStack.class);
+
 	/**
 	 * This is the buffer length
 	 *
@@ -69,30 +72,7 @@ public final class ByteStack {
 	 */
 	public ByteStack() {
 		buffer = new byte[DEFLENGTH];
-		logger = new Logger(this);
 		reset();
-	}
-
-	/**
-	 * This constructs the buffer
-	 *
-	 * @param l
-	 *            is the logger level
-	 * @see #reset()
-	 */
-	public ByteStack(final LoggerLevel l) {
-		this();
-		setLoggerLevel(l);
-	}
-
-	/**
-	 * This sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 */
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -468,8 +448,8 @@ public final class ByteStack {
 	 */
 	public static void main(final String[] args) {
 		try {
-			final ByteStack b0 = new ByteStack(LoggerLevel.DEBUG);
-			final ByteStack b1 = new ByteStack(LoggerLevel.DEBUG);
+			final ByteStack b0 = new ByteStack();
+			final ByteStack b1 = new ByteStack();
 
 			b0.putInt(54321);
 			if (args.length > 0) {

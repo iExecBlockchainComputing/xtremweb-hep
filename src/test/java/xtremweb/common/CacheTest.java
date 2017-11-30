@@ -23,44 +23,33 @@ package xtremweb.common;
  *
  */
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
-
-import xtremweb.common.AppInterface;
-import xtremweb.common.Cache;
-import xtremweb.common.Logger;
-import xtremweb.common.UID;
 import xtremweb.communications.URI;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests XML serialization
- * 
+ * <p>
  * Created: 15 novembre 2012
- * 
+ *
  * @author Oleg Lodygensky
  * @version 1.0
  */
 
 public class CacheTest {
-	private final Logger logger;
 
-	public CacheTest() {
-		logger = new Logger(this);
-	}
+    public CacheTest() {
+    }
 
-	@Test
-	public void start() {
+    @Test
+    public void start() throws Exception {
 
-		try {
-			final Cache cache = new Cache();
-			final AppInterface app = new AppInterface();
-			final URI uri = new URI("xw://localhost/" + new UID());
-			cache.add(app, uri);
+        final Cache cache = new Cache();
+        final AppInterface app = new AppInterface();
+        final URI uri = new URI("xw://localhost/" + new UID());
+        cache.add(app, uri);
 
-			assertTrue(cache.get(uri).equals(app));
-		} catch (final Exception e) {
-			logger.exception(e);
-		}
-	}
+        assertTrue(cache.get(uri).equals(app));
+    }
 }

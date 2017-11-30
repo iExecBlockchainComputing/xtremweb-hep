@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.sql.ResultSet;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -49,6 +50,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 public final class UserInterface extends Table {
+
+	private static final Logger logger = Logger.getLogger(UserInterface.class);
 
 	/**
 	 * This is the database table name This was stored in
@@ -657,7 +660,7 @@ public final class UserInterface extends Table {
 			setOwner((UID) TableColumns.OWNERUID.fromResultSet(rs));
 			setAccessRights((XWAccessRights) TableColumns.ACCESSRIGHTS.fromResultSet(rs));
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 		try {
@@ -1198,7 +1201,7 @@ public final class UserInterface extends Table {
 	public boolean setLogin(String v) {
 		if ((v != null) && (v.length() > USERLOGINLENGTH)) {
 			v = v.substring(0, USERLOGINLENGTH - 1);
-			getLogger().warn("Login too long; truncated to " + v);
+			logger.warn("Login too long; truncated to " + v);
 		}
 		return setValue(Columns.LOGIN, (v == null ? null : v));
 	}
@@ -1265,7 +1268,6 @@ public final class UserInterface extends Table {
 		try {
 			final UserInterface itf = new UserInterface();
 			itf.setUID(UID.getMyUid());
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			if (argv.length > 0) {
 				try {
 					final XMLReader reader = new XMLReader(itf);
@@ -1286,9 +1288,7 @@ public final class UserInterface extends Table {
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.UserInterface [anXMLDescriptionFile]",
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.UserInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 import java.util.Date;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -55,6 +56,9 @@ import xtremweb.security.XWAccessRights;
  * This aims to transfer work through the network too.
  */
 public class WorkInterface extends Table {
+
+	private static final Logger logger = Logger.getLogger(WorkInterface.class);
+
 	/**
 	 * This is the database table name This was stored in
 	 * xtremweb.dispatcher.Work
@@ -1779,7 +1783,7 @@ public class WorkInterface extends Table {
 				setCompletedDate();
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -2052,7 +2056,7 @@ public class WorkInterface extends Table {
 		Date val = d;
 		final Date arrivaldate = getArrivalDate();
 		if ((val != null) && (arrivaldate != null) && (val.before(arrivaldate))) {
-			getLogger().error("completedDate : " + d.toString() + " < " + arrivaldate);
+			logger.error("completedDate : " + d.toString() + " < " + arrivaldate);
 			final Date start = getCompStartDate();
 			final Date end = getCompEndDate();
 			if ((start != null) && (end != null)) {
@@ -2060,7 +2064,7 @@ public class WorkInterface extends Table {
 				if (diff > 0) {
 					val = new Date();
 					val.setTime(val.getTime() + diff);
-					getLogger().warn("completedDate forced to " + val);
+					logger.warn("completedDate forced to " + val);
 				}
 			}
 		}
@@ -2179,14 +2183,11 @@ public class WorkInterface extends Table {
 				} catch (final XMLEndParseException e) {
 				}
 			}
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			itf.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.WorkInterface [anXMLDescriptionFile]",
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.WorkInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

@@ -51,6 +51,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.CPUEnum;
 import xtremweb.common.DataInterface;
 import xtremweb.common.DataTypeEnum;
@@ -70,6 +73,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 class DatasTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(DatasTableModel.class);
 
 	/**
 	 * These defines submission parameters
@@ -304,11 +309,11 @@ class DatasTableModel extends TableModel {
 					getParent().commClient().uploadData(data.getUID(), contentFile);
 				}
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 				JOptionPane.showMessageDialog(getParent(), "Can't send data : " + e, ERROR, JOptionPane.ERROR_MESSAGE);
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		contentFile = null;
 	}
@@ -369,7 +374,7 @@ class DatasTableModel extends TableModel {
 			final UserInterface user = (UserInterface) getParent().commClient().get(uid, false);
 			clone.set(index, user.getLogin());
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return clone;
 	}
@@ -387,7 +392,7 @@ class DatasTableModel extends TableModel {
 			return getParent().commClient().getDatas();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}
@@ -432,7 +437,7 @@ class DatasTableModel extends TableModel {
 			data = (DataInterface) getSelectedRow(selectedRows[0]);
 			dataUid = data.getUID();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			JOptionPane.showMessageDialog(getParent(), e.toString(), WARNING, JOptionPane.WARNING_MESSAGE);
 			getParent().setCursor(null);
 			return;
@@ -452,7 +457,7 @@ class DatasTableModel extends TableModel {
 			}
 			getParent().commClient().downloadData(dataUid, fdata);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			getParent().setTitleNotConnected();
 		}
 		getParent().setCursor(null);

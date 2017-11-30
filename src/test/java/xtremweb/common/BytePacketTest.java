@@ -23,44 +23,34 @@ package xtremweb.common;
  *
  */
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 
-import xtremweb.common.BytePacket;
-import xtremweb.common.Logger;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests XML serialization
- * 
+ * <p>
  * Created: 23 janvier 2013
- * 
+ *
  * @author Oleg Lodygensky
  * @version 8.2.0
  */
 
 public class BytePacketTest {
-	private final Logger logger;
 
-	public BytePacketTest() {
-		logger = new Logger(this);
-	}
+    public BytePacketTest() {
+    }
 
-	@Test
-	public void start() {
+    @Test
+    public void start() throws Exception {
 
-		try {
-			final BytePacket b0 = new BytePacket();
-			final BytePacket b1 = new BytePacket();
+        final BytePacket b0 = new BytePacket();
+        final BytePacket b1 = new BytePacket();
 
-			b0.putInt(12345);
-			b0.putInt(54321);
+        b0.putInt(12345);
+        b0.putInt(54321);
 
-			b1.setData(b0.getData());
-			assertTrue(b0.getData().equals(b1.getData()));
-		} catch (final Exception e) {
-			logger.exception(e);
-		}
-	}
-
+        b1.setData(b0.getData());
+        assertTrue(b0.getData().equals(b1.getData()));
+    }
 }

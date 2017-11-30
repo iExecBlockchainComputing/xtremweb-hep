@@ -44,8 +44,10 @@ import java.util.Vector;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.Base64;
-import xtremweb.common.Logger;
 
 /**
  * A multithreaded, reusable XML-RPC client object. Use this if you need a
@@ -57,13 +59,12 @@ public class XmlRpcClient implements XmlRpcHandler {
 	private URL url;
 	private String auth;
 	private String socketType;
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XmlRpcClient.class);
 
 	/**
 	 * Construct a XML-RPC client with this URL.
 	 */
 	public XmlRpcClient(final URL url) {
-		logger = new Logger(this);
 		this.setUrl(url);
 	}
 

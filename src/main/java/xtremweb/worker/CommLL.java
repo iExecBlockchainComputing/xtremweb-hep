@@ -35,7 +35,8 @@ package xtremweb.worker;
 
 import java.util.Vector;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.communications.IdRpc;
 
 /**
@@ -43,25 +44,25 @@ import xtremweb.communications.IdRpc;
  */
 public class CommLL extends CommQueue {
 
+	private static final Logger logger = Logger.getLogger(CommLL.class);
 	private final Vector<CommEvent> poolQueue;
 	private final Vector<CommEvent> commEventInProgress;
 
 	public CommLL() {
 		poolQueue = new Vector<>(MAX_COMMEVENT_INPROGRESS);
 		commEventInProgress = new Vector<>(MAX_COMMEVENT_INPROGRESS);
-		setLogger(new Logger(this));
 	}
 
 	@Override
 	public void workRequest() {
-		getLogger().info("Added Communcation : WORKREQUEST ");
+		logger.info("Added Communcation : WORKREQUEST ");
 		poolQueue.add(new CommEvent(IdRpc.WORKREQUEST));
 	}
 
 	@Override
 	public void sendResult(final Work w) {
 		try {
-			getLogger().info("Added Communication : SENDRESULT " + w.getUID());
+			logger.info("Added Communication : SENDRESULT " + w.getUID());
 		} catch (final Exception e) {
 		}
 		poolQueue.add(0, new CommEvent(IdRpc.UPLOADDATA, w));
@@ -73,7 +74,7 @@ public class CommLL extends CommQueue {
 	@Override
 	public void sendWork(final Work w) {
 		try {
-			getLogger().info("Added Communication : SENDWORK " + w.getUID());
+			logger.info("Added Communication : SENDWORK " + w.getUID());
 		} catch (final Exception e) {
 		}
 		poolQueue.add(0, new CommEvent(IdRpc.SENDWORK, w));
@@ -81,7 +82,7 @@ public class CommLL extends CommQueue {
 
 	@Override
 	public CommEvent getCommEvent() {
-		getLogger().debug("poolQueue.isEmpty() = " + poolQueue.isEmpty() + ";   commEventInProgress.size ("
+		logger.debug("poolQueue.isEmpty() = " + poolQueue.isEmpty() + ";   commEventInProgress.size ("
 				+ commEventInProgress.size() + ") > " + MAX_COMMEVENT_INPROGRESS);
 		if (poolQueue.isEmpty() || (commEventInProgress.size() > MAX_COMMEVENT_INPROGRESS)) {
 			return null;
@@ -106,5 +107,4 @@ public class CommLL extends CommQueue {
 	public int size(final int type) {
 		return poolQueue.size();
 	}
-
-}// CommPool
+}

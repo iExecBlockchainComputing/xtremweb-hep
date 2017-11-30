@@ -32,12 +32,6 @@ import java.io.FileOutputStream;
 
 import org.junit.Test;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.StreamIO;
-import xtremweb.common.Table;
-import xtremweb.common.UID;
-import xtremweb.common.XMLReader;
 
 /**
  * This tests XML serialization
@@ -49,7 +43,6 @@ import xtremweb.common.XMLReader;
  */
 
 public abstract class TableInterfaceTest {
-	private final Logger logger;
 	/**
 	 * This is written to disk
 	 */
@@ -60,7 +53,6 @@ public abstract class TableInterfaceTest {
 	private Table itf2;
 
 	protected TableInterfaceTest() {
-		logger = new Logger(this);
 		setItf(null);
 		setItf2(null);
 	}
@@ -76,7 +68,6 @@ public abstract class TableInterfaceTest {
 			final FileOutputStream fout = new FileOutputStream(temp);
 			final DataOutputStream out = new DataOutputStream(fout);
 			getItf().setUID(UID.getMyUid());
-			getItf().setLoggerLevel(LoggerLevel.DEBUG);
 			getItf().setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(out);
 			writer.write(getItf());
@@ -86,7 +77,6 @@ public abstract class TableInterfaceTest {
 			getItf2().setDUMPNULLS(true);
 			assertTrue(getItf().toXml().equals(getItf2().toXml()));
 		} catch (final Exception e) {
-			logger.exception(e);
 			assert(false);
 		}
 	}

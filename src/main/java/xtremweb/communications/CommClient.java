@@ -59,8 +59,8 @@ import xtremweb.common.Cache;
 import xtremweb.common.DataInterface;
 import xtremweb.common.GroupInterface;
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.MileStone;
 import xtremweb.common.SessionInterface;
 import xtremweb.common.StatusEnum;
@@ -77,7 +77,6 @@ import xtremweb.common.XMLHashtable;
 import xtremweb.common.XMLReader;
 import xtremweb.common.XMLValue;
 import xtremweb.common.XMLVector;
-import xtremweb.common.XMLable;
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
@@ -85,14 +84,7 @@ import xtremweb.security.XWAccessRights;
 
 public abstract class CommClient implements ClientAPI {
 
-	private final Logger logger;
-
-	/**
-	 * @since 7.0.0
-	 */
-	public void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-	}
+	private static final Logger logger = Logger.getLogger(CommClient.class);
 
 	/**
 	 * This is the cache where download object are cached
@@ -116,13 +108,6 @@ public abstract class CommClient implements ClientAPI {
 	 * This contains configuration
 	 */
 	private static XWConfigurator config = null;
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
 
 	/**
 	 * This is max amount of times we try on socket time out exception
@@ -163,7 +148,7 @@ public abstract class CommClient implements ClientAPI {
 	 * @see xtremweb.communications.URI#URI(String, UID)
 	 */
 	public URI newURI(final UID uid) throws URISyntaxException {
-		logger.finest("CommClient#newURI " + config.getCurrentDispatcher() + ":" + getPort() + "/" + uid);
+		logger.trace("CommClient#newURI " + config.getCurrentDispatcher() + ":" + getPort() + "/" + uid);
 		final URI ret = new URI(config.getCurrentDispatcher(), uid);
 		return ret;
 	}
@@ -265,7 +250,6 @@ public abstract class CommClient implements ClientAPI {
 	 * to false
 	 */
 	protected CommClient() {
-		logger = new Logger(this);
 		mileStone = new MileStone(getClass());
 		nbMessages = 0;
 		autoClose = true;
@@ -318,7 +302,7 @@ public abstract class CommClient implements ClientAPI {
 			try {
 				addHandler(key, value);
 			} catch (final Exception e) {
-				new Logger().exception("Init comm layers: ignoring (" + key + ", " + value + ")", e);
+				logger.error("Caught exception, Init comm layers: ignoring (" + key + ", " + value + ")", e);
 			}
 		}
 
@@ -338,7 +322,7 @@ public abstract class CommClient implements ClientAPI {
 				addHandler(Connection.httpsScheme(), Connection.HTTPPORT.layer());
 			}
 		} catch (final Exception e) {
-			new Logger().exception(e);
+			logger.error("Caught exception: ", e);
 			XWTools.fatal("init comm layers : " + e);
 		}
 	}
@@ -432,7 +416,7 @@ public abstract class CommClient implements ClientAPI {
 			if (cmd.getUser() == null) {
 				cmd.setUser(config.getUser());
 			}
-			logger.finest("sendCommand " + cmd.toXml());
+			logger.trace("sendCommand " + cmd.toXml());
 
 			write(cmd);
 			++nbMessages;
@@ -1233,7 +1217,7 @@ public abstract class CommClient implements ClientAPI {
 
 		final Vector<XMLValue> apps = (Vector<XMLValue>) getApps().getXmlValues();
 		try {
-			logger.finest("commClient#getApp(" + name + ") vector.size = " + apps.size() + " " + apps.toString());
+			logger.trace("commClient#getApp(" + name + ") vector.size = " + apps.size() + " " + apps.toString());
 
 			for (int i = 0; i < apps.size(); i++) {
 
@@ -1972,7 +1956,7 @@ public abstract class CommClient implements ClientAPI {
 			sendCommand(command);
 			newXMLVector();
 		} catch (final SAXException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		} finally {
 			close();
 		}
@@ -2169,7 +2153,7 @@ public abstract class CommClient implements ClientAPI {
 			sendCommand(command);
 			xmlv = newXMLVector();
 		} catch (final IOException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			ioe = e;
 		} finally {
 			close();
@@ -2662,8 +2646,7 @@ public abstract class CommClient implements ClientAPI {
 			if (work.getStatus() == status) {
 				return work;
 			}
-			getLogger()
-					.debug("Sleeping " + Math.max(100, Integer.parseInt(config.getProperty(XWPropertyDefs.TIMEOUT))));
+			logger.debug("Sleeping " + Math.max(100, Integer.parseInt(config.getProperty(XWPropertyDefs.TIMEOUT))));
 			Thread.sleep(Math.max(100, Integer.parseInt(config.getProperty(XWPropertyDefs.TIMEOUT))));
 		}
 	}

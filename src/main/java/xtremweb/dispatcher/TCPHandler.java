@@ -41,8 +41,10 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.SSLSocket;
 import javax.security.auth.x500.X500Principal;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.BytePacket;
-import xtremweb.common.Logger;
 import xtremweb.common.MD5;
 import xtremweb.common.OSEnum;
 import xtremweb.common.StreamIO;
@@ -70,6 +72,7 @@ import xtremweb.security.PEMPublicKeyValidator;
 
 public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 
+	private static final Logger logger = Logger.getLogger(TCPHandler.class);
 	private SSLSocket sslSocket = null;
 	private Socket socket = null;
 	private StreamIO io;
@@ -157,12 +160,11 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 		setRemotePort(s.getPort());
 
 		final XWConfigurator config = getConfig();
-		final Logger logger = getLogger();
 
 		try {
 			s.setSoTimeout(config.getInt(XWPropertyDefs.SOTIMEOUT));
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		final boolean net = Boolean.parseBoolean(config.getProperty(XWPropertyDefs.OPTIMIZENETWORK));
@@ -173,7 +175,7 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 				s.setTrafficClass(0x08); // maximize throughput
 				s.setKeepAlive(false); // don't keep alive
 			} catch (final Exception e) {
-				logger.exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 	}
@@ -206,15 +208,12 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	@Override
 	protected void write(final XMLable cmd) throws IOException {
-		final Logger logger = getLogger();
 
 		try {
 			mileStone("<write>");
 			writer.writeWithTags(cmd);
 		} catch (final Exception e) {
-			if (logger.debug()) {
-				logger.exception(e);
-			}
+			logger.error("Caught exception: ", e);
 			final String str = e.toString();
 			mileStone("<error method='write' msg='" + e.getMessage() + "' />");
 			throw new IOException(str);
@@ -249,12 +248,11 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	@Override
 	public synchronized void readFile(final File f) throws IOException {
-		final Logger logger = getLogger();
 		try {
 			mileStone("<readFile file='" + f + "'>");
 			io.readFile(f);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			final String str = e.getMessage();
 			mileStone("<error method='readFile' msg='" + e.getMessage() + "' />");
 			throw new IOException(str);
@@ -269,7 +267,6 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 	 */
 	private synchronized void waitSocket() {
 
-		final Logger logger = getLogger();
 		while ((socket == null) && (sslSocket == null)) {
 			try {
 				logger.debug("TCPHandler is waiting");
@@ -346,7 +343,7 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 							} catch (final Exception e) {
 								throw new AccessControlException("Certificate challenge error : " + e.getMessage());
 							}
-							getLogger().debug("cert.getIssuerX500Principal().getName() "
+							logger.debug("cert.getIssuerX500Principal().getName() "
 									+ cert.getIssuerX500Principal().getName());
 
 							principal = cert.getSubjectX500Principal();
@@ -402,7 +399,7 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 				} while (cmd != null);
 
 			} catch (final Exception e) {
-				getLogger().debug(remoteAddresse() + " end of communication : " + e.getMessage());
+				logger.debug(remoteAddresse() + " end of communication : " + e.getMessage());
 			} finally {
 				close();
 				this.socket = null;
@@ -430,9 +427,9 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 				sslSocket.close();
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='close' msg='" + e.getMessage() + "' />");
-			getLogger().exception("close error", e);
+			logger.error("Caught exception, close error", e);
 		} finally {
 			io = null;
 			writer = null;

@@ -29,13 +29,13 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
 import xtremweb.worker.StreamPiper;
 
 public class XWExecPureJava implements XWExec {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XWExecPureJava.class);
 	private Process workProcess = null;
 	private boolean isRunning = false;
 
@@ -46,10 +46,8 @@ public class XWExecPureJava implements XWExec {
 	private OutputStream stderrFile;
 	private InputStream stdinFile = null;
 
-	public XWExecPureJava(final LoggerLevel l) {
+	public XWExecPureJava() {
 		init();
-		logger = new Logger(this);
-		logger.setLoggerLevel(l);
 	}
 
 	@Override

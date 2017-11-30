@@ -23,7 +23,8 @@
 
 package xtremweb.dispatcher;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWPropertyDefs;
 
 /**
@@ -32,7 +33,7 @@ import xtremweb.common.XWPropertyDefs;
  */
 
 public abstract class TaskSet extends Thread {
-	private Logger logger;
+	private static final Logger logger = Logger.getLogger(TaskSet.class);
 	/**
 	 * This stores the tasks set status
 	 *
@@ -45,7 +46,6 @@ public abstract class TaskSet extends Thread {
 	 */
 	public TaskSet() {
 		super("TaskSet");
-		setLogger(new Logger(this));
 	}
 
 	/**
@@ -92,22 +92,7 @@ public abstract class TaskSet extends Thread {
 				sleep(timeout);
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
-	}
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
 	}
 }

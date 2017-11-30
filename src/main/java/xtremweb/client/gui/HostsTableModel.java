@@ -23,7 +23,7 @@
 
 /**
  * HostsTableModel.java
- *
+ * <p>
  * Purpose : This is the table model to display XtremWeb workers informations
  * Created : 18 Avril 2006
  *
@@ -41,6 +41,9 @@ import java.util.Vector;
 
 import javax.swing.JButton;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.HostInterface;
 import xtremweb.common.Table;
 import xtremweb.common.TableColumns;
@@ -55,184 +58,186 @@ import xtremweb.common.XMLVector;
 
 class HostsTableModel extends TableModel {
 
-	/**
-	 * This is the activate button label, alos used as key in hashtable
-	 */
-	public static final String ACTIVATE_LABEL = "Activate";
-	/**
-	 * This is the activate button
-	 */
-	private JButton activateButton;
+    private static final Logger logger = Logger.getLogger(HostsTableModel.class);
 
-	/**
-	 * This is the default constructor.
-	 */
-	public HostsTableModel(final MainFrame p) {
-		this(p, true);
-	}
+    /**
+     * This is the activate button label, alos used as key in hashtable
+     */
+    public static final String ACTIVATE_LABEL = "Activate";
+    /**
+     * This is the activate button
+     */
+    private JButton activateButton;
 
-	/**
-	 * This is a constructor.
-	 *
-	 * @param detail
-	 *            tells whether to add a last column to get details
-	 */
-	public HostsTableModel(final MainFrame p, final boolean detail) {
-		super(p, new HostInterface(), detail);
-		activateButton = null;
-	}
+    /**
+     * This is the default constructor.
+     */
+    public HostsTableModel(final MainFrame p) {
+        this(p, true);
+    }
 
-	/**
-	 * This creates new JButton
-	 *
-	 * @return a Vector of JButton
-	 */
-	@Override
-	public Hashtable getButtons() {
+    /**
+     * This is a constructor.
+     *
+     * @param detail
+     *            tells whether to add a last column to get details
+     */
+    public HostsTableModel(final MainFrame p, final boolean detail) {
+        super(p, new HostInterface(), detail);
+        activateButton = null;
+    }
 
-		final Hashtable ret = super.getButtons();
+    /**
+     * This creates new JButton
+     *
+     * @return a Vector of JButton
+     */
+    @Override
+    public Hashtable getButtons() {
 
-		if (activateButton == null) {
-			activateButton = new JButton(ACTIVATE_LABEL);
-			activateButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(final ActionEvent e) {
-					activate();
-				}
-			});
-			activateButton.setEnabled(getParent().privileged());
-		}
+        final Hashtable ret = super.getButtons();
 
-		ret.put(ACTIVATE_LABEL, activateButton);
+        if (activateButton == null) {
+            activateButton = new JButton(ACTIVATE_LABEL);
+            activateButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(final ActionEvent e) {
+                    activate();
+                }
+            });
+            activateButton.setEnabled(getParent().privileged());
+        }
 
-		ret.remove(ADD_LABEL);
+        ret.put(ACTIVATE_LABEL, activateButton);
 
-		return ret;
-	}
+        ret.remove(ADD_LABEL);
 
-	/**
-	 * This adds a host
-	 */
-	@Override
-	public void add() {
-		getLogger().error("host add is not implemented");
-	}
+        return ret;
+    }
 
-	/**
-	 * This views a host
-	 */
-	@Override
-	public void view() {
-		super.view("Host viewer", "ACTIVE flag is set on server side: only ACTIVE workers may receive jobs\n"
-				+ "AVAILABLE flas is set by the worker itself, accordingly to its local policy (mouse/keyboard...)");
-	}
+    /**
+     * This adds a host
+     */
+    @Override
+    public void add() {
+        logger.error("host add is not implemented");
+    }
 
-	/**
-	 * This replaces UID by human readable columns
-	 */
-	@Override
-	protected Vector getViewableRow(final Vector row) {
-		final Vector clone = (Vector) row.clone();
-		try {
-			final int index = TableColumns.OWNERUID.getOrdinal();
-			final UID uid = (UID) clone.elementAt(index);
-			final UserInterface user = (UserInterface) getParent().commClient().get(uid, false);
-			clone.set(index, user.getLogin());
-		} catch (final Exception e) {
-			getLogger().exception(e);
-		}
-		return clone;
-	}
+    /**
+     * This views a host
+     */
+    @Override
+    public void view() {
+        super.view("Host viewer", "ACTIVE flag is set on server side: only ACTIVE workers may receive jobs\n"
+                + "AVAILABLE flas is set by the worker itself, accordingly to its local policy (mouse/keyboard...)");
+    }
 
-	/**
-	 * This de/activates a host
-	 */
-	public void activate() {
-		getLogger().error("host activate is not implemented");
-	}
+    /**
+     * This replaces UID by human readable columns
+     */
+    @Override
+    protected Vector getViewableRow(final Vector row) {
+        final Vector clone = (Vector) row.clone();
+        try {
+            final int index = TableColumns.OWNERUID.getOrdinal();
+            final UID uid = (UID) clone.elementAt(index);
+            final UserInterface user = (UserInterface) getParent().commClient().get(uid, false);
+            clone.set(index, user.getLogin());
+        } catch (final Exception e) {
+            logger.error("Caught exception: ", e);
+        }
+        return clone;
+    }
 
-	/**
-	 * This retreives a Vector of worker UID from server
-	 *
-	 * @return an empty vector on error
-	 * @see xtremweb.communications.CommAPI#getHosts()
-	 */
-	@Override
-	public XMLVector getRows() throws ConnectException {
-		try {
-			getParent().setTitleConnected();
-			return getParent().commClient().getHosts();
-		} catch (final Exception e) {
-			getParent().setTitleNotConnected();
-			getLogger().exception(e);
-			throw new ConnectException(e.toString());
-		}
-	}
+    /**
+     * This de/activates a host
+     */
+    public void activate() {
+        logger.error("host activate is not implemented");
+    }
 
-	/**
-	 * This retreives an host from server
-	 *
-	 * @return an HostInterface or null on error
-	 * @see xtremweb.communications.CommAPI#getWorker(UID)
-	 */
-	@Override
-	public Table getRow(final UID uid) throws ConnectException {
-		try {
-			getParent().setTitleConnected();
-			final HostInterface host = (HostInterface) getParent().commClient().get(uid);
-			if (host == null) {
-				return null;
-			}
-			//
-			// Next forces boolean attributes to their default value, if not set
-			// Otherwise HostInterface#values[] are null
-			// and JTable generates an exception
-			//
-			host.isTracing();
-			host.isActive();
-			host.isAvailable();
+    /**
+     * This retreives a Vector of worker UID from server
+     *
+     * @return an empty vector on error
+     * @see xtremweb.communications.CommAPI#getHosts()
+     */
+    @Override
+    public XMLVector getRows() throws ConnectException {
+        try {
+            getParent().setTitleConnected();
+            return getParent().commClient().getHosts();
+        } catch (final Exception e) {
+            getParent().setTitleNotConnected();
+            logger.error("Caught exception: ", e);
+            throw new ConnectException(e.toString());
+        }
+    }
 
-			return host;
-		} catch (final Exception e) {
-			getParent().setTitleNotConnected();
-			getLogger().exception(e);
-			throw new ConnectException(e.toString());
-		}
-	}
+    /**
+     * This retreives an host from server
+     *
+     * @return an HostInterface or null on error
+     * @see xtremweb.communications.CommAPI#getWorker(UID)
+     */
+    @Override
+    public Table getRow(final UID uid) throws ConnectException {
+        try {
+            getParent().setTitleConnected();
+            final HostInterface host = (HostInterface) getParent().commClient().get(uid);
+            if (host == null) {
+                return null;
+            }
+            //
+            // Next forces boolean attributes to their default value, if not set
+            // Otherwise HostInterface#values[] are null
+            // and JTable generates an exception
+            //
+            host.isTracing();
+            host.isActive();
+            host.isAvailable();
 
-	/**
-	 * This called when Commit button is clicked; it sends all hosts
-	 * informations to XW server.
-	 */
-	public void onCommitClicked() {
+            return host;
+        } catch (final Exception e) {
+            getParent().setTitleNotConnected();
+            logger.error("Caught exception: ", e);
+            throw new ConnectException(e.toString());
+        }
+    }
 
-		final HostInterface.Columns column = HostInterface.Columns.TRACES;
-		final Hashtable tracerHosts = new Hashtable();
-		final Hashtable activatedHosts = new Hashtable();
+    /**
+     * This called when Commit button is clicked; it sends all hosts
+     * informations to XW server.
+     */
+    public void onCommitClicked() {
 
-		for (int row = 0; row < getRowCount(); row++) {
+        final HostInterface.Columns column = HostInterface.Columns.TRACES;
+        final Hashtable tracerHosts = new Hashtable();
+        final Hashtable activatedHosts = new Hashtable();
 
-			final String hostName = (String) getValueAt(row, HostInterface.Columns.NAME.ordinal());
-			final Boolean trace = (Boolean) getValueAt(row, HostInterface.Columns.TRACES.ordinal());
-			final Boolean active = (Boolean) getValueAt(row, HostInterface.Columns.ACTIVE.ordinal());
+        for (int row = 0; row < getRowCount(); row++) {
 
-			activatedHosts.put(hostName, active);
-			tracerHosts.put(hostName, trace);
+            final String hostName = (String) getValueAt(row, HostInterface.Columns.NAME.ordinal());
+            final Boolean trace = (Boolean) getValueAt(row, HostInterface.Columns.TRACES.ordinal());
+            final Boolean active = (Boolean) getValueAt(row, HostInterface.Columns.ACTIVE.ordinal());
 
-		}
+            activatedHosts.put(hostName, active);
+            tracerHosts.put(hostName, trace);
 
-		try {
-			getLogger().error("traceWorkers() error");
-		} catch (final Exception e) {
-			getLogger().exception("traceWorkers()", e);
-		}
+        }
 
-		try {
-			getLogger().error("activateWorkers() error");
-		} catch (final Exception e) {
-			getLogger().exception("activateWorkers()", e);
-		}
+        try {
+            logger.error("traceWorkers() error");
+        } catch (final Exception e) {
+            logger.error("Caught exception, traceWorkers():", e);
+        }
 
-	}
+        try {
+            logger.error("activateWorkers() error");
+        } catch (final Exception e) {
+            logger.error("Caught exception, activateWorkers():", e);
+        }
+
+    }
 
 }

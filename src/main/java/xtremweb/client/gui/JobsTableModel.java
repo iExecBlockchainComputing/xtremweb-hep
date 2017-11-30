@@ -50,6 +50,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.DataInterface;
 import xtremweb.common.GroupInterface;
@@ -95,6 +98,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 class JobsTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(JobsTableModel.class);
 
 	/**
 	 * This is used in the application drop down menu
@@ -207,7 +212,7 @@ class JobsTableModel extends TableModel {
 					refresh();
 				} catch (final ConnectException ex) {
 					getParent().setTitleNotConnected();
-					getLogger().exception(ex);
+					logger.error("Caught exception: ", ex);
 				}
 			}
 		});
@@ -242,7 +247,7 @@ class JobsTableModel extends TableModel {
 			return getParent().commClient().getWorks();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}
@@ -277,12 +282,12 @@ class JobsTableModel extends TableModel {
 		try {
 			final WorkInterface work = (WorkInterface) getParent().commClient().get(uid, true);
 			if (work == null) {
-				getLogger().error("can't find any work " + uid);
+				logger.error("can't find any work " + uid);
 				return null;
 			}
 
 			if ((refreshSelectedIndex != StatusEnum.ANY) && (refreshSelectedIndex != work.getStatus())) {
-				getLogger().info("can't find any work with the given status " + work.getStatus());
+				logger.info("can't find any work with the given status " + work.getStatus());
 				return null;
 			}
 
@@ -295,7 +300,7 @@ class JobsTableModel extends TableModel {
 			try {
 				user = (UserInterface) getParent().commClient().get(work.getOwner());
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 
 			GroupInterface group = null;
@@ -323,7 +328,7 @@ class JobsTableModel extends TableModel {
 
 			return row;
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			return null;
 		}
 	}
@@ -354,7 +359,7 @@ class JobsTableModel extends TableModel {
 			final Table job = getRow(row.getUID(), true);
 			return new ViewDialog(getParent(), title, job.columns(false), job.toVector(), editable);
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return null;
 	}
@@ -389,14 +394,14 @@ class JobsTableModel extends TableModel {
 
 		currentDir = fc.getSelectedFile();
 
-		getLogger().debug("result currentDir = " + currentDir);
-		getLogger().debug("result filename = " + fc.getName());
+		logger.debug("result currentDir = " + currentDir);
+		logger.debug("result filename = " + fc.getName());
 
 		if ((confirm == JFileChooser.CANCEL_OPTION) && (currentDir == null)) {
 			return;
 		}
 
-		getLogger().debug("result currentDir = " + currentDir);
+		logger.debug("result currentDir = " + currentDir);
 
 		getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -563,7 +568,7 @@ class JobsTableModel extends TableModel {
 
 				finished = true;
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 				JOptionPane.showMessageDialog(getParent(), "Can't send job : " + e, ERROR, JOptionPane.ERROR_MESSAGE);
 				vdialog.setVisible(true);
 			}
@@ -652,7 +657,7 @@ class JobsTableModel extends TableModel {
 			tm.refresh();
 		} catch (final ConnectException e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			return;
 		}
 

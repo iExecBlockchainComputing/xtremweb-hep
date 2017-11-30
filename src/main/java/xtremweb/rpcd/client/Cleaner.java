@@ -34,9 +34,12 @@ package xtremweb.rpcd.client;
 
 import java.util.Vector;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.XWReturnCode;
 import xtremweb.communications.CommClient;
 
 /**
@@ -44,7 +47,8 @@ import xtremweb.communications.CommClient;
  */
 public class Cleaner extends Thread {
 
-	Logger logger;
+	private static final Logger logger = Logger.getLogger(Cleaner.class);
+
 	/**
 	 * Communication channel
 	 */
@@ -65,19 +69,19 @@ public class Cleaner extends Thread {
 	protected Cleaner(final XWConfigurator c, final Callback cb) {
 
 		super("Cleaner");
-		logger = new Logger(c.getLoggerLevel());
-
 		callback = cb;
 
 		try {
 			comm = (CommClient) Class.forName(c.getProperty(XWPropertyDefs.COMMLAYER)).newInstance();
 			CommClient.setConfig(c);
 		} catch (final Exception e) {
-			logger.fatal("Can't init comm :  " + e);
+			logger.error("Can't init comm :  " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 
 		if (comm == null) {
-			logger.fatal("Can't init comm");
+			logger.error("Can't init comm");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 

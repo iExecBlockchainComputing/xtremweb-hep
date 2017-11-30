@@ -23,49 +23,36 @@
 
 package xtremweb.dispatcher;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.AccessControlException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import org.expressme.openid.Authentication;
+import org.expressme.openid.OpenIdException;
+import org.apache.log4j.Logger;
+
+import xtremweb.common.MD5;
+import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.XWTools;
+import xtremweb.communications.Connection;
+import xtremweb.dispatcher.HTTPOAuthHandler.OAuthException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.expressme.openid.Authentication;
-import org.expressme.openid.OpenIdException;
-import org.expressme.openid.OpenIdManager;
-
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.github.scribejava.core.oauth.OAuthService;
-
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
-import xtremweb.common.MD5;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
-import xtremweb.communications.Connection;
-import xtremweb.dispatcher.HTTPOAuthHandler.OAuthException;
-import xtremweb.dispatcher.HTTPOAuthHandler.Operator;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.AccessControlException;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
  * This handles HTTP request to /jwt/ This accepts and verifies
@@ -77,7 +64,7 @@ import xtremweb.dispatcher.HTTPOAuthHandler.Operator;
 
 public abstract class HTTPJWTHandler extends Thread implements org.eclipse.jetty.server.Handler {
 
-	protected Logger logger;
+	private static final Logger logger = Logger.getLogger(HTTPJWTHandler.class);
 
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
@@ -141,7 +128,6 @@ public abstract class HTTPJWTHandler extends Thread implements org.eclipse.jetty
 			return;
 		}
 		loginTimeout = Dispatcher.getConfig().getInt(XWPropertyDefs.LOGINTIMEOUT) * 1000;
-		logger = new Logger(this);
 		try {
 			localRootUrl = new URL(Connection.HTTPSSLSCHEME + "://" + XWTools.getLocalHostName() + ":"
 					+ Dispatcher.getConfig().getPort(Connection.HTTPSPORT));
@@ -156,19 +142,6 @@ public abstract class HTTPJWTHandler extends Thread implements org.eclipse.jetty
 				.withIssuer(jwtethissuer)
 				.build();
 		instance = this;
-	}
-
-	/**
-	 * This constructor call the default constructor and sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 * @throws UnsupportedEncodingException 
-	 * @throws IllegalArgumentException 
-	 */
-	public HTTPJWTHandler(LoggerLevel l) throws IllegalArgumentException, UnsupportedEncodingException {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -324,7 +297,7 @@ public abstract class HTTPJWTHandler extends Thread implements org.eclipse.jetty
 					"<html><head><title>OpenId delegation error</title></head><body><h1>OpenId delegation error</h1><p>Error message: "
 							+ e.getMessage()
 							+ "</p><p>Please contact the administrator of this XtremWeb-HEP server</p></body></html>");
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		response.getWriter().flush();

@@ -25,6 +25,7 @@ package xtremweb.database;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.StatusEnum;
 import xtremweb.common.Table;
@@ -54,6 +55,8 @@ import xtremweb.common.WorkInterface;
  * @since 5.8.0
  */
 public class SQLRequestUserWorksCount extends Table {
+
+	private static final Logger logger = Logger.getLogger(SQLRequestUserWorksCount.class);
 
 	private static final String TABLENAME = WorkInterface.TABLENAME;
 	/**
@@ -159,7 +162,7 @@ public class SQLRequestUserWorksCount extends Table {
 		try {
 			setWorksCount(rs.getInt(Columns.WORKSCOUNT.toString()));
 		} catch (final Exception e) {
-			getLogger().warn("can't find works count from result set");
+			logger.warn("can't find works count from result set");
 			setWorksCount(0);
 		}
 		try {

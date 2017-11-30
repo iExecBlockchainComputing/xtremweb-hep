@@ -40,6 +40,7 @@ import java.util.Vector;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -47,7 +48,6 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import xtremweb.common.Base64;
-import xtremweb.common.Logger;
 import xtremweb.common.XWTools;
 
 /**
@@ -64,6 +64,8 @@ import xtremweb.common.XWTools;
  */
 
 public abstract class XmlRpc extends DefaultHandler {
+
+	private static final Logger logger = Logger.getLogger(XmlRpc.class);
 
 	public static final String version = "helma XML-RPC 1.0";
 
@@ -150,23 +152,6 @@ public abstract class XmlRpc extends DefaultHandler {
 
 	private static String keyStoreFile;
 	private static String passPhrase;
-
-	private Logger logger;
-
-	/**
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *            the logger to set
-	 */
-	public void setLogger(final Logger logger) {
-		this.logger = logger;
-	}
 
 	public static final String types[] = { "String", "Integer", "Boolean", "Double", "Date", "Base64", "Struct",
 			"Array", "Nil" };

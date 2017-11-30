@@ -34,6 +34,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.rmi.RemoteException;
 import java.util.Iterator;
 import java.util.Set;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
@@ -44,6 +45,7 @@ import org.eclipse.jetty.server.Handler;
 
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.XWReturnCode;
 
 /**
  * <p>
@@ -61,6 +63,8 @@ import xtremweb.common.XWPropertyDefs;
  */
 
 public class TCPServer extends CommServer {
+
+	private static final Logger logger = Logger.getLogger(TCPServer.class);
 
 	/**
 	 * This is this thread name if client auth is expected
@@ -168,7 +172,7 @@ public class TCPServer extends CommServer {
 			final File keyFile = prop.getKeyStoreFile();
 
 			if ((keyFile == null) || !keyFile.exists()) {
-				getLogger().warn("unsecured communications : not using SSL");
+				logger.warn("unsecured communications : not using SSL");
 				if (nio) {
 					nioSocketServer = ServerSocketChannel.open();
 					nioSocketServer.configureBlocking(false);
@@ -190,8 +194,9 @@ public class TCPServer extends CommServer {
 
 					nio = false;
 				} catch (final Exception e) {
-					getLogger().exception(e);
-					getLogger().fatal("Can't init SSL : " + e.toString());
+					logger.error("Caught exception: ", e);
+					logger.error("Can't init SSL : " + e.toString());
+					System.exit(XWReturnCode.FATAL.ordinal());
 				}
 			}
 
@@ -202,7 +207,8 @@ public class TCPServer extends CommServer {
 				}
 			});
 		} catch (final Exception e) {
-			getLogger().fatal(getName() + ": could not listen on port " + getPort() + " : " + e);
+			logger.error(getName() + ": could not listen on port " + getPort() + " : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -215,7 +221,7 @@ public class TCPServer extends CommServer {
 	@Override
 	public void run() {
 
-		getLogger().info("started, listening on port : " + getPort());
+		logger.info("started, listening on port : " + getPort());
 		int loop = 0;
 
 		while (true) {
@@ -256,7 +262,7 @@ public class TCPServer extends CommServer {
 				} else {
 					SSLSocket socket = null;
 
-					getLogger().debug(msgWithRemoteAddresse("Connection management : accepting (" + getId() + ")"));
+					logger.debug(msgWithRemoteAddresse("Connection management : accepting (" + getId() + ")"));
 					try {
 						socket = (SSLSocket) sslSocketServer.accept();
 						socket.setSoTimeout(getConfig().getInt(XWPropertyDefs.SOTIMEOUT));
@@ -266,7 +272,7 @@ public class TCPServer extends CommServer {
 					} catch (final Exception e) {
 						setRemoteName(null);
 						setRemoteIP(null);
-						getLogger().exception(e);
+						logger.error("Caught exception: ", e);
 						break;
 					}
 					CommHandler h = popConnection();
@@ -274,7 +280,8 @@ public class TCPServer extends CommServer {
 						h.setCommServer(this);
 						h.setSocket(socket);
 					} catch (final Exception e) {
-						getLogger().exception(msgWithRemoteAddresse("new connection exception"), e);
+						logger.error(msgWithRemoteAddresse("new connection exception"));
+						logger.error("Caught exception: ", e);
 						socket.close();
 						h.resetSockets();
 						pushConnection(h);
@@ -286,7 +293,7 @@ public class TCPServer extends CommServer {
 					}
 				}
 			} catch (final Exception e) {
-				getLogger().exception(e);
+				logger.error("Caught exception: ", e);
 			}
 		}
 
@@ -298,14 +305,14 @@ public class TCPServer extends CommServer {
 	 */
 	protected void cleanup() {
 		try {
-			getLogger().debug("cleanup");
+			logger.debug("cleanup");
 			if (nio) {
 				nioSocketServer.close();
 			} else {
 				sslSocketServer.close();
 			}
 		} catch (final Exception e) {
-			getLogger().error("can't clean up");
+			logger.error("can't clean up");
 		}
 	}
 

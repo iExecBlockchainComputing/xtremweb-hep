@@ -35,6 +35,7 @@ package xtremweb.rpcd.client;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.XWConfigurator;
 import xtremweb.communications.Connection;
@@ -66,6 +67,8 @@ import xtremweb.communications.Connection;
  *
  */
 public class rpcudp extends rpc {
+
+	private static final Logger logger = Logger.getLogger(rpcudp.class);
 
 	/**
 	 * This is the Socket to accept client requests
@@ -99,20 +102,20 @@ public class rpcudp extends rpc {
 			clientSocket = new DatagramSocket(port);
 			System.out.println("XtremWeb for SunRPC listening on UDP port: " + clientSocket.getLocalPort());
 		} catch (final IOException e) {
-			getLogger().warn("Could not listen on UDP port " + port + ". xtremweb.rpcd.client.rpcudp stops now.");
+			logger.warn("Could not listen on UDP port " + port + ". xtremweb.rpcd.client.rpcudp stops now.");
 			throw new IllegalThreadStateException("Could not listen on UDP port " + port);
 		}
 
 		while (true) {
 
 			try {
-				getLogger().debug("accepting...");
+				logger.debug("accepting...");
 
 				// byte[] buf = new byte [BUFSIZE];
 				final DatagramPacket packet = new DatagramPacket(buf, buf.length);
 				clientSocket.receive(packet);
 
-				getLogger().debug("accepted...");
+				logger.debug("accepted...");
 
 				/*
 				 * byte[] datas = packet.getData (); int [] integers =
@@ -138,11 +141,7 @@ public class rpcudp extends rpc {
 					 */
 				}
 			} catch (final Exception e) {
-				e.printStackTrace();
-				getLogger().error("connect() exception " + e);
-				if (getLogger().debug()) {
-					e.printStackTrace();
-				}
+				logger.error("Caught exception, connect() exception " + e);
 			}
 		}
 	}

@@ -23,19 +23,17 @@
 
 package xtremweb.dispatcher;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import org.eclipse.jetty.server.Request;
+import org.apache.log4j.Logger;
+
+import xtremweb.communications.XWPostParams;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
-
-import org.eclipse.jetty.server.Request;
-
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
-
-import xtremweb.common.LoggerLevel;
-import xtremweb.communications.XWPostParams;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * This handles HTTP request to /ethauth/. This accepts and verifies ethereum
@@ -46,6 +44,8 @@ import xtremweb.communications.XWPostParams;
  */
 
 public class HTTPJWTEthereumAuthHandler extends HTTPJWTHandler {
+
+	private static final Logger logger = Logger.getLogger(HTTPJWTEthereumAuthHandler.class);
 
 	public static final String handlerPath = "/ethauth";
 	/**
@@ -73,19 +73,6 @@ public class HTTPJWTEthereumAuthHandler extends HTTPJWTHandler {
 	 */
 	public HTTPJWTEthereumAuthHandler() throws IllegalArgumentException, UnsupportedEncodingException {
 		super("HTTPEthereumAuthHandler");
-	}
-
-	/**
-	 * This constructor call the default constructor and sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 * @throws UnsupportedEncodingException
-	 * @throws IllegalArgumentException
-	 */
-	public HTTPJWTEthereumAuthHandler(LoggerLevel l) throws IllegalArgumentException, UnsupportedEncodingException {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**

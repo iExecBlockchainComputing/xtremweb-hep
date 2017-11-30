@@ -26,27 +26,14 @@ package xtremweb.client;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Vector;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import xtremweb.common.CommandLineOptions;
-import xtremweb.common.CommandLineParser;
-import xtremweb.common.DataInterface;
-import xtremweb.common.DataTypeEnum;
-import xtremweb.common.Logger;
-import xtremweb.common.MD5;
-import xtremweb.common.MileStone;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.UID;
-import xtremweb.common.WorkInterface;
-import xtremweb.common.XMLObject;
-import xtremweb.common.XMLValue;
-import xtremweb.common.XMLVector;
-import xtremweb.common.XMLable;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWTools;
+import org.apache.log4j.Logger;
+
+
+import xtremweb.common.*;
 import xtremweb.communications.CommClient;
 import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommandGetApps;
@@ -66,12 +53,8 @@ import xtremweb.communications.XMLRPCCommandSend;
  */
 
 public final class HelloWorld {
-	/**
-	 * This is the logger
-	 *
-	 * @since 7.0.0
-	 */
-	private final Logger logger;
+
+	private static final Logger logger = Logger.getLogger(HelloWorld.class);
 	/**
 	 * This stores and tests the command line parameters
 	 */
@@ -86,7 +69,6 @@ public final class HelloWorld {
 	 */
 	private HelloWorld(final String[] argv) throws ParseException {
 
-		logger = new Logger(this);
 		config = null;
 
 		args = new CommandLineParser(argv);
@@ -97,9 +79,10 @@ public final class HelloWorld {
 		try {
 			config = (XWConfigurator) args.getOption(CommandLineOptions.CONFIG);
 		} catch (final NullPointerException e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			if (args.getOption(CommandLineOptions.GUI) == null) {
-				logger.fatal("You must provide a config file, using \"--xwconfig\" !");
+				logger.error("You must provide a config file, using \"--xwconfig\" !");
+				System.exit(XWReturnCode.FATAL.ordinal());
 			} else {
 				new MileStone(XWTools.split(""));
 			}
@@ -118,7 +101,6 @@ public final class HelloWorld {
 	public CommClient commClient() throws IOException {
 		try {
 			final CommClient client = config.defaultCommClient();
-			client.setLoggerLevel(logger.getLoggerLevel());
 			client.setAutoClose(false);
 			return client;
 		} catch (final Exception e) {
@@ -136,7 +118,7 @@ public final class HelloWorld {
 			client.setAutoClose(true);
 			client.close();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -180,7 +162,8 @@ public final class HelloWorld {
 				}
 			}
 			if (appUid == null) {
-				logger.fatal("Can't retrieve application");
+				logger.error("Can't retrieve application");
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 			//
 			// submit new work
@@ -268,7 +251,7 @@ public final class HelloWorld {
 			logger.info("Disconnecting");
 			client.disconnect();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			exit();
 		}
 	}

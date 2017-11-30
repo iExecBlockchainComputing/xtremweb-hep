@@ -42,6 +42,8 @@ import java.nio.channels.WritableByteChannel;
 import java.security.cert.X509Certificate;
 import java.util.Hashtable;
 import java.util.Vector;
+import org.apache.log4j.Logger;
+
 
 /**
  * This class implements some basic stream I/O<br />
@@ -53,7 +55,7 @@ import java.util.Vector;
 
 public class StreamIO implements AutoCloseable {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(StreamIO.class);
 
 	/**
 	 * This flag tells to use NIO or not
@@ -94,7 +96,6 @@ public class StreamIO implements AutoCloseable {
 	 */
 	public StreamIO(final DataOutputStream o, final DataInputStream i, final int n, final boolean newio) {
 
-		logger = new Logger(this);
 		output = o;
 		input = i;
 		bufferLength = n;
@@ -162,8 +163,8 @@ public class StreamIO implements AutoCloseable {
 				output.flush();
 				output.close();
 			}
-		} catch (final IOException ioe) {
-			logger.exception(ioe);
+		} catch (final IOException e) {
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -480,7 +481,7 @@ public class StreamIO implements AutoCloseable {
 
 		final long length = file.length();
 
-		logger.finest("writeFile : to be written " + length);
+		logger.trace("writeFile : to be written " + length);
 		writeLong(length);
 		boolean thiscomnio = nio;
 		if (length > XWTools.TWOGIGABYTES) {
@@ -543,7 +544,7 @@ public class StreamIO implements AutoCloseable {
 					final WritableByteChannel outChannel = Channels.newChannel(output);
 					written = inChannel.transferTo(0, length, outChannel);
 				}
-				logger.finest("writeFileContent : bytes written " + written);
+				logger.trace("writeFileContent : bytes written " + written);
 				if (written != length) {
 					throw new IOException("writeFileContent : byte count error " + written + "/" + length);
 				}
@@ -566,7 +567,7 @@ public class StreamIO implements AutoCloseable {
 	public void readFile(final File file) throws IOException {
 
 		final long length = readLong();
-		logger.finest("readFile : to be read " + length);
+		logger.trace("readFile : to be read " + length);
 
 		boolean thiscomnio = nio;
 		if (length > XWTools.TWOGIGABYTES) {
@@ -596,7 +597,7 @@ public class StreamIO implements AutoCloseable {
 					final ReadableByteChannel inChannel = Channels.newChannel(input);
 					written = outChannel.transferFrom(inChannel, 0, length);
 				}
-				logger.finest("readFile : bytes read " + written);
+				logger.trace("readFile : bytes read " + written);
 				if (written != length) {
 					throw new IOException("readFile : byte count error " + written + "/" + length);
 				}
@@ -604,7 +605,7 @@ public class StreamIO implements AutoCloseable {
 		} finally {
 			output.flush();
 		}
-		logger.finest("readFile done");
+		logger.trace("readFile done");
 	}
 
 	/**
@@ -628,7 +629,7 @@ public class StreamIO implements AutoCloseable {
 						written += n;
 					}
 				}
-				logger.finest("readFileContent : bytes read = " + written);
+				logger.trace("readFileContent : bytes read = " + written);
 			} else {
 				throw new IOException("StreamIO#readFileContent is not implemented with java.nio");
 			}
@@ -749,7 +750,7 @@ public class StreamIO implements AutoCloseable {
 	 */
 	public void writeObject00(final XMLable o) throws IOException {
 		try {
-			logger.finest("writeObject " + o.openXmlRootElement() + o.toXml() + o.closeXmlRootElement());
+			logger.trace("writeObject " + o.openXmlRootElement() + o.toXml() + o.closeXmlRootElement());
 			final byte[] strb = o.openXmlRootElement().getBytes(XWTools.UTF8);
 			output.write(strb);
 			final XMLWriter writer = new XMLWriter(output);
@@ -757,9 +758,7 @@ public class StreamIO implements AutoCloseable {
 			final byte[] strb2 = o.closeXmlRootElement().getBytes(XWTools.UTF8);
 			output.write(strb2);
 		} catch (final Exception e) {
-			if (logger.debug()) {
-				logger.exception(e);
-			}
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.getMessage());
 		}
 	}

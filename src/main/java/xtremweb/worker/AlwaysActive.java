@@ -32,8 +32,13 @@ package xtremweb.worker;
  */
 
 import xtremweb.common.XWConfigurator;
+import org.apache.log4j.Logger;
+
+import xtremweb.common.XWReturnCode;
 
 public class AlwaysActive extends Activator {
+
+	private static final Logger logger = Logger.getLogger(AlwaysActive.class);
 
 	/** This is the default and only constructor */
 	public AlwaysActive() {
@@ -78,7 +83,8 @@ public class AlwaysActive extends Activator {
 					notifyAll();
 				}
 			} catch (final IllegalMonitorStateException e) {
-				getLogger().fatal("unrecoverable exception" + e);
+				logger.error("unrecoverable exception" + e);
+				System.exit(XWReturnCode.FATAL.ordinal());
 			}
 		}
 	}

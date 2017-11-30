@@ -32,6 +32,8 @@ package xtremweb.worker;
 import xtremweb.archdep.ArchDepFactory;
 import xtremweb.archdep.XWUtil;
 import xtremweb.common.XWConfigurator;
+import org.apache.log4j.Logger;
+
 
 /**
  * <CODE>CpuActivator</CODE> monitors CPU activity
@@ -42,6 +44,7 @@ import xtremweb.common.XWConfigurator;
 
 public class CpuActivator extends PollingActivator {
 
+	private static final Logger logger = Logger.getLogger(CpuActivator.class);
 	private int remains = 0;
 	private XWUtil irq = null;
 
@@ -121,10 +124,10 @@ public class CpuActivator extends PollingActivator {
 		}
 
 		if (ret != lastState) {
-			getLogger().debug(
+			logger.debug(
 					"  %CPU(host) " + cpuLoad + "  %CPU(worker) = " + processLoad + "  %CPU(others) = " + others);
 
-			getLogger().debug("Cpu " + (ret == false ? "not" : "") + " available : " + Worker.getConfig().cpuLoad()
+			logger.debug("Cpu " + (ret == false ? "not" : "") + " available : " + Worker.getConfig().cpuLoad()
 					+ " > " + others);
 
 			lastState = ret;
@@ -149,7 +152,7 @@ public class CpuActivator extends PollingActivator {
 		} else {
 			remains -= getWaitingProbeInterval();
 		}
-		getLogger().info("activation in " + remains + " ms");
+		logger.info("activation in " + remains + " ms");
 
 		return (remains <= 0);
 

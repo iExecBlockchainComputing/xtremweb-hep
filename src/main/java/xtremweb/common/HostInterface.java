@@ -33,6 +33,9 @@ import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
+
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -53,6 +56,8 @@ import xtremweb.security.XWAccessRights;
  * This class describes a row of the hosts SQL table.
  */
 public final class HostInterface extends Table {
+
+	private static final Logger logger = Logger.getLogger(HostInterface.class);
 
 	/**
 	 * This is the database table name This was stored in
@@ -1192,7 +1197,7 @@ public final class HostInterface extends Table {
 			} catch (final Exception e) {
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new IOException(e.toString());
 		}
 		setDirty(false);
@@ -2646,14 +2651,11 @@ public final class HostInterface extends Table {
 				} catch (final XMLEndParseException e) {
 				}
 			}
-			itf.setLoggerLevel(LoggerLevel.DEBUG);
 			itf.setDUMPNULLS(true);
 			final XMLWriter writer = new XMLWriter(new DataOutputStream(System.out));
 			writer.write(itf);
 		} catch (final Exception e) {
-			final Logger logger = new Logger();
-			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.HostInterface [anXMLDescriptionFile]",
+			logger.error("Caught exception, Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.HostInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

@@ -43,6 +43,9 @@ import org.expressme.openid.Authentication;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import org.apache.log4j.Logger;
+
+
 import com.github.scribejava.apis.FacebookApi;
 import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.apis.TwitterApi;
@@ -58,8 +61,6 @@ import com.github.scribejava.core.oauth.OAuth10aService;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.oauth.OAuthService;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
 import xtremweb.common.MD5;
 import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
@@ -76,6 +77,8 @@ import xtremweb.communications.XWPostParams;
  */
 
 public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server.Handler {
+
+	private static final Logger logger = Logger.getLogger(HTTPOAuthHandler.class);
 
 	public class OAuthException extends Exception {
 
@@ -378,8 +381,6 @@ public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server
 		}
 	}
 
-	private Logger logger;
-
 	static final long ONE_HOUR = 3600000L;
 	static final long TWO_HOUR = ONE_HOUR * 2L;
 
@@ -463,7 +464,6 @@ public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server
 		if (instance != null) {
 			return;
 		}
-		logger = new Logger(this);
 		try {
 			localRootUrl = new URL(Connection.HTTPSSLSCHEME + "://" + XWTools.getLocalHostName() + ":"
 					+ Dispatcher.getConfig().getPort(Connection.HTTPSPORT));
@@ -565,17 +565,6 @@ public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server
 			logger.info("" + op + " app key  = " + op.getAppKey());
 			logger.info("" + op + " service  = " + op.getServiceBuilder());
 		}
-	}
-
-	/**
-	 * This constructor call the default constructor and sets the logger level
-	 *
-	 * @param l
-	 *            is the logger level
-	 */
-	public HTTPOAuthHandler(final LoggerLevel l) {
-		this();
-		logger.setLoggerLevel(l);
 	}
 
 	/**
@@ -730,7 +719,7 @@ public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server
 
 			baseRequest.setHandled(true);
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			baseRequest.setHandled(false);
 		}
 		response.getWriter().flush();
@@ -965,7 +954,6 @@ public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server
 		if (store == null) {
 			return null;
 		}
-		final Logger logger = new Logger();
 		try {
 			for (final Operator op : Operator.values()) {
 				final X509Certificate[] gcerts = XWTools.retrieveCertificates(op.getServerAddress(), false);
@@ -973,15 +961,15 @@ public class HTTPOAuthHandler extends Thread implements org.eclipse.jetty.server
 					final X509Certificate cert = gcerts[i];
 					try {
 						final String alias = cert.getSubjectDN().toString();
-						logger.finest("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
+						logger.trace("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
 						store.setCertificateEntry(alias, cert);
 					} catch (final Exception e) {
-						logger.exception("Can't add new entry to keystore", e);
+						logger.error("Caught exception, Can't add new entry to keystore", e);
 					}
 				}
 			}
 		} catch (final Exception e) {
-			logger.exception("Can't add new entry to keystore", e);
+			logger.error("Caught exception, Can't add new entry to keystore", e);
 		}
 		return store;
 	}

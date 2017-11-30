@@ -29,6 +29,8 @@ package xtremweb.worker;
 
 import xtremweb.archdep.ArchDepFactory;
 import xtremweb.archdep.XWInterrupts;
+import org.apache.log4j.Logger;
+
 
 /**
  * <CODE>MouseKbdActivator</CODE> activator for that monitors keyboard and mouse
@@ -39,6 +41,8 @@ import xtremweb.archdep.XWInterrupts;
  */
 
 public class MouseKbdActivator extends PollingActivator {
+
+	private static final Logger logger = Logger.getLogger(MouseKbdActivator.class);
 
 	/** interrupt counters */
 	private int lastKey = 0;
@@ -58,7 +62,7 @@ public class MouseKbdActivator extends PollingActivator {
 		if (remains <= 0) {
 			remains = 60000;
 		}
-		getLogger().debug("MouseKbdActivator " + initialized + getActivationDelay() + " " + remains);
+		logger.debug("MouseKbdActivator " + initialized + getActivationDelay() + " " + remains);
 	}
 
 	/** return true if the user is active */
@@ -73,14 +77,14 @@ public class MouseKbdActivator extends PollingActivator {
 		if (Worker.getConfig().hasKeyboard()) {
 			newKey = irq.readKey();
 			differ = differ || (newKey != lastKey);
-			getLogger().debug("isactive() key " + newKey + " " + lastKey + " " + differ);
+			logger.debug("isactive() key " + newKey + " " + lastKey + " " + differ);
 			lastKey = newKey;
 		}
 
 		if (Worker.getConfig().hasMouse()) {
 			newMouse = irq.readMouse();
 			differ = differ || (newMouse != lastMouse);
-			getLogger().debug("isactive() mouse " + newMouse + " " + lastMouse + " " + differ);
+			logger.debug("isactive() mouse " + newMouse + " " + lastMouse + " " + differ);
 			lastMouse = newMouse;
 		}
 
@@ -101,7 +105,7 @@ public class MouseKbdActivator extends PollingActivator {
 		} else {
 			remains -= getWaitingProbeInterval();
 		}
-		getLogger().info("activation in " + remains + " ms");
+		logger.info("activation in " + remains + " ms");
 
 		return (remains <= 0);
 

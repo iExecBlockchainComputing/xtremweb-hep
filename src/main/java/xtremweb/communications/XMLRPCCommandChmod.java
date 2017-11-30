@@ -31,6 +31,7 @@ import java.security.InvalidKeyException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.UID;
 import xtremweb.common.UserInterface;
@@ -50,6 +51,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 public class XMLRPCCommandChmod extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandChmod.class);
 
 	/**
 	 * This is the RPC id
@@ -158,14 +161,14 @@ public class XMLRPCCommandChmod extends XMLRPCCommand {
 				try {
 					setURI(new URI(value));
 				} catch (final URISyntaxException e) {
-					getLogger().error("URI syntax error ; this is not an URI " + value);
+					logger.error("URI syntax error ; this is not an URI " + value);
 				}
 			} else if (attribute.compareToIgnoreCase(getColumnLabel(ACCESSRIGHTS)) == 0) {
 				try {
 					new XWAccessRights(value);
 					setValueAt(ACCESSRIGHTS, value);
 				} catch (final Exception e) {
-					getLogger().error("not a valid access rights " + value);
+					logger.error("not a valid access rights " + value);
 					setValueAt(ACCESSRIGHTS, null);
 				}
 			}

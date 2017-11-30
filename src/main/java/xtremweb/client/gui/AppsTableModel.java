@@ -43,6 +43,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.CPUEnum;
 import xtremweb.common.DataInterface;
@@ -60,6 +63,8 @@ import xtremweb.security.XWAccessRights;
  */
 
 class AppsTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(AppsTableModel.class);
 
 	/**
 	 * These defines submission parameters
@@ -221,7 +226,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.NONE, XWOSes.JAVA, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No java JAR : " + e.toString());
+				logger.debug("No java JAR : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(LINUXIX86LABEL);
@@ -234,7 +239,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.IX86, XWOSes.LINUX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Linux ix86 binary : " + e.toString());
+				logger.debug("No Linux ix86 binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(LINUXAMD64LABEL);
@@ -247,7 +252,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.AMD64, XWOSes.LINUX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Linux ix86 binary : " + e.toString());
+				logger.debug("No Linux ix86 binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(LINUXIA64LABEL);
@@ -260,7 +265,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.IA64, XWOSes.LINUX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Linux ia64 binary : " + e.toString());
+				logger.debug("No Linux ia64 binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(LINUXPPCLABEL);
@@ -273,7 +278,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.PPC, XWOSes.LINUX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Linux ppc binary : " + e.toString());
+				logger.debug("No Linux ppc binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(WIN32IX86LABEL);
@@ -286,7 +291,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.PPC, XWOSes.LINUX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Win32 ix86 binary : " + e.toString());
+				logger.debug("No Win32 ix86 binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(WIN32AMD64LABEL);
@@ -299,7 +304,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.PPC, XWOSes.LINUX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Win32 AMD64 binary : " + e.toString());
+				logger.debug("No Win32 AMD64 binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(MACOSX86_64LABEL);
@@ -312,7 +317,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.X86_64, XWOSes.MACOSX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Mac OS X x86_64  binary : " + e.toString());
+				logger.debug("No Mac OS X x86_64  binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(MACOSIX86LABEL);
@@ -325,7 +330,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.IX86, XWOSes.MACOSX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Mac OS X ix86  binary : " + e.toString());
+				logger.debug("No Mac OS X ix86  binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(MACOSPPCLABEL);
@@ -338,7 +343,7 @@ class AppsTableModel extends TableModel {
 				}
 				// app.setBinary(XWCPUs.PPC, XWOSes.MACOSX, fileUri);
 			} catch (final Exception e) {
-				getLogger().debug("No Mac OS X PPC binary : " + e.toString());
+				logger.debug("No Mac OS X PPC binary : " + e.toString());
 			}
 
 			innerPanel = (JPanel) vdialog.getFields().get(STDINLABEL);
@@ -376,9 +381,7 @@ class AppsTableModel extends TableModel {
 
 			getParent().commClient().send(app);
 		} catch (final Exception e) {
-			if (getLogger().debug()) {
-				e.printStackTrace();
-			}
+			logger.error("Caught exception: ", e);
 			JOptionPane.showMessageDialog(getParent(), "Can't send application : " + e, ERROR,
 					JOptionPane.ERROR_MESSAGE);
 		}
@@ -444,9 +447,7 @@ class AppsTableModel extends TableModel {
 			tm.refresh();
 		} catch (final ConnectException e) {
 			getParent().setTitleNotConnected();
-			if (getLogger().debug()) {
-				e.printStackTrace();
-			}
+			logger.error("Caught exception: ", e);
 			return;
 		}
 
@@ -501,7 +502,7 @@ class AppsTableModel extends TableModel {
 			return getParent().commClient().getApps();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}
@@ -530,7 +531,7 @@ class AppsTableModel extends TableModel {
 
 			return row;
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			return null;
 		}
 	}

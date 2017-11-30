@@ -28,9 +28,11 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Enumeration;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import xtremweb.communications.IdRpc;
 import xtremweb.communications.URI;
+
 
 /**
  * Created: August 30th, 2005<br />
@@ -43,7 +45,7 @@ import xtremweb.communications.URI;
 
 public final class CommandLineParser {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(CommandLineParser.class);
 
 	/**
 	 * This is the command line option prefix
@@ -108,7 +110,7 @@ public final class CommandLineParser {
 	 *            is the option param
 	 */
 	public void setOption(final CommandLineOptions opt, final Object o) {
-		logger.config("setOption " + opt + ":" + o);
+		logger.info("setOption " + opt + ":" + o);
 		final int i = opt.ordinal();
 		if (opt != CommandLineOptions.ENV) {
 			optionnalParameters[i] = o;
@@ -196,9 +198,8 @@ public final class CommandLineParser {
 	/**
 	 */
 	public static void usageHeader(final String header) {
-		final Logger l = new Logger();
 		if (header != null) {
-			l.info(header);
+			logger.info(header);
 		}
 	}
 
@@ -206,15 +207,14 @@ public final class CommandLineParser {
 	 * This prints usage
 	 */
 	public static void usage(final String header) {
-		final Logger l = new Logger();
 		usageHeader(header);
-		l.info("Available commands:");
+		logger.info("Available commands:");
 		for (final IdRpc i : IdRpc.values()) {
-			l.info(i.helpClient());
+			logger.info(i.helpClient());
 		}
-		l.info("Available options :");
+		logger.info("Available options :");
 		for (final CommandLineOptions c : CommandLineOptions.values()) {
-			l.info(c.usage());
+			logger.info(c.usage());
 		}
 	}
 
@@ -228,8 +228,7 @@ public final class CommandLineParser {
 	 */
 	public static void usage(final String header, final IdRpc i) {
 		usageHeader(header);
-		final Logger l = new Logger();
-		l.info("\t" + i.helpClient());
+		logger.info("\t" + i.helpClient());
 	}
 
 	/**
@@ -242,8 +241,7 @@ public final class CommandLineParser {
 	 */
 	public static void usage(final String header, final CommandLineOptions i) {
 		usageHeader(header);
-		final Logger l = new Logger();
-		l.info("\t" + i.usage());
+		logger.info("\t" + i.usage());
 	}
 
 	/**
@@ -297,7 +295,7 @@ public final class CommandLineParser {
 	 * @see #setAction(int, Object)
 	 */
 	private void setAction(final IdRpc i) throws ParseException, IndexOutOfBoundsException {
-		logger.config("setAction " + i);
+		logger.info("setAction " + i);
 		setAction(i, null);
 	}
 
@@ -315,7 +313,7 @@ public final class CommandLineParser {
 
 		command = i;
 		commandParams[command.ordinal()] = obj;
-		logger.config("setAction " + i + ":" + obj);
+		logger.info("setAction " + i + ":" + obj);
 	}
 
 	/**
@@ -360,7 +358,7 @@ public final class CommandLineParser {
 		try {
 			return (OutputFormat) getOption(CommandLineOptions.FORMAT) == OutputFormat.SHORT;
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return false;
 		}
 	}
@@ -446,7 +444,6 @@ public final class CommandLineParser {
 	 */
 	public CommandLineParser() {
 		super();
-		logger = new Logger(this);
 		optionnalParameters = new Object[IdRpc.SIZE];
 		commandParams = new Object[IdRpc.SIZE];
 		command = IdRpc.NULL;
@@ -550,17 +547,17 @@ public final class CommandLineParser {
 						try {
 							setOption(opt, StatusEnum.valueOf(args[++i].toUpperCase()));
 						} catch (final Exception e) {
-							logger.exception(e);
+							logger.error("Caught exception: ", e);
 						}
 						break;
 					case CONFIG:
 						try {
 							final XWConfigurator config = new XWConfigurator(args[++i], false);
 							setOption(opt, config);
-							logger.setLoggerLevel(config.getLoggerLevel());
+
 							break;
 						} catch (final Exception e) {
-							logger.exception(e);
+							logger.error("Caught exception: ", e);
 							System.exit(1);
 						}
 						break;
@@ -572,7 +569,7 @@ public final class CommandLineParser {
 					//
 					// this is not a an option
 					//
-					logger.finest(args[i] + " is an argument");
+					logger.trace(args[i] + " is an argument");
 
 					params.add(checkParam(args[i]));
 				}

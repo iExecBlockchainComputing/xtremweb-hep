@@ -46,8 +46,12 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.XWReturnCode;
 import xtremweb.common.XWRole;
 
 /**
@@ -73,6 +77,8 @@ import xtremweb.common.XWRole;
  */
 
 public class HTTPServer extends CommServer {
+
+	private static final Logger logger = Logger.getLogger(HTTPServer.class);
 
 	/**
 	 * This is the Jetty HTTP server
@@ -111,7 +117,7 @@ public class HTTPServer extends CommServer {
 
 			if ((keyFile == null) || (!keyFile.exists()) || (prop.getRole() == XWRole.WORKER)) {
 
-				getLogger().warn("unsecured communications : not using SSL");
+				logger.warn("unsecured communications : not using SSL");
 
 				final HttpConfiguration httpConfig = new HttpConfiguration();
 				httpConfig.setSecureScheme("https");
@@ -137,10 +143,11 @@ public class HTTPServer extends CommServer {
 				}
 			});
 
-			getLogger().info("started, listening on port : " + getPort());
+			logger.info("started, listening on port : " + getPort());
 		} catch (final Exception e) {
-			getLogger().exception(e);
-			getLogger().fatal(getName() + ": could not listen on port " + getPort() + " : " + e);
+			logger.error("Caught exception: ", e);
+			logger.error(getName() + ": could not listen on port " + getPort() + " : " + e);
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -165,7 +172,7 @@ public class HTTPServer extends CommServer {
 			fstore.deleteOnExit();
 			final KeyStore store = prop.getKeyStore();
 			store.store(sstore, password.toCharArray());
-			getLogger().debug("HTTPS keystore = " + fstore.getCanonicalPath());
+			logger.debug("HTTPS keystore = " + fstore.getCanonicalPath());
 			final SslContextFactory sslContextFactory = new SslContextFactory(fstore.getCanonicalPath());
 			sslContextFactory.setKeyStorePassword(password);
 			sslContextFactory.setKeyManagerPassword(passphrase);
@@ -203,11 +210,11 @@ public class HTTPServer extends CommServer {
 	 */
 	public void addHandler(final Handler h) {
 		try {
-			getLogger().debug("addHandler " + h.getClass());
+			logger.debug("addHandler " + h.getClass());
 			final HandlerCollection handlers = (HandlerCollection) httpServer.getHandler();
 			handlers.addHandler(h);
 		} catch (final Exception e) {
-			getLogger().exception("Can't add handler", e);
+			logger.error("Caught exception, Can't add handler", e);
 		}
 	}
 
@@ -266,10 +273,10 @@ public class HTTPServer extends CommServer {
 
 		try {
 			httpServer.start();
-			getLogger().info("started, listening on port : " + getPort());
+			logger.info("started, listening on port : " + getPort());
 			httpServer.join();
 		} catch (final Exception e) {
-			getLogger().exception("can't start HTTP server : " + getPort(), e);
+			logger.error("Caught exception, can't start HTTP server : " + getPort(), e);
 		}
 	}
 
@@ -279,10 +286,10 @@ public class HTTPServer extends CommServer {
 	 */
 	protected void cleanup() {
 		try {
-			getLogger().debug("cleanup");
+			logger.debug("cleanup");
 			httpServer.getHandler().stop();
 		} catch (final Exception e) {
-			getLogger().error("can't clean up");
+			logger.error("can't clean up");
 		}
 	}
 

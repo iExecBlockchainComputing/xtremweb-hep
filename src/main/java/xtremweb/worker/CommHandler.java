@@ -40,11 +40,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Server;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.AppInterface;
 import xtremweb.common.DataInterface;
 import xtremweb.common.GroupInterface;
 import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
 import xtremweb.common.MileStone;
 import xtremweb.common.SessionInterface;
 import xtremweb.common.Table;
@@ -81,11 +83,7 @@ import xtremweb.communications.XMLRPCCommandWorkAliveByUID;
 
 public abstract class CommHandler extends Thread implements xtremweb.communications.CommHandler {
 
-	private final Logger logger;
-
-	public Logger getLogger() {
-		return logger;
-	}
+	private static final Logger logger = Logger.getLogger(CommHandler.class);
 
 	/**
 	 * This is the server that received incoming communication This is used to
@@ -137,7 +135,6 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 
 	protected CommHandler(final String name) {
 		super(name);
-		logger = new Logger(this);
 		mileStone = new MileStone(getClass());
 	}
 
@@ -408,7 +405,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 		} catch (final SocketException e) {
 			logger.debug(e.toString());
 		} catch (final Exception e) {
-			logger.exception("Cannot get io socket", e);
+			logger.error("Caught exception, Cannot get io socket", e);
 		} finally {
 			close();
 		}

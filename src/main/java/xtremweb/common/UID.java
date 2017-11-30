@@ -30,6 +30,7 @@ import java.security.InvalidKeyException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.UUID;
+import org.apache.log4j.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -41,6 +42,8 @@ import org.xml.sax.SAXException;
  * database
  */
 public final class UID extends XMLable {
+
+	private static final Logger logger = Logger.getLogger(UID.class);
 
 	/**
 	 * This is the XML tag
@@ -269,19 +272,18 @@ public final class UID extends XMLable {
 			return;
 		}
 
-		final Logger logger = getLogger();
-		logger.finest("UID nb attributes  : " + attrs.getLength());
+		logger.trace("UID nb attributes  : " + attrs.getLength());
 
 		for (int a = 0; a < attrs.getLength(); a++) {
 			final String attribute = attrs.getQName(a);
 			final String value = attrs.getValue(a);
-			logger.finest("UID  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
+			logger.trace("UID  ##  attribute #" + a + ": name=\"" + attribute + "\"" + ", value=\"" + value + "\"");
 
 			if (attribute.compareToIgnoreCase(getColumnLabel(UID)) == 0) {
 				try {
 					fromString(value);
 				} catch (final Exception e) {
-					logger.exception(e);
+					logger.error("Caught exception: ", e);
 				}
 			}
 		}
@@ -313,13 +315,12 @@ public final class UID extends XMLable {
 	public static void main(final String[] argv) {
 
 		final Hashtable<UID, String> cache = new Hashtable<>();
-		final Logger logger = new Logger();
 		final UID org = new UID();
 		UID copy = null;
 		try {
 			copy = new UID(org.toString());
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		logger.info("copy.equals(org)) = " + copy.equals(org));
 

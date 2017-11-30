@@ -423,26 +423,6 @@ public enum XWPropertyDefs {
 		}
 	},
 	/**
-	 * All : logger level
-	 * <p>
-	 * Property type : string
-	 * </p>
-	 * <p>
-	 * Default : WARN
-	 * </p>
-	 */
-	LOGGERLEVEL {
-		/**
-		 * This retrieves the String representation of the default value
-		 *
-		 * @return LoggerLevel.WARN.toString()
-		 */
-		@Override
-		public String defaultValue() {
-			return LoggerLevel.WARN.toString();
-		}
-	},
-	/**
 	 * All : the uid
 	 * <p>
 	 * Property type : string

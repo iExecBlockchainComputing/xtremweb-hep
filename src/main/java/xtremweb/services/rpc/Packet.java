@@ -32,8 +32,9 @@ package xtremweb.services.rpc;
  * @version
  */
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+
+import org.apache.log4j.Logger;
+
 import xtremweb.common.XWTools;
 
 /**
@@ -74,8 +75,6 @@ import xtremweb.common.XWTools;
 
 public class Packet {
 
-	private final Logger logger;
-
 	private byte[] buffer;
 	private final int[] integers;
 	private final int xid;
@@ -85,6 +84,8 @@ public class Packet {
 	private final int proc;
 	private String hostName;
 
+	private static final Logger logger = Logger.getLogger(Packet.class);
+
 	/**
 	 * This constructs a new MOUNT packet calling Packet (byte [], Level,
 	 * String) with a null third parameter
@@ -93,14 +94,12 @@ public class Packet {
 	 *            is the packet datas
 	 * @param nbBytes
 	 *            is the packet datas length
-	 * @param l
-	 *            is the logger level
 	 * @param h
 	 *            is the new credential host name
 	 * @see #Packet (byte [], Level, String)
 	 */
-	public Packet(final byte[] inBuf, final int nbBytes, final LoggerLevel l, final String h) throws Exception {
-		this(inBuf, nbBytes, l, h, 0, 0);
+	public Packet(final byte[] inBuf, final int nbBytes, final String h) throws Exception {
+		this(inBuf, nbBytes, h, 0, 0);
 	}
 
 	/**
@@ -111,8 +110,6 @@ public class Packet {
 	 *            is the packet datas
 	 * @param nbBytes
 	 *            is the packet datas length
-	 * @param l
-	 *            is the logger level
 	 * @param h
 	 *            is the new credential host name
 	 * @param userID
@@ -120,11 +117,8 @@ public class Packet {
 	 * @param groupID
 	 *            is the group ID of the current process
 	 */
-	public Packet(final byte[] inBuf, final int nbBytes, final LoggerLevel l, final String h, final int userID,
+	public Packet(final byte[] inBuf, final int nbBytes, final String h, final int userID,
 			final int groupID) throws Exception {
-
-		logger = new Logger(l);
-		;
 
 		buffer = new byte[nbBytes];
 		System.arraycopy(inBuf, 0, buffer, 0, nbBytes);
@@ -318,10 +312,6 @@ public class Packet {
 	 *            is the effective length to dump
 	 */
 	public final void dump(final String msg, final byte[] datas, final int len) {
-
-		if (logger.debug() == false) {
-			return;
-		}
 
 		String dbg = "";
 		for (int i = 0; i < len; i++) {

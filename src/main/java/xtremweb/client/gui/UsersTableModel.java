@@ -45,13 +45,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.UID;
 import xtremweb.common.UserGroupInterface;
 import xtremweb.common.UserInterface;
 import xtremweb.common.UserRightEnum;
 import xtremweb.common.XMLValue;
 import xtremweb.common.XMLVector;
-import xtremweb.common.XMLable;
 
 /**
  * This class defines a swing table model to display XtremWeb informations<br />
@@ -59,6 +61,8 @@ import xtremweb.common.XMLable;
  */
 
 class UsersTableModel extends TableModel {
+
+	private static final Logger logger = Logger.getLogger(UsersTableModel.class);
 
 	/**
 	 * These defines submission parameters
@@ -136,7 +140,7 @@ class UsersTableModel extends TableModel {
 				groupsUID.put(group.getLabel(), groupUID);
 			}
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 
 		newRow.add(groupLabels); // group labels
@@ -229,7 +233,7 @@ class UsersTableModel extends TableModel {
 			getParent().commClient().send(user);
 		} catch (final Exception e) {
 			JOptionPane.showMessageDialog(getParent(), "Can't send user : " + e, ERROR, JOptionPane.ERROR_MESSAGE);
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -253,7 +257,7 @@ class UsersTableModel extends TableModel {
 			final UserGroupInterface usergroup = (UserGroupInterface) getParent().commClient().get(uid, false);
 			clone.set(index, usergroup.getLabel());
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 		}
 		return clone;
 	}
@@ -270,7 +274,7 @@ class UsersTableModel extends TableModel {
 			return getParent().commClient().getUsers();
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}

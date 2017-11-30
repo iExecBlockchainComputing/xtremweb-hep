@@ -35,9 +35,10 @@
 
 package xtremweb.worker;
 
+import org.apache.log4j.Logger;
+
 import xtremweb.archdep.ArchDepFactory;
 import xtremweb.archdep.XWTracerNative;
-import xtremweb.common.Logger;
 import xtremweb.common.TracerZipFile;
 import xtremweb.common.WorkerParameters;
 
@@ -49,7 +50,7 @@ import xtremweb.common.WorkerParameters;
 
 public class XWTracer extends Thread {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(XWTracer.class);
 	private boolean running = true;
 	/** 10 sec */
 	private int resultDelay = 1000;
@@ -62,7 +63,6 @@ public class XWTracer extends Thread {
 	/** This is the default constructor */
 	XWTracer(final boolean r) {
 		super("XWTracerThreadSend");
-		logger = new Logger(this);
 		instance = this;
 		running = r;
 	}

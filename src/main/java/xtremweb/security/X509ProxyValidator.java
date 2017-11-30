@@ -76,12 +76,16 @@ import java.util.Vector;
 
 import javax.security.auth.x500.X500Principal;
 
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.XWPropertyDefs;
 
 /**
  */
 public final class X509ProxyValidator {
+
+	private static final Logger logger = Logger.getLogger(X509ProxyValidator.class);
 
 	/**
 	 * This is the certificate factory to retreive certificate from file,
@@ -92,18 +96,12 @@ public final class X509ProxyValidator {
 	 * This contains the CA certificates paths
 	 */
 	private final Vector<X509CACertPath> caCertPaths;
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
 
 	/**
 	 */
 	public X509ProxyValidator() throws CertificateException, IOException, NoSuchAlgorithmException {
 
 		certFactory = CertificateFactory.getInstance("X.509");
-
-		logger = new Logger(this);
 
 		String cadir = null;
 
@@ -181,12 +179,10 @@ public final class X509ProxyValidator {
 	public PKIXCertPathValidatorResult validate(final X509Proxy proxy)
 			throws IOException, CertificateException, CertPathValidatorException {
 
-		if (logger.finest()) {
-			logger.finest("<< ******************************************************************************** <<");
-			logger.finest("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-			logger.finest("proxy.getLast  =" + proxy.getLast().getSubjectX500Principal().getName());
-			logger.finest("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-		}
+		logger.trace("<< ******************************************************************************** <<");
+		logger.trace("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		logger.trace("proxy.getLast  =" + proxy.getLast().getSubjectX500Principal().getName());
+		logger.trace("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
 		X509Certificate last = null;
 		try {
@@ -212,12 +208,10 @@ public final class X509ProxyValidator {
 	public PKIXCertPathValidatorResult validate(final X509Certificate cert)
 			throws IOException, CertificateException, CertPathValidatorException {
 
-		if (logger.finest()) {
-			logger.finest("<< ******************************************************************************** <<");
-			logger.finest("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-			logger.finest("cert.subject =" + cert.getSubjectX500Principal().getName());
-			logger.finest("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-		}
+		logger.trace("<< ******************************************************************************** <<");
+		logger.trace("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+		logger.trace("cert.subject =" + cert.getSubjectX500Principal().getName());
+		logger.trace("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
 		final Enumeration<X509CACertPath> listsEnum = caCertPaths.elements();
 		while (listsEnum.hasMoreElements()) {
@@ -227,7 +221,7 @@ public final class X509ProxyValidator {
 				final PKIXCertPathValidatorResult ret = cacertpath.validate(cert);
 				return ret;
 			} catch (final CertPathValidatorException e) {
-				logger.finest(e.toString());
+				logger.trace(e.toString());
 			} finally {
 				cacertpath = null;
 			}
@@ -332,7 +326,7 @@ public final class X509ProxyValidator {
 		//
 		// create linked lists of certificates
 		//
-		logger.finest("Certificate files in directory = " + certs.length);
+		logger.trace("Certificate files in directory = " + certs.length);
 
 		for (int i = 0; i < certs.length; i++) {
 
@@ -360,7 +354,7 @@ public final class X509ProxyValidator {
 
 			if (lists.isEmpty()) {
 				list = new LinkedList<>();
-				logger.finest("> add first new list (" + certs[i] + ") " + certSubjectName);
+				logger.trace("> add first new list (" + certs[i] + ") " + certSubjectName);
 				list.add(certFromFile);
 				lists.add(list);
 				list = null;
@@ -398,20 +392,20 @@ public final class X509ProxyValidator {
 						principal = null;
 
 						if (certSubjectName.compareTo(firstcertSubjectName) == 0) {
-							logger.finest(">>> 01 certSubjectName = " + certSubjectName + " firstcertSubjectName = "
+							logger.trace(">>> 01 certSubjectName = " + certSubjectName + " firstcertSubjectName = "
 									+ firstcertSubjectName);
 							continue;
 						}
 
 						if (certSubjectName.compareTo(lastcertSubjectName) == 0) {
-							logger.finest(">>> 02 certSubjectName = " + certSubjectName + " lastcertSubjectName = "
+							logger.trace(">>> 02 certSubjectName = " + certSubjectName + " lastcertSubjectName = "
 									+ lastcertSubjectName);
 							continue;
 						}
 
 						if (certIssuerName.compareTo(firstcertSubjectName) == 0) {
 							cacertsList.addFirst(certFromFile);
-							logger.finest(">>> addFirst (" + cacertsList.size() + ") " + certSubjectName
+							logger.trace(">>> addFirst (" + cacertsList.size() + ") " + certSubjectName
 									+ " is issued by " + firstcertSubjectName);
 							inserted = true;
 							break;
@@ -419,7 +413,7 @@ public final class X509ProxyValidator {
 
 						if (certSubjectName.compareTo(lastcertIssuerName) == 0) {
 							cacertsList.addLast(certFromFile);
-							logger.finest(">>> addLast  (" + cacertsList.size() + ") " + certSubjectName
+							logger.trace(">>> addLast  (" + cacertsList.size() + ") " + certSubjectName
 									+ " is issuer of " + lastcertSubjectName);
 							inserted = true;
 							break;
@@ -439,7 +433,7 @@ public final class X509ProxyValidator {
 
 			if (inserted == false) {
 				list = new LinkedList<>();
-				logger.finest("> add another new list (" + certs[i] + ") " + certSubjectName);
+				logger.trace("> add another new list (" + certs[i] + ") " + certSubjectName);
 				list.add(certFromFile);
 				lists.add(list);
 				list = null;
@@ -449,7 +443,7 @@ public final class X509ProxyValidator {
 			certSubjectName = null;
 		}
 
-		logger.finest("> Paths found   " + lists.size());
+		logger.trace("> Paths found   " + lists.size());
 
 		//
 		// second, check if some lists should also be linked to each other
@@ -513,14 +507,14 @@ public final class X509ProxyValidator {
 						if (firstcertIssuerName.compareTo(lastcert2SubjectName) == 0) {
 							cacertsList.addAll(cacertsList2);
 							listsIterator2.remove();
-							logger.finest(">>> List addFirst (" + cacertsList.size() + ") " + lastcert2SubjectName
+							logger.trace(">>> List addFirst (" + cacertsList.size() + ") " + lastcert2SubjectName
 									+ " is issuer of " + firstcertSubjectName);
 							break;
 						}
 						if (firstcert2IssuerName.compareTo(lastcertSubjectName) == 0) {
 							cacertsList2.addAll(cacertsList);
 							listsIterator.remove();
-							logger.finest(">>> List addLast (" + cacertsList.size() + ") " + lastcertSubjectName
+							logger.trace(">>> List addLast (" + cacertsList.size() + ") " + lastcertSubjectName
 									+ " is issuer of " + firstcert2SubjectName);
 							break;
 						}
@@ -547,7 +541,7 @@ public final class X509ProxyValidator {
 		//
 		// finally, dump and create the ProxyValidator from lists
 		//
-		logger.config("Found certificate paths");
+		logger.info("Found certificate paths");
 
 		listsIterator = lists.listIterator();
 		int numlist = 0;
@@ -567,7 +561,7 @@ public final class X509ProxyValidator {
 					String idn = v.getAnchorIssuerName();
 					final boolean trusted = (idn.compareTo(dn) == 0);
 					if (trusted) {
-						logger.config("> #" + numlist++ + " " + dn);
+						logger.info("> #" + numlist++ + " " + dn);
 						ret.add(v);
 					} else {
 						logger.error(">  !! Trust Anchor Error !! " + dn + " is not a trusted anchor: it is issued by "
@@ -581,7 +575,7 @@ public final class X509ProxyValidator {
 						try {
 							final X509Certificate cert = certit.next();
 							if (trusted) {
-								logger.config(">> Subject=\"" + cert.getSubjectDN() + "\" Issuer=\""
+								logger.info(">> Subject=\"" + cert.getSubjectDN() + "\" Issuer=\""
 										+ cert.getIssuerDN() + "\"");
 							} else {
 								logger.error(">> !! Trust Anchor Error !!  Subject=\"" + cert.getSubjectDN()
@@ -626,14 +620,14 @@ public final class X509ProxyValidator {
 					try {
 						final X509Certificate cert = certit.next();
 						final String alias = cert.getSubjectDN().toString();
-						logger.finest("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
+						logger.trace("KeyStore set entry= " + alias + "; KeyStore.size = " + store.size());
 						store.setCertificateEntry(alias, cert);
 					} catch (final Exception e) {
-						logger.exception("Can't add new entry to keystore", e);
+						logger.error("Caught exception, Can't add new entry to keystore", e);
 					}
 				}
 			} catch (final Exception e) {
-				logger.exception("Can't retrieve ca cert path", e);
+				logger.error("Caught exception, Can't retrieve ca cert path", e);
 			}
 		}
 		return store;

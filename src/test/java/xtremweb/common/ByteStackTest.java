@@ -23,47 +23,37 @@ package xtremweb.common;
  *
  */
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 
-import xtremweb.common.ByteStack;
-import xtremweb.common.Logger;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests XML serialization
- * 
+ * <p>
  * Created: 23 janvier 2013
- * 
+ *
  * @author Oleg Lodygensky
  * @version 8.2.0
  */
 
 public class ByteStackTest {
-	private final Logger logger;
-	private final int THEINT = 54321;
-	private final String THESTRING = "this is for testing only";
+    private final int THEINT = 54321;
+    private final String THESTRING = "this is for testing only";
 
-	public ByteStackTest() {
-		logger = new Logger(this);
-	}
+    public ByteStackTest() {
+    }
 
-	@Test
-	public void start() {
+    @Test
+    public void start() throws Exception {
 
-		try {
-			final ByteStack b0 = new ByteStack();
-			final ByteStack b1 = new ByteStack();
+        final ByteStack b0 = new ByteStack();
+        final ByteStack b1 = new ByteStack();
 
-			b0.putInt(THEINT);
-			b0.putString(THESTRING);
-			b0.pack();
-			b1.setData(b0.getData());
-			assertTrue(b1.getString().equals(THESTRING));
-			assertTrue(b1.getInt() == THEINT);
-		} catch (final Exception e) {
-			logger.exception(e);
-		}
-	}
-
+        b0.putInt(THEINT);
+        b0.putString(THESTRING);
+        b0.pack();
+        b1.setData(b0.getData());
+        assertTrue(b1.getString().equals(THESTRING));
+        assertTrue(b1.getInt() == THEINT);
+    }
 }

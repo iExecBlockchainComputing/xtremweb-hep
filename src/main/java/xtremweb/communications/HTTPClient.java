@@ -45,6 +45,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyStore;
 
 import javax.net.ssl.SSLHandshakeException;
+import org.apache.log4j.Logger;
 
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.HostConfiguration;
@@ -84,6 +85,8 @@ import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
 
 public class HTTPClient extends CommClient {
+
+	private static final Logger logger = Logger.getLogger(HTTPClient.class);
 
 	public class AuthSSLProtocolSocketFactory implements SecureProtocolSocketFactory {
 
@@ -239,7 +242,7 @@ public class HTTPClient extends CommClient {
 						config.getProperty(XWPropertyDefs.SSLKEYPASSWORD)), serverPort);
 				Protocol.registerProtocol(uri.getScheme(), xwssl);
 			} else {
-				getLogger().warn("unsecured communications : not using SSL");
+				logger.warn("unsecured communications : not using SSL");
 				if (serverPort == -1) {
 					serverPort = config.getPort(Connection.HTTPPORT);
 				}
@@ -297,7 +300,7 @@ public class HTTPClient extends CommClient {
 
 			connection.open();
 		} catch (final Exception e) {
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			mileStone("<error method='open' msg='" + e.getMessage() + "' />");
 			throw new IOException("HTTPClient : open failed " + e.toString());
 		} finally {
@@ -534,7 +537,7 @@ public class HTTPClient extends CommClient {
 			}
 		} catch (final Exception e) {
 			mileStone("<error method='uploadData' msg='" + e.getMessage() + "' />");
-			getLogger().error("Upload error " + command.getURI() + " " + e);
+			logger.error("Upload error " + command.getURI() + " " + e);
 		} finally {
 			post.releaseConnection();
 			close();
@@ -576,7 +579,7 @@ public class HTTPClient extends CommClient {
 			if (io != null) {
 				io.close();
 			}
-			getLogger().exception(e);
+			logger.error("Caught exception: ", e);
 			inputStream = null;
 			mileStone("<error method='readFile' msg='" + e.getMessage() + "' />");
 			throw new IOException(e.toString());

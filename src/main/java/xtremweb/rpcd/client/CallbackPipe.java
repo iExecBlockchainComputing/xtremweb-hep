@@ -36,10 +36,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Date;
+import org.apache.log4j.Logger;
 
 import xtremweb.archdep.ArchDepFactory;
-import xtremweb.common.Logger;
 import xtremweb.common.XWConfigurator;
+import xtremweb.common.XWReturnCode;
 import xtremweb.services.rpc.Packet;
 import xtremweb.services.rpc.rpcdefs;
 
@@ -47,6 +48,8 @@ import xtremweb.services.rpc.rpcdefs;
  * This class pipes RCP callback on UDP
  */
 public class CallbackPipe extends Callback {
+
+	private static final Logger logger = Logger.getLogger(CallbackPipe.class);
 
 	/**
 	 * This is the RPC port to forward client requests to This RPC server port
@@ -71,8 +74,9 @@ public class CallbackPipe extends Callback {
 			setServerHost(InetAddress.getByName(sn));
 		} catch (final Exception e) {
 			final Logger logger = getLogger();
-			logger.exception("InetAddress.getByName (" + sn + ")", e);
-			logger.fatal("Please use '--name' option");
+			logger.error("Caught exception, InetAddress.getByName (" + sn + ")", e);
+			logger.error("Please use '--name' option");
+			System.exit(XWReturnCode.FATAL.ordinal());
 		}
 	}
 
@@ -91,8 +95,7 @@ public class CallbackPipe extends Callback {
 
 		final Logger logger = getLogger();
 		final String serverName = getServerName();
-		final Packet request = new Packet(clientPacket.getData(), clientPacket.getLength(), logger.getLoggerLevel(),
-				serverName);
+		final Packet request = new Packet(clientPacket.getData(), clientPacket.getLength(), serverName);
 
 		String proc = null;
 		final int prog = request.getProg();

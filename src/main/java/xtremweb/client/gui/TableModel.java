@@ -58,8 +58,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 
-import xtremweb.common.Logger;
-import xtremweb.common.LoggerLevel;
+import org.apache.log4j.Logger;
+
+
 import xtremweb.common.Table;
 import xtremweb.common.UID;
 import xtremweb.common.XMLValue;
@@ -72,10 +73,7 @@ import xtremweb.communications.URI;
  */
 public abstract class TableModel extends DefaultTableModel {
 
-	/**
-	 * This is the logger
-	 */
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(TableModel.class);
 
 	public final static String WARNING = "XWHEP Warning";
 	public final static String INFO = "XWHEP Information";
@@ -207,13 +205,9 @@ public abstract class TableModel extends DefaultTableModel {
 	 */
 	protected TableModel(final MainFrame p, final Table itf, final boolean d) {
 
-		logger = new Logger(this);
-
 		detailed = d;
 		setParent(p);
 		this.itf = itf;
-
-		setLoggerLevel(getParent().getLoggerLevel());
 
 		selectButton = null;
 		unselectButton = null;
@@ -281,26 +275,6 @@ public abstract class TableModel extends DefaultTableModel {
 		return rows;
 	}
 
-	/**
-	 * This is the logger getter
-	 *
-	 * @return the logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	public LoggerLevel getLoggerLevel() {
-		return logger.getLoggerLevel();
-	}
-
-	/**
-	 * This sets the logger level. This also sets the logger levels checkboxes
-	 * menu item.
-	 */
-	public final void setLoggerLevel(final LoggerLevel l) {
-		logger.setLoggerLevel(l);
-	}
 
 	/**
 	 * This sets the JTable
@@ -393,7 +367,7 @@ public abstract class TableModel extends DefaultTableModel {
 						getParent().setTitleConnected();
 						refresh();
 					} catch (final ConnectException ex) {
-						logger.exception(ex);
+						logger.error("Caught exception: ", ex);
 						getParent().setTitleNotConnected();
 					}
 				}
@@ -520,7 +494,7 @@ public abstract class TableModel extends DefaultTableModel {
 
 			uri = getParent().commClient().newURI(row.getUID());
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			JOptionPane.showMessageDialog(getParent(), e.toString(), WARNING, JOptionPane.WARNING_MESSAGE);
 			return;
 		} finally {
@@ -532,7 +506,7 @@ public abstract class TableModel extends DefaultTableModel {
 			getParent().setTitleConnected();
 			refresh();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			getParent().setTitleNotConnected();
 		} finally {
 			uri = null;
@@ -626,7 +600,7 @@ public abstract class TableModel extends DefaultTableModel {
 			return ret;
 		} catch (final Exception e) {
 			getParent().setTitleNotConnected();
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			throw new ConnectException(e.toString());
 		}
 	}
@@ -714,7 +688,7 @@ public abstract class TableModel extends DefaultTableModel {
 		try {
 			return itf.columns(true).length;
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return 0;
 		}
 	}
@@ -744,7 +718,7 @@ public abstract class TableModel extends DefaultTableModel {
 			final Table row = rows.elementAt(arow);
 			return row.getValue(row.getIndex(acol, true));
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return null;
 		}
 	}
@@ -770,7 +744,7 @@ public abstract class TableModel extends DefaultTableModel {
 			final Table row = rows.elementAt(arow);
 			row.setValue(acol, value);
 		} catch (final Exception e) {
-			logger.exception("TasksTableModel::setValueAt ()", e);
+			logger.error("Caught exception, TasksTableModel::setValueAt () ", e);
 			return;
 		}
 
@@ -789,7 +763,7 @@ public abstract class TableModel extends DefaultTableModel {
 			}
 			return getValueAt(0, column).getClass();
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 			return String.class;
 		}
 	}

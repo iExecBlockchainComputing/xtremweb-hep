@@ -30,6 +30,7 @@ import java.security.InvalidKeyException;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import xtremweb.common.StatusEnum;
 import xtremweb.common.UID;
@@ -54,6 +55,8 @@ import xtremweb.common.XWConfigurator;
  * error works etc.
  */
 public class XMLRPCCommandGetWorks extends XMLRPCCommand {
+
+	private static final Logger logger = Logger.getLogger(XMLRPCCommandGetWorks.class);
 
 	/**
 	 * This is the RPC id
@@ -183,7 +186,7 @@ public class XMLRPCCommandGetWorks extends XMLRPCCommand {
 				try {
 					setURI(new URI(value));
 				} catch (final Exception e) {
-					getLogger().error("not a valid URI " + value);
+					logger.error("not a valid URI " + value);
 					setURI(null);
 				}
 			} else if (attribute.compareToIgnoreCase(getColumnLabel(STATUS)) == 0) {

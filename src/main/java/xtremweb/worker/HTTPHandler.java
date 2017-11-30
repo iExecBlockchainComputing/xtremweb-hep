@@ -41,7 +41,8 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 
 import xtremweb.common.BytePacket;
-import xtremweb.common.Logger;
+import org.apache.log4j.Logger;
+
 import xtremweb.common.StreamIO;
 import xtremweb.common.UserInterface;
 import xtremweb.common.XMLable;
@@ -66,6 +67,7 @@ public class HTTPHandler extends xtremweb.worker.CommHandler {
 
 	private final IdRpc idRpc;
 	private final UserInterface user;
+	private static final Logger logger = Logger.getLogger(HTTPHandler.class);
 
 	/**
 	 * This is the default constructor which only calls super("HTTPHandler")
@@ -229,7 +231,6 @@ public class HTTPHandler extends xtremweb.worker.CommHandler {
 	 */
 	@Override
 	protected void write(final XMLable cmd) {
-		final Logger logger = getLogger();
 		try {
 			if (response == null) {
 				logger.error("Can't write : this.response is not set");
@@ -241,7 +242,7 @@ public class HTTPHandler extends xtremweb.worker.CommHandler {
 			response.setStatus(HttpServletResponse.SC_OK);
 			response.getWriter().println(XMLable.XMLHEADER + cmd.toXml());
 		} catch (final Exception e) {
-			logger.exception(e);
+			logger.error("Caught exception: ", e);
 		}
 	}
 
@@ -285,7 +286,7 @@ public class HTTPHandler extends xtremweb.worker.CommHandler {
 	 */
 	@Override
 	public void close() {
-		getLogger().debug("close");
+		logger.debug("close");
 		io.close();
 	}
 }

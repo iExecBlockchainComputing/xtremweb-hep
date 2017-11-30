@@ -32,12 +32,11 @@ package xtremweb.worker;
  * @author <a href="mailto: fedak@lri.fr> "Gilles Fedak</a>
  */
 
+import xtremweb.communications.IdRpc;
+
 import java.util.Collection;
 import java.util.Stack;
 import java.util.Vector;
-
-import xtremweb.common.Logger;
-import xtremweb.communications.IdRpc;
 
 public class CommStack extends CommQueue {
 
@@ -49,7 +48,6 @@ public class CommStack extends CommQueue {
 		size = 0;
 		poolQueue = new Stack<>();
 		commEventInProgress = new Vector<>(MAX_COMMEVENT_INPROGRESS);
-		setLogger(new Logger(this));
 	}
 
 	@Override
