@@ -23,6 +23,8 @@
 
 package xtremweb.common;
 
+import java.util.Arrays;
+
 /**
  * XWCPUs.java<br />
  *
@@ -38,17 +40,13 @@ package xtremweb.common;
 
 public enum CPUEnum {
 
-	NONE, IX86, X86_64, IA64, PPC, SPARC, ALPHA, AMD64, ARM32, ARM64, ARM;
+	NONE, IX86, X86_64, IA64, PPC, SPARC, ALPHA, AMD64, ARM32, ARM64;
 
-	public static final CPUEnum LAST = ARM;
+	public static final CPUEnum LAST = ARM64;
 	public static final int SIZE = LAST.ordinal() + 1;
 
 	public static CPUEnum fromInt(final int v) throws IllegalArgumentException {
-		for (final CPUEnum i : CPUEnum.values()) {
-			if (i.ordinal() == v) {
-				return i;
-			}
-		}
+		if (0 <= v && v < SIZE) return CPUEnum.values()[v];
 		throw new IllegalArgumentException("unvalid XWCPUs value " + v);
 	}
 
@@ -78,16 +76,13 @@ public enum CPUEnum {
 	 */
 	public static String getCpuName(final String archName) throws IllegalArgumentException {
 
-		if ((archName.compareToIgnoreCase("i86") == 0) || (archName.compareToIgnoreCase("x86") == 0)
-				|| (archName.compareToIgnoreCase("ix86") == 0) || (archName.compareToIgnoreCase("i386") == 0)
-				|| (archName.compareToIgnoreCase("x386") == 0) || (archName.compareToIgnoreCase("ix386") == 0)
-				|| (archName.compareToIgnoreCase("i486") == 0) || (archName.compareToIgnoreCase("x486") == 0)
-				|| (archName.compareToIgnoreCase("ix486") == 0) || (archName.compareToIgnoreCase("i586") == 0)
-				|| (archName.compareToIgnoreCase("x586") == 0) || (archName.compareToIgnoreCase("ix586") == 0)
-				|| (archName.compareToIgnoreCase("i686") == 0) || (archName.compareToIgnoreCase("x686") == 0)
-				|| (archName.compareToIgnoreCase("ix686") == 0)) {
-			return IX86.toString();
-		}
+		final String[] armArchArray = {"arm", "aarch64" , "arm32", "arm64"}; // aarch64 returned by ARM64
+		if (Arrays.asList(armArchArray).contains(archName.toLowerCase()))
+			return valueOf(("ARM" + System.getProperty("sun.arch.data.model")).toUpperCase()).toString(); // ARM32 or ARM64
+
+		final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
+			"i586", "x586", "ix586", "i686", "x686", "ix686"};
+		if (Arrays.asList(ixArchArray).contains(archName.toLowerCase())) return IX86.toString();
 
 		return valueOf(archName.toUpperCase()).toString();
 	}
