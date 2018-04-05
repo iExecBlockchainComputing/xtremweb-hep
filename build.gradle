@@ -371,7 +371,7 @@ buildARM64WorkerDockerImage.enabled = canBuildDockerImages
 
 task buildImages(){
     dependsOn (buildWorkerDockerImage, buildClientDockerImage, buildServerDockerImage,
-            buildARM32ClientDockerImage, buildARM32WorkerDockerImage, buildARM64WorkerDockerImage, buildARM64WorkerDockerImage)
+            buildARM32ClientDockerImage, buildARM32WorkerDockerImage) // TODO add buildARM64ClientDockerImage, buildARM64WorkerDockerImage)
 }
 
 buildImages.enabled = canBuildDockerImages
