@@ -77,7 +77,7 @@ class DatasTableModel extends TableModel {
 	private static final String UIDLABEL = "UID";
 	private static final String OWNERLABEL = "Owner";
 	private static final String SIZELABEL = "Length";
-	private static final String MD5LABEL = "MD5";
+	private static final String SHALABEL = "SHASUM";
 	private static final String NAMELABEL = "Name";
 	private static final String ACCESSRIGHTSLABEL = "Access rights";
 	private static final String TYPELABEL = "Type";
@@ -88,7 +88,7 @@ class DatasTableModel extends TableModel {
 	 * These defines submission parameter labels
 	 */
 	private static final String[] labels = { UIDLABEL, OWNERLABEL, NAMELABEL, ACCESSRIGHTSLABEL, TYPELABEL, OSLABEL,
-			CPULABEL, CONTENTLABEL, SIZELABEL, MD5LABEL };
+			CPULABEL, CONTENTLABEL, SIZELABEL, SHALABEL};
 
 	private static final String HELPSTRING = new String("<u>" + NAMELABEL
 			+ "</u> : is required (automatically sets if selecting a file)<br>" + "<u>" + ACCESSRIGHTSLABEL
@@ -206,7 +206,7 @@ class DatasTableModel extends TableModel {
 		resetButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				((JTextField) vdialog.getFields().get(MD5LABEL)).setText("");
+				((JTextField) vdialog.getFields().get(SHALABEL)).setText("");
 				((JTextField) vdialog.getFields().get(SIZELABEL)).setText("");
 				contentURI.setText("");
 			}
@@ -237,7 +237,7 @@ class DatasTableModel extends TableModel {
 		field.setEditable(false);
 		newRow.add(field);
 
-		field = new JTextField(); // MD5
+		field = new JTextField(); // SHASUM
 		field.setEditable(false);
 		newRow.add(field);
 
@@ -263,7 +263,7 @@ class DatasTableModel extends TableModel {
 			return;
 		}
 		final String accessRights = ((JTextField) vdialog.getFields().get(ACCESSRIGHTSLABEL)).getText();
-		final String md5Value = ((JTextField) vdialog.getFields().get(MD5LABEL)).getText();
+		final String shaValue = ((JTextField) vdialog.getFields().get(SHALABEL)).getText();
 		final String sizeValue = ((JTextField) vdialog.getFields().get(SIZELABEL)).getText();
 		final String type = (String) ((JComboBox) vdialog.getFields().get(TYPELABEL)).getSelectedItem();
 		final String os = (String) ((JComboBox) vdialog.getFields().get(OSLABEL)).getSelectedItem();
@@ -275,7 +275,7 @@ class DatasTableModel extends TableModel {
 		try {
 			final DataInterface data = new DataInterface(newUID);
 			data.setName(dataName);
-			data.setMD5(md5Value);
+			data.setShasum(shaValue);
 			if ((sizeValue != null) && (sizeValue.length() > 0)) {
 				data.setSize(new Long(sizeValue).longValue());
 			}
@@ -338,12 +338,12 @@ class DatasTableModel extends TableModel {
 				dataNameField.setText(contentFile.getName());
 			}
 			try {
-				((JTextField) vdialog.getFields().get(MD5LABEL)).setText(XWTools.sha256CheckSum(contentFile));
+				((JTextField) vdialog.getFields().get(SHALABEL)).setText(XWTools.sha256CheckSum(contentFile));
 				((JTextField) vdialog.getFields().get(SIZELABEL)).setText("" + contentFile.length());
 			} catch (final Exception e) {
 			}
 		} else {
-			((JTextField) vdialog.getFields().get(MD5LABEL)).setText("");
+			((JTextField) vdialog.getFields().get(SHALABEL)).setText("");
 			((JTextField) vdialog.getFields().get(SIZELABEL)).setText("");
 			contentURI.setText("");
 		}

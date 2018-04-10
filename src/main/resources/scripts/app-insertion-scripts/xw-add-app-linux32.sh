@@ -1,9 +1,19 @@
 #!/bin/sh
 #=============================================================================
 #
-#  Copyright 2012  E. URBAH
-#                  at LAL, Univ Paris-Sud, IN2P3/CNRS, Orsay, France
-#  License GPL v3
+# Copyright [2018] [CNRS] Etienne Urbah
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 #  Shell script for insertion inside XtremWeb-HEP of an application for Linux
 #  32 bits :  Either 1 binary, or 1 script + 1 binary or zip
@@ -148,7 +158,7 @@ xw_send_data ()
     fi
     
     #-------------------------------------------------------------------------
-    #  If the XtremWeb-HEP size and MD5 are those of the inserted file, OK
+    #  If the XtremWeb-HEP size and SHASUM are those of the inserted file, OK
     #-------------------------------------------------------------------------
     if [ '(' "$XW_ATTR_SIZE" = "$XW_FILE_SIZE" ')' -a  \
          '(' "$XW_ATTR_MD5"  = "$XW_FILE_MD5"  ')' ]; then
@@ -205,7 +215,7 @@ xw_send_data ()
     fi
     
     #-------------------------------------------------------------------------
-    #  If the size and MD5 of the downloaded file are NOT those of the
+    #  If the size and SHASUM of the downloaded file are NOT those of the
     #  inserted file, that is an error
     #-------------------------------------------------------------------------
     if [ '(' $(gunzip -c "$XW_FILE_DOWNLOAD" | wc -c) !=  \
@@ -226,7 +236,7 @@ xw_send_data ()
     fi
     
     #-------------------------------------------------------------------------
-    #  Here the size and MD5 of the downloaded file are those of the inserted
+    #  Here the size and SHASUM of the downloaded file are those of the inserted
     #  file, OK
     #-------------------------------------------------------------------------
     rm "$XW_FILE_DOWNLOAD"

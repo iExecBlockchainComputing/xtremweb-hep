@@ -5,18 +5,15 @@
 -- 
 --       This file is part of XtremWeb-HEP.
 -- 
---     XtremWeb-HEP is free software: you can redistribute it and/or modify
---     it under the terms of the GNU General Public License as published by
---     the Free Software Foundation, either version 3 of the License, or
---     (at your option) any later version.
--- 
---     XtremWeb-HEP is distributed in the hope that it will be useful,
---     but WITHOUT ANY WARRANTY; without even the implied warranty of
---     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---     GNU General Public License for more details.
--- 
---     You should have received a copy of the GNU General Public License
---     along with XtremWeb-HEP.  If not, see <http://www.gnu.org/licenses/>.
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--     http://www.apache.org/licenses/LICENSE-2.0
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 -- 
 --
 -- Since : 5.8.0
@@ -30,12 +27,12 @@
 
 select completeddate,count(*)
        from (
-         (select date_format(completeddate,"%Y/%m") as completeddate from works 
+         (select date_format(completeddate,"%Y/%m") as completeddate from works
          where not isnull(completeddate)
             and completeddate > date_sub(now(), interval 6 month) 
 	       	and status="COMPLETED")
 	     union all
-         (select date_format(completeddate,"%Y/%m") as completeddate from works_history 
+         (select date_format(completeddate,"%Y/%m") as completeddate from works_history
          where not isnull(completeddate)
             and completeddate > date_sub(now(), interval 6 month) 
 	       	and status="COMPLETED")

@@ -656,6 +656,28 @@ public enum IdRpc {
 		}
 	},
 	/**
+	 * This sends an envelope to server
+	 * @since 13.0.0
+	 */
+	SENDENVELOPE {
+		@Override
+		public XMLRPCCommandSend newCommand(final URI uri, final UserInterface client, final Table obj)
+				throws IOException {
+			return newXMLRPCCommandSend(uri, client, obj);
+		}
+
+		@Override
+		public String helpClient() {
+			return this.toString()
+					+ " <id> [name] [maxcpuspeed] [maxwallclocktime] [maxmemory] [maxstorage] [maxfilesize]";
+		}
+
+		@Override
+		public String helpRestApi() {
+			return "/" + this.toString() + "?" + XWPostParams.XMLDESC + "=an xml description : sends an envelope";
+		}
+	},
+	/**
 	 * This broadcasts a work to all workers
 	 */
 	BROADCASTWORK {
@@ -696,47 +718,89 @@ public enum IdRpc {
 			return "/" + this.toString() + " : sends the work alive signal (for debugging purposes only)";
 		}
 	},
-	/**
-	 * This retrieves all works UID from server
-	 */
-	GETWORKS {
-		@Override
-		public XMLRPCCommandGetWorks newCommand(final URI uri, final UserInterface client, final Table obj)
-				throws IOException {
-			return new XMLRPCCommandGetWorks(uri, client);
-		}
+    /**
+     * This retrieves all works UID from server
+     */
+    GETWORKS {
+        @Override
+        public XMLRPCCommandGetWorks newCommand(final URI uri, final UserInterface client, final Table obj)
+                throws IOException {
+            return new XMLRPCCommandGetWorks(uri, client);
+        }
 
-		@Override
-		public String helpClient() {
-			return this.toString() + " : retrieves all works";
-		}
+        @Override
+        public String helpClient() {
+            return this.toString() + " : retrieves all works";
+        }
 
-		@Override
-		public String helpRestApi() {
-			return "/" + this.toString() + ": retrieves all works";
-		}
-	},
-	/**
-	 * This retrieves a work by its external ID (another scheduler, blockchain transaction hash etc.)
-	 * @since 11.1.0
-	 */
-	GETWORKBYEXTERNALID {
-		@Override
-		public XMLRPCCommandGetWorkByExternalId newCommand(final URI uri, final UserInterface client, final Table obj)
-				throws IOException {
-			return new XMLRPCCommandGetWorkByExternalId(uri, client);
-		}
+        @Override
+        public String helpRestApi() {
+            return "/" + this.toString() + ": retrieves all works";
+        }
+    },
+    /**
+     * This retrieves a work by its external ID (another scheduler, blockchain transaction hash etc.)
+     * @since 11.1.0
+     */
+    GETWORKBYEXTERNALID {
+        @Override
+        public XMLRPCCommandGetWorkByExternalId newCommand(final URI uri, final UserInterface client, final Table obj)
+                throws IOException {
+            return new XMLRPCCommandGetWorkByExternalId(uri, client);
+        }
 
-		@Override
-		public String helpClient() {
-			return this.toString() + " aString [...] : retrevies work given their id";
-		}
+        @Override
+        public String helpClient() {
+            return this.toString() + " aString [...] : retrevies work given their id";
+        }
 
-		@Override
-		public String helpRestApi() {
-			return this.toString() + "/anId";
-		}
-	},
+        @Override
+        public String helpRestApi() {
+            return this.toString() + "/anId";
+        }
+    },
+    /**
+     * This retrieves all envelopes UID from server
+     * @since 13.0.0
+     */
+    GETENVELOPES {
+        @Override
+        public XMLRPCCommandGetEnvelopes newCommand(final URI uri, final UserInterface client, final Table obj)
+                throws IOException {
+            return new XMLRPCCommandGetEnvelopes(uri, client);
+        }
+
+        @Override
+        public String helpClient() {
+            return this.toString() + " : retrieves all envelopes";
+        }
+
+        @Override
+        public String helpRestApi() {
+            return "/" + this.toString() + ": retrieves all envelopes";
+        }
+    },
+    /**
+     * This retrieves an envelope by its ID
+     * @since 13.1.0
+     */
+    GETENVELOPEBYID {
+        @Override
+        public XMLRPCCommandGetEnvelopeById newCommand(final URI uri, final UserInterface client, final Table obj)
+                throws IOException {
+            return new XMLRPCCommandGetEnvelopeById(uri, client);
+        }
+
+        @Override
+        public String helpClient() {
+            return this.toString() + " anInteger [...] : retrieves envelopes given their id";
+        }
+
+        @Override
+        public String helpRestApi() {
+            return this.toString() + "/anInteger";
+        }
+    },
 	/**
 	 * This send a work status to server
 	 */

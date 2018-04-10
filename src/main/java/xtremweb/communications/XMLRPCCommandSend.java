@@ -35,6 +35,7 @@ import org.xml.sax.SAXException;
 
 import xtremweb.common.AppInterface;
 import xtremweb.common.DataInterface;
+import xtremweb.common.EnvelopeInterface;
 import xtremweb.common.GroupInterface;
 import xtremweb.common.Logger;
 import xtremweb.common.SessionInterface;
@@ -84,6 +85,9 @@ public abstract class XMLRPCCommandSend extends XMLRPCCommand {
 		}
 		if(obj instanceof WorkInterface) {
 			return new XMLRPCCommandSendWork(uri, obj);
+		}
+		if(obj instanceof EnvelopeInterface) {
+			return new XMLRPCCommandSendEnvelope(uri, obj);
 		}
 		throw new IOException("unkown ovject type");
 	}

@@ -55,6 +55,12 @@ public class XWCommException extends Exception {
 		}
 	}
 
+	public void wallClockTime() throws IOException {
+		if (result.getReturnCode() == XWReturnCode.WALLCLOCKTIME) {
+			throw new IOException(result.getMessage());
+		}
+	}
+
 	@Override
 	public String toString() {
 		return result.toString();

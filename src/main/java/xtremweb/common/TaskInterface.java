@@ -781,6 +781,25 @@ public final class TaskInterface extends xtremweb.common.Table {
 		return testStatus(StatusEnum.ERROR);
 	}
 
+	/**
+	 * This sets the task to FAILED
+	 * @since 13.0.0
+	 */
+	public void setFailed() {
+		setStatus(StatusEnum.FAILED);
+		setRemovalDate();
+	}
+
+	/**
+	 * This tests is this task is FAILED
+	 * @since 13.0.0
+	 * @return a boolean.
+	 */
+	public boolean isFailed() {
+		return testStatus(StatusEnum.FAILED);
+	}
+
+
 	public boolean setAliveCount(final int v) {
 		Integer i = new Integer(v);
 		final boolean ret = setValue(Columns.ALIVECOUNT, i);

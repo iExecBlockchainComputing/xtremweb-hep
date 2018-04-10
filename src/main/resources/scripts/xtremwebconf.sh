@@ -555,14 +555,12 @@ if [ $? -eq 0 ] ; then
 fi
 
 XW_CLASSES=""
-for i in $ZIPS $JARS $RESOURCES ; do
-    if [ "X$i" = "Xxtremweb.jar" ]; then
-#        if [ "$PROG" != "xtremweb.worker" -a "$PROG" != "xtremweb.client" ]; then
-        if [ "X$PROG" != "Xxtremweb.worker" ]; then
-            XW_CLASSES=$i:$XW_CLASSES
-        fi
+for i in $RESOURCES $ZIPS $JARS ; do
+    baseFileName=$(basename $i)
+    if [ "X${baseFileName}" = "Xxtremweb.jar" ]; then
+        [ -z ${XW_CLASSES} ] && XW_CLASSES="${i}" || XW_CLASSES="${i}:${XW_CLASSES}"
     else
-        XW_CLASSES=$i:$XW_CLASSES
+        [ -z ${XW_CLASSES} ] && XW_CLASSES="${i}" || XW_CLASSES="${XW_CLASSES}:${i}"
     fi
 done
 
@@ -627,7 +625,7 @@ LOG4JCONFIGFILE=$RESOURCESDIR/$LOG4JCONFIGFILENAME
 LOG4JOPTS="-Dlog4j.configurationFile"
 [ -f $LOG4JCONFIGFILE ] && JAVAOPTS="$JAVAOPTS $LOG4JOPTS=$LOG4JCONFIGFILE"
 
-JAVACMD="$JAVA -DHWMEM=$HWMEM $JAVAOPTS -DLOGFILE=$LOGFILE  $JAVANETDEBUG $JETTYDEBUG $JAVATRUSTKEY $PROFILER -cp $MAINJAR:$XW_CLASSES:$PROFCLASS"
+JAVACMD="$JAVA -DHWMEM=$HWMEM $JAVAOPTS -DLOGFILE=$LOGFILE  $JAVANETDEBUG $JETTYDEBUG $JAVATRUSTKEY $PROFILER -cp $XW_CLASSES:$PROFCLASS:$MAINJAR:"
 JAVA="$JAVACMD $MAINCLASS --xwconfig $CFGFILE $XWVERBOSE $XWDOWNLOAD $XWFORMAT $XWSTATUS $PARAMS"
 if [ "X$IBISHUBADDRESS" = "X" ] ; then
 	IBISHUB="$JAVACMD -Dsmartsockets.hub.port=$IBISHUBPORT $IBISHUBCLASS"

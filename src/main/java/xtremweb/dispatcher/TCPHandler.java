@@ -54,6 +54,7 @@ import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWPropertyDefs;
 import xtremweb.common.XWTools;
 import xtremweb.communications.XMLRPCCommand;
+import xtremweb.communications.XWPostParams;
 import xtremweb.security.PEMPublicKeyValidator;
 
 /**
@@ -221,7 +222,7 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 	/**
 	 * This writes a file to output channel
 	 *
-	 * @see xtremweb.common.StreamIO#writeFile(File)
+	 * @see xtremweb.common.StreamIO#writeFile(File, long)
 	 * @param f
 	 *            is the file to send
 	 */
@@ -229,7 +230,7 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 	public synchronized void writeFile(final File f) throws IOException {
 		try {
 			mileStone("<writeFile file='" + f + "'>");
-			io.writeFile(f, getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+			io.writeFile(f, XWPostParams.MAXUPLOADSIZE);
 		} finally {
 			mileStone("</writeFile>");
 		}
@@ -247,7 +248,7 @@ public class TCPHandler extends xtremweb.dispatcher.CommHandler {
 		final Logger logger = getLogger();
 		try {
 			mileStone("<readFile file='" + f + "'>");
-			io.readFile(f, getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+			io.readFile(f, XWPostParams.MAXUPLOADSIZE);
 		} catch (final Exception e) {
 			logger.exception(e);
 			mileStone("<error method='readFile' msg='" + e.getMessage() + "' />");

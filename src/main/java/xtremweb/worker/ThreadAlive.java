@@ -376,11 +376,15 @@ public class ThreadAlive extends Thread {
 				throw new IOException("Can't retrieve new keystore data " + keystoreUri);
 			}
 
-			final String currentKeystoreMD5 = XWTools.sha256CheckSum(currentKeystoreFile);
+			final String currentKeystoreSHA = XWTools.sha256CheckSum(currentKeystoreFile);
 
-			if (newKeystoreData.getMD5().compareTo(currentKeystoreMD5) != 0) {
+			if (newKeystoreData.getShasum().compareTo(currentKeystoreSHA) != 0) {
 				logger.info("Downloading new keystore");
-				CommManager.getInstance().downloadData(keystoreUri);
+				try {
+					CommManager.getInstance().downloadData(keystoreUri, XWPostParams.MAXUPLOADSIZE, false);
+				} catch(final XWCommException e) {
+					logger.exception(e);
+				}
 				final File newKeystoreFile = CommManager.getInstance().commClient(keystoreUri)
 						.getContentFile(keystoreUri);
 

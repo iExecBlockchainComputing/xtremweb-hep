@@ -668,30 +668,8 @@ public enum XWPropertyDefs {
 	 * Server : admin uid
 	 * Property type : string
 	 * Default : null
-	 * @deprecated since hsqldb usage is not maintained any more
 	 */
 	ADMINUID,
-	/**
-	 * Server : worker login
-	 * Property type : string
-	 * Default : null
-	 * @deprecated since hsqldb usage is not maintained any more
-	 */
-	WORKERLOGIN,
-	/**
-	 * Server : worker password
-	 * Property type : string
-	 * Default : null
-	 * @deprecated since hsqldb usage is not maintained any more
-	 */
-	WORKERPASSWORD,
-	/**
-	 * Server : worker uid
-	 * Property type : string
-	 * Default : null
-	 * @deprecated since hsqldb usage is not maintained any more
-	 */
-	WORKERUID,
 	/**
 	 * Worker , Client : login
 	 * Property type : string
@@ -704,7 +682,7 @@ public enum XWPropertyDefs {
 	 * Property type : string
 	 * Default : null
 	 * @since 11.0.0
-	 * @see UserRightEnum#DELEGATION_USER
+	 * @see UserRightEnum#MANDATED_USER
 	 */
 	MANDATINGLOGIN,
 	/**
@@ -866,55 +844,6 @@ public enum XWPropertyDefs {
 		}
 	},
 	/**
-	 * Dispatcher, worker : this defines the maximum usable disk space per
-	 * application and work; this is in Mb
-	 * Property type : long
-	 * Default : XWTools.MAXDISKSIZE
-	 *
-	 * @see xtremweb.common.XWTools#MAXDISKSIZE
-	 * @since 9.1.0
-	 */
-	MAXDISKSPACE {
-		@Override
-		public String defaultValue() {
-			return "" + XWTools.MAXDISKSIZE;
-		}
-	},
-	/**
-	 * Dispatcher: upload size limit, in Mb
-	 * Property type : long
-	 * Default : XWTools.MAXFILESIZE
-	 *
-	 * @see xtremweb.common.XWTools#MAXFILESIZE
-	 * @since 12.2.3
-	 */
-	MAXFILESIZE {
-		@Override
-		public String defaultValue() {
-			return "" + XWTools.MAXFILESIZE;
-		}
-	},
-	/**
-	 * Dispatcher, worker : this defines the maximum usable RAM space per
-	 * application and work
-	 * Property type : integer
-	 * Default : XWTools.MAXRAMSIZE
-	 *
-	 * @see xtremweb.common.XWTools#MAXRAMSIZE
-	 * @since 9.1.0
-	 */
-	MAXRAMSPACE {
-		/**
-		 * This retrieves the String representation of the default value
-		 *
-		 * @return XWTools.MAXRAMSIZE
-		 */
-		@Override
-		public String defaultValue() {
-			return "" + XWTools.MAXRAMSIZE;
-		}
-	},
-	/**
 	 * All : default max instances of a job before we put that job in error
 	 * <p>
 	 * Property type : integer
@@ -932,28 +861,6 @@ public enum XWPropertyDefs {
 		@Override
 		public String defaultValue() {
 			return "10";
-		}
-	},
-	/**
-	 * All : default max computing seconds
-	 * <p>
-	 * Property type : integer
-	 * </p>
-	 * <p>
-	 * Default : 21,600 s (6 hours)
-	 * </p>
-	 *
-	 * @since 8.2.0
-	 */
-	WALLCLOCKTIMEVALUE {
-		/**
-		 * This retrieves the String representation of the default value
-		 *
-		 * @return "21600"
-		 */
-		@Override
-		public String defaultValue() {
-			return "-1";
 		}
 	},
 	/**

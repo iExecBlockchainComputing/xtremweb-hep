@@ -271,6 +271,9 @@ public class Executor {
 	public void setMaxWallClockTime(final long w) {
 		maxWallClockTime = w * 1000;
 	}
+	public long getMaxWallClockTime() {
+		return maxWallClockTime;
+	}
 
 	/**
 	 * This retreives an attribute (as the name says)
@@ -327,16 +330,12 @@ public class Executor {
 			isRunning = false;
 			process = null;
 		} catch (final Throwable e) {
-			getLogger().debug("Can't stop process : " + e);
-			throw new ExecutorLaunchException();
+			throw new ExecutorLaunchException("Can't stop process [ " + getCmdLine() + "  ]: " + e);
 		}
 	}
 
 	/**
 	 * This closes handles stdin, stdout and stderr. This cancels the timer.
-	 *
-	 * @exception ExecutorLaunchException
-	 *                is thrown on error (no running process)
 	 */
 	private void closeHandles() {
 
@@ -394,8 +393,7 @@ public class Executor {
 			}
 			isRunning = true;
 		} catch (final Exception e) {
-			getLogger().exception("Can't start process : " + getCommandLine(), e);
-			throw new ExecutorLaunchException();
+			throw new ExecutorLaunchException("Can't start process  [" + getCommandLine() + "] : " + e);
 		} finally {
 			dir = null;
 		}
@@ -505,10 +503,10 @@ public class Executor {
 	 * This waits until the process exits
 	 *
 	 * @return the process return code
-	 * @throws InterruptedException
-	 *             is thrown if wall clock time reached
+	 * @throws ExecutorWallClockTimeException
+     *             is thrown if wall clock time reached
 	 */
-	public int waitFor() throws InterruptedException {
+	public int waitFor() throws ExecutorWallClockTimeException {
 		int returnCode = 0;
 
 		for (isRunning = true; isRunning;) {
@@ -527,7 +525,7 @@ public class Executor {
 		}
 
 		if (wallclockTimeReached == true) {
-			throw new InterruptedException("wall clock time reached");
+			throw new ExecutorWallClockTimeException();
 		}
 
 		clean();
@@ -558,9 +556,10 @@ public class Executor {
 				stop();
 			} catch (final ExecutorLaunchException e) {
 				getLogger().exception("checkWallClock", e);
+			} finally {
+				wallclockTimeReached = true;
+				isRunning = false;
 			}
-			wallclockTimeReached = true;
-			isRunning = false;
 		}
 	}
 
@@ -571,7 +570,7 @@ public class Executor {
 	 * @throws InterruptedException
 	 *             is thrown if wall clock time reached
 	 */
-	public int startAndWait() throws ExecutorLaunchException, InterruptedException {
+	public int startAndWait() throws ExecutorLaunchException, ExecutorWallClockTimeException  {
 		start();
 		return waitFor();
 	}

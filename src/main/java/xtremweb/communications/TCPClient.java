@@ -252,7 +252,7 @@ public class TCPClient extends CommClient {
 			forceClose = true;
 			setNbMessages(0);
 		}
-		if ((isAutoClose() == false) && (forceClose == false)) {
+		if ((!isAutoClose()) && (!forceClose)) {
 			getLogger().debug("not closing");
 			return;
 		}
@@ -508,7 +508,7 @@ public class TCPClient extends CommClient {
 	@Override
 	public void writeFile(final File f) throws IOException {
 		mileStone("<writeFile file='" + f + "'>");
-		io.writeFile(f, getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+		io.writeFile(f, XWPostParams.MAXUPLOADSIZE);
 		mileStone("</writeFile>");
 	}
 
@@ -522,7 +522,7 @@ public class TCPClient extends CommClient {
 	@Override
 	public void readFile(final File f) throws IOException {
 		mileStone("<readFile file='" + f + "'>");
-		io.readFile(f, getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+		io.readFile(f, XWPostParams.MAXUPLOADSIZE);
 		mileStone("</readFile>");
 	}
 

@@ -4,6 +4,7 @@
 ; Author  : Oleg Lodygensky (lodygens@lal.in2p3.fr)
 ; Acknowledgment : Ad Emmen
 ; Purpose : This is the script to create an installer for the xwhep Worker.
+; License : Apache 2
 ; ============================================================================
 
 

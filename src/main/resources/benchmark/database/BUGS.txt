@@ -1,2 +1,1 @@
-Since XWHEP 10.x, these scripts are not functional any more.
 They must be rewritten to correctly manage the 10.x database structure.

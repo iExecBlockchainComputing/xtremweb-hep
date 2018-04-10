@@ -92,13 +92,10 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public String fromString(final String v) {
-				final String val = v;
-				return val.replaceAll("[\\n\\s\'\"]+", "_");
+				return v.replaceAll("[\\n\\s\'\"]+", "_");
 			}
 		},
 		/**
@@ -119,12 +116,10 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -141,13 +136,10 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an ApplicationType representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public AppTypeEnum fromString(final String v) {
-				final String value = v.toUpperCase();
-				return AppTypeEnum.valueOf(value);
+				return AppTypeEnum.valueOf(v.toUpperCase());
 			}
 		},
 		/**
@@ -164,8 +156,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Long fromString(final String v) {
@@ -184,8 +174,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -204,8 +192,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -224,8 +210,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -246,8 +230,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public URI fromString(final String v) throws URISyntaxException {
@@ -268,8 +250,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public URI fromString(final String v) throws URISyntaxException {
@@ -290,8 +270,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public URI fromString(final String v) throws URISyntaxException {
@@ -312,8 +290,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public URI fromString(final String v) throws URISyntaxException {
@@ -332,8 +308,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -354,8 +328,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -376,8 +348,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -398,8 +368,6 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -443,7 +411,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -467,7 +435,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -491,7 +459,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -514,7 +482,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -535,7 +503,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -554,7 +522,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -574,7 +542,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -594,7 +562,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -615,7 +583,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -634,7 +602,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -653,7 +621,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -672,7 +640,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -691,7 +659,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -710,7 +678,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -729,7 +697,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -748,7 +716,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -767,7 +735,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -786,7 +754,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -805,7 +773,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -824,7 +792,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -844,7 +812,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -864,7 +832,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -885,7 +853,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -906,7 +874,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -925,7 +893,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -944,7 +912,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -963,7 +931,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -982,7 +950,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1001,7 +969,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1020,7 +988,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1039,7 +1007,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1058,7 +1026,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1077,7 +1045,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1096,7 +1064,7 @@ public final class AppInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -1228,7 +1196,7 @@ public final class AppInterface extends Table {
 	 *
 	 * @param rs
 	 *            is an SQL request result
-	 * @exception IOException
+	 * @exception IOException on error
 	 */
 	public AppInterface(final ResultSet rs) throws IOException {
 		this();
@@ -1262,7 +1230,7 @@ public final class AppInterface extends Table {
 	 * @since 9.0.0
 	 * @param rs
 	 *            is the SQL data set
-	 * @throws IOException
+	 * @throws IOException on error
 	 */
 	@Override
 	public void fill(final ResultSet rs) throws IOException {
@@ -1534,8 +1502,6 @@ public final class AppInterface extends Table {
 	 * @param attrs
 	 *            contains attributes XML representation
 	 * @see Table#fromXml(Attributes)
-	 * @throws IOException
-	 *             on XML error
 	 */
 	public AppInterface(final Attributes attrs) {
 		this();
@@ -2416,7 +2382,7 @@ public final class AppInterface extends Table {
 	 * @since 12.2.8
  	*/
 	public void checkParams(final String params) throws AccessControlException {
-//		getType().checkParams(params);
+		getType().checkParams(params);
 	}
 	/**
 	 * This sets parameter value; this is called from
@@ -3023,15 +2989,10 @@ public final class AppInterface extends Table {
 	 * @param v
 	 *            is the minimal amount of RAM this work needs in Kb.
 	 * @return true if value has changed, false otherwise
-	 * @see XWPropertyDefs#MAXRAMSPACE
 	 */
 	public final boolean setMinMemory(final int v) {
 		try {
-			final String sysValueStr = System.getProperty(XWPropertyDefs.MAXRAMSPACE.toString());
-			final String maxValueStr = sysValueStr == null ? XWPropertyDefs.MAXRAMSPACE.defaultValue() : sysValueStr;
-			final int maxValue = Integer.parseInt(maxValueStr);
-			final int value = v > maxValue ? maxValue : v;
-			return setValue(Columns.MINMEMORY, Integer.valueOf(value < 0 ? 0 : value));
+			return setValue(Columns.MINMEMORY, Integer.valueOf(v < 0 ? 0 : v));
 		} catch (final Exception e) {
 			return setValue(Columns.MINMEMORY, Integer.valueOf(0));
 		}
@@ -3049,27 +3010,16 @@ public final class AppInterface extends Table {
 	}
 
 	/**
-	 * This sets the minimal disk space for this application Provided value can
-	 * not exceed XWPropertyDefs.MAXDISKSPACE If(v >
-	 * XWPropertyDefs.MAXDISKSPACE) v is forced to XWPropertyDefs.MAXDISKSPACE.
-	 * If(v < 0) v is forced to 0.
+	 * This sets the minimal disk space for this application
 	 *
 	 * @param v
 	 *            is the minimal amount of disk space this work needs in Mb.
 	 * @return true if value has changed, false otherwise
 	 * @since 9.0.5
-	 * @see XWPropertyDefs#MAXDISKSPACE
 	 */
 	public boolean setMinFreeMassStorage(final long v) {
 		try {
-			long value = v;
-			final String sysValueStr = System.getProperty(XWPropertyDefs.MAXDISKSPACE.toString());
-			final String maxValueStr = sysValueStr == null ? XWPropertyDefs.MAXDISKSPACE.defaultValue() : sysValueStr;
-			final long maxValue = Long.parseLong(maxValueStr);
-			if (value > maxValue) {
-				value = maxValue;
-			}
-			return setValue(Columns.MINFREEMASSSTORAGE, Long.valueOf(value < 0L ? 0L : value));
+			return setValue(Columns.MINFREEMASSSTORAGE, Long.valueOf(v < 0L ? 0L : v));
 		} catch (final Exception e) {
 			return setValue(Columns.MINFREEMASSSTORAGE, 0L);
 		}

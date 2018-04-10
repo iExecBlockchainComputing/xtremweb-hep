@@ -38,15 +38,15 @@ package xtremweb.common;
  *     |                     v                           |
  *     |                  Running <--- ResultRequest -> Lost
  *     |                     |               ^           ^
- *     |                     v               |           ^
- *     |                     |               |           ^
- *     |                Replicating          |           ^
- *     |                     |               |           ^
  *     |                     v               |           |
- *  Aborted <----+-----------+---------------+-----------+
- *               |           |               |           |
- *               v           v               v           |
- *             Error    Completed <-- DataRequest -------+
+ *     |                     |               |           |
+ *     |                Replicating          |           |
+ *     |                     |               |           |
+ *     |                     v               |           |
+ *  Aborted <----+-----------+---------------+-----------+-----------+
+ *               |           |               |           |           |
+ *               v           v               v           |           v
+ *             Error    Completed <-- DataRequest -------+         Failed
  *
  * </code>
  *
@@ -80,7 +80,7 @@ public enum StatusEnum {
 	 */
 	RUNNING,
 	/**
-	 * This denotes an error
+	 * This denotes a middleware error
 	 */
 	ERROR,
 	/**
@@ -122,7 +122,13 @@ public enum StatusEnum {
 	 *
 	 * @since 10.2.0
 	 */
-	REPLICATING;
+	REPLICATING,
+	/**
+	 * This denotes an user error
+     * e.g. : the work does not comply to its envelope parameters
+	 * @since 13.0.0
+	 */
+	FAILED;
 
 	public static final StatusEnum LAST = REPLICATING;
 	public static final int SIZE = LAST.ordinal() + 1;

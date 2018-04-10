@@ -47,6 +47,7 @@ import xtremweb.security.XWAccessRights;
 
 /**
  * This interface defines client communications facilities. This replaces
+ * This interface defines client communications facilities. This replaces
  * RMIOutputInterface.java
  *
  * @author Oleg Lodygensky
@@ -107,19 +108,21 @@ interface ClientAPI {
 			SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all applications from server
+	 * This retrieves all applications from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getApps()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all applications from server
+	 * This retrieves all applications from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @param command
 	 *            is the XMLRPC command to use
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getApps(XMLRPCCommandGetApps command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
@@ -133,17 +136,19 @@ interface ClientAPI {
 	void remove(URI uri) throws InvalidKeyException, AccessControlException, IOException;
 
 	/**
-	 * This retrieves all datas from server
+	 * This retrieves all datas from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getDatas()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all datas from server
+	 * This retrieves all datas from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getDatas(XMLRPCCommandGetDatas command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
@@ -182,63 +187,90 @@ interface ClientAPI {
 			throws InvalidKeyException, AccessControlException, IOException;
 
 	/**
-	 * This retrieves all groups from server for the client
+	 * This retrieves all envelopes from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+	 * @since 13.0.0
+	 * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
+	 */
+	XMLVector getEnvelopes()
+			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
+
+	/**
+	 * This retrieves all works from server, up to MAXDBREQUESTLIMIT
+	 *
+	 * @return a Vector of UIDs
+	 * @since 13.0.0
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
+	 */
+	XMLVector getEnvelopes(XMLRPCCommandGetEnvelopes command)
+			throws InvalidKeyException, AccessControlException, IOException, SAXException;
+
+	/**
+	 * This retrieves all groups from server for the client, up to MAXDBREQUESTLIMIT
+	 *
+	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getGroups()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all groups from server for the client
+	 * This retrieves all groups from server for the client, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getGroups(XMLRPCCommandGetGroups command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all works for the given group
+	 * This retrieves all works for the given group, up to MAXDBREQUESTLIMIT
 	 *
 	 * @param groupuid
 	 *            is the group UID to retreive works for
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getGroupWorks(UID groupuid)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all works for the given group
+	 * This retrieves all works for the given group, up to MAXDBREQUESTLIMIT
 	 *
 	 * @param uri
 	 *            is the URI to connect to ; its path must contains the UID of
 	 *            the group to retreive works for
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getGroupWorks(URI uri) throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all works for the given group
+	 * This retrieves all works for the given group, up to MAXDBREQUESTLIMIT
 	 *
 	 * @param command
 	 *            is the command to send to server
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getGroupWorks(XMLRPCCommandGetGroupWorks command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all workers from server
+	 * This retrieves all workers from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getHosts()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all workers from server
+	 * This retrieves all workers from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getHosts(XMLRPCCommandGetHosts command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
@@ -290,93 +322,104 @@ interface ClientAPI {
 	int setWorkersNb(int nb) throws InvalidKeyException, AccessControlException, IOException;
 
 	/**
-	 * This retrieves all sessions from server
+	 * This retrieves all sessions from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getSessions()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all sessions from server
+	 * This retrieves all sessions from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getSessions(XMLRPCCommandGetSessions command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all works for the given session
+	 * This retrieves all works for the given session, up to MAXDBREQUESTLIMIT
 	 *
 	 * @param session
 	 *            is the session UID to retreive works for
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getSessionWorks(UID session)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all works for the given session
+	 * This retrieves all works for the given session, up to MAXDBREQUESTLIMIT
 	 *
 	 * @param command
 	 *            is the command to send to server
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getSessionWorks(XMLRPCCommandGetSessionWorks command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all tasks from server
+	 * This retrieves all tasks from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getTasks()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all tasks from server
+	 * This retrieves all tasks from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getTasks(XMLRPCCommandGetTasks command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all traces from server
+	 * This retrieves all traces from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getTraces()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all traces from server
+	 * This retrieves all traces from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getTraces(XMLRPCCommandGetTraces command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves traces from server
+	 * This retrieves traces from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getTraces(Date since, Date before)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all usergroups from server
+	 * This retrieves all usergroups from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getUserGroups()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all usergroups from server
+	 * This retrieves all usergroups from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getUserGroups(XMLRPCCommandGetUserGroups command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
@@ -394,17 +437,19 @@ interface ClientAPI {
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all users from server
+	 * This retrieves all users from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getUsers()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all users from server
+	 * This retrieves all users from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getUsers(XMLRPCCommandGetUsers command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
@@ -422,17 +467,19 @@ interface ClientAPI {
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**
-	 * This retrieves all works from server
+	 * This retrieves all works from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getWorks()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
-	 * This retrieves all works from server
+	 * This retrieves all works from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
+     * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
 	XMLVector getWorks(XMLRPCCommandGetWorks command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
@@ -531,7 +578,7 @@ interface ClientAPI {
 	void broadcast(XMLRPCCommandBroadcastWork command) throws InvalidKeyException, AccessControlException, IOException;
 
 	/**
-	 * This method waits for works to complete, with a time out<br />
+	 * This method waits for works to complete, with a time out
 	 * If time out is reached, this returns
 	 *
 	 * @param works

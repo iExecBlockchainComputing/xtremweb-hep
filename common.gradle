@@ -26,6 +26,7 @@ project.ext{
     privateEtc = '/private/etc'
 }
 
+def envuid=UUID.randomUUID().toString()
 def adminuid=UUID.randomUUID().toString()
 def workeruid=UUID.randomUUID().toString()
 def vworkeruid=UUID.randomUUID().toString()
@@ -54,6 +55,7 @@ project.ext.getCustomProperties = {
     }
 
     // add other custom properties
+    props.setProperty("ENVUID", envuid)
     props.setProperty("ADMINUID", adminuid)
     props.setProperty("WORKERUID", workeruid)
     props.setProperty("VWORKERUID", vworkeruid)

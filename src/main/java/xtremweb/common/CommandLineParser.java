@@ -278,7 +278,7 @@ public final class CommandLineParser {
 	 * setAction() has been called) </blockquote>
 	 * </p>
 	 *
-	 * @see #setAction(int, Object)
+	 * @see #setAction(IdRpc)
 	 */
 	private void setCommandParams(final Vector v) {
 		if (command == IdRpc.NULL) {
@@ -292,9 +292,9 @@ public final class CommandLineParser {
 	/**
 	 * This sets action with no commandParams
 	 *
-	 * @param c
+	 * @param i
 	 *            the action to perform in this instance
-	 * @see #setAction(int, Object)
+	 * @see #setAction(IdRpc, Object)
 	 */
 	private void setAction(final IdRpc i) throws ParseException, IndexOutOfBoundsException {
 		logger.config("setAction " + i);
@@ -514,9 +514,6 @@ public final class CommandLineParser {
 					case REPLICA:
 					case REPLICASIZE:
 						setOption(opt, new Integer(args[++i]));
-						break;
-					case WALLCLOCKTIME:
-						setOption(opt, new Long(args[++i]));
 						break;
 					case GROUP:
 					case SESSION:

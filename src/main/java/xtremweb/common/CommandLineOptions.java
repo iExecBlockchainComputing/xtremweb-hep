@@ -321,17 +321,6 @@ public enum CommandLineOptions {
 		}
 	},
 	/**
-	 * This option set the wallclocktime for a job
-	 *
-	 * @since 8.2.0
-	 */
-	WALLCLOCKTIME {
-		@Override
-		public String help() {
-			return this.toString() + " <anInteger >: to set the work wallclocktime";
-		}
-	},
-	/**
 	 * This option tells the client to listen on socket
 	 */
 	SHELL {

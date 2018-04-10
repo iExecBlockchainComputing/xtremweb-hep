@@ -26,7 +26,6 @@ package xtremweb.client;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Vector;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -43,7 +42,6 @@ import xtremweb.common.WorkInterface;
 import xtremweb.common.XMLObject;
 import xtremweb.common.XMLValue;
 import xtremweb.common.XMLVector;
-import xtremweb.common.XMLable;
 import xtremweb.common.XWConfigurator;
 import xtremweb.common.XWTools;
 import xtremweb.communications.CommClient;
@@ -205,7 +203,7 @@ public final class HelloWorld {
 				data.setStatus(StatusEnum.UNAVAILABLE);
 				data.setSize(dataFile.length());
 				data.setName(inputFileName);
-				data.setMD5(XWTools.sha256CheckSum(dataFile));
+				data.setShasum(XWTools.sha256CheckSum(dataFile));
 				final DataTypeEnum inputType = DataTypeEnum.getFileType(dataFile);
 				if (inputType != null) {
 					data.setType(inputType);

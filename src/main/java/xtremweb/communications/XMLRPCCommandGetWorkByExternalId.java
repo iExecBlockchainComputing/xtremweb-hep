@@ -139,17 +139,17 @@ public class XMLRPCCommandGetWorkByExternalId extends XMLRPCCommand {
 	/**
 	 * This is for testing only. The first argument must be a valid client
 	 * configuration file. Without a second argument, this dumps an
-	 * XMLRPCCommandGetUserByLogin object. If the second argument is an XML file
-	 * containing a description of an XMLRPCCommandGetUserByLogin this creates
+	 * XMLRPCCommandGetWorkByExternalId object. If the second argument is an XML file
+	 * containing a description of an XMLRPCCommandGetWorkByExternalId this creates
 	 * an object from XML description and dumps it. <br />
 	 * Usage : java -cp xtremweb.jar
-	 * xtremweb.communications.XMLRPCCommandGetUserByLogin aConfigFile
+	 * xtremweb.communications.XMLRPCCommandGetWorkByExternalId aConfigFile
 	 * [anXMLDescriptionFile]
 	 */
 	public static void main(final String[] argv) {
 		try {
 			final XWConfigurator config = new XWConfigurator(argv[0], false);
-			final XMLRPCCommandGetUserByLogin cmd = new XMLRPCCommandGetUserByLogin(
+			final XMLRPCCommandGetWorkByExternalId cmd = new XMLRPCCommandGetWorkByExternalId(
 					new URI(config.getCurrentDispatcher(), new UID()), config.getUser());
 			cmd.test(argv);
 		} catch (final Exception e) {

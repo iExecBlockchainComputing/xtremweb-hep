@@ -64,9 +64,6 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
 import xtremweb.common.BytePacket;
@@ -90,8 +87,6 @@ import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommand;
 import xtremweb.communications.XMLRPCCommandActivateHost;
 import xtremweb.communications.XMLRPCCommandChmod;
-import xtremweb.communications.XMLRPCCommandGet;
-import xtremweb.communications.XMLRPCCommandUploadData;
 import xtremweb.communications.XMLRPCCommandWorkAlive;
 import xtremweb.communications.XWPostParams;
 import xtremweb.database.SQLRequest;
@@ -241,7 +236,6 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		 * This writes resource content to the given response. This calls
 		 * writeBinary() for non text resources
 		 *
-		 * @see #writeBinary(HttpServletResponse)
 		 * @param response
 		 *            is the output channel to write to
 		 * @throws IOException
@@ -271,8 +265,8 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	private static final String CONTENTTYPEVALUE = "application/octet-stream";
 	/** This is the content length label HTTP header */
 	private static final String CONTENTLENGTHLABEL = "Content-Length";
-	/** This is the content md5sum label HTTP header */
-	private static final String CONTENTMD5LABEL = "Content-MD5";
+	/** This is the content shasum label HTTP header */
+	private static final String CONTENTSHASUMLABEL = "Content-SHASUM";
 	/** This is the content disposition label HTTP header */
 	private static final String CONTENTDISPOSITIONLABEL = "Content-Disposition";
 	/** This is the last modified label HTTP header */
@@ -287,8 +281,8 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			+ "<p style=\"color:red\">You must have registered your data first</p>" + "<p>Registered Data UID:<br>"
 			+ "<input type=\"text\" name=\"" + XWPostParams.DATAUID + "\" size=\"40\"></p><p>"
 			+ "<p>Registered Data size:<br>" + "<input type=\"text\" name=\"" + XWPostParams.DATASIZE
-			+ "\" size=\"40\"></p><p>" + "<p>Registered Data md5sum:<br>" + "<input type=\"text\" name=\""
-			+ XWPostParams.DATAMD5SUM + "\" size=\"40\"></p><p>" + "Please specify a file:<br>"
+			+ "\" size=\"40\"></p><p>" + "<p>Registered Data shasum:<br>" + "<input type=\"text\" name=\""
+			+ XWPostParams.DATASHASUM + "\" size=\"40\"></p><p>" + "Please specify a file:<br>"
 			+ "<input type=\"file\" name=\"" + XWPostParams.DATAFILE + "\" size=\"45\"></p><div>"
 			+ "<input type=\"submit\" value=\"Send\"></div></form>";
 
@@ -330,7 +324,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	protected HttpServletRequest request;
 	protected  HttpServletResponse response;
 	private FileItem dataUpload;
-	private String dataUploadmd5sum;
+	private String dataUploadshasum;
 	private final FileItemFactory diskFactory;
 	private final ServletFileUpload servletUpload;
 
@@ -388,7 +382,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		dataUpload = null;
 		diskFactory = new DiskFileItemFactory();
 		servletUpload = new ServletFileUpload(diskFactory);
-		servletUpload.setSizeMax(getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+		servletUpload.setSizeMax(XWPostParams.MAXUPLOADSIZE);
 		getLogger().debug("new Thread " + Thread.currentThread().getName());
 	}
 
@@ -407,7 +401,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 		dataUpload = null;
 		diskFactory = new DiskFileItemFactory();
 		servletUpload = new ServletFileUpload(diskFactory);
-		servletUpload.setSizeMax(getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+		servletUpload.setSizeMax(XWPostParams.MAXUPLOADSIZE);
 		getLogger().debug("new Thread " + Thread.currentThread().getName());
 	}
 
@@ -832,7 +826,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	public synchronized void writeFile(final File f) throws IOException {
 		try (final StreamIO io = new StreamIO(new DataOutputStream(response.getOutputStream()), null, false)) {
 			mileStone("<writeFile file='" + f + "'>");
-			io.writeFileContent(f, getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+			io.writeFileContent(f, XWPostParams.MAXUPLOADSIZE);
 		} catch (final Exception e) {
 			getLogger().exception(e);
 			mileStone("<error method='writeFile' msg='" + e.getMessage() + "' />");
@@ -1060,8 +1054,8 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 							case DATAFILE:
 								dataUpload = item;
 								break;
-							case DATAMD5SUM:
-								dataUploadmd5sum = item.getString();
+							case DATASHASUM:
+								dataUploadshasum = item.getString();
 								break;
 							}
 						} catch (final Exception e) {
@@ -1085,13 +1079,13 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			}
 
 			if (dataUpload != null) {
-				final String value = request.getParameter(XWPostParams.DATAMD5SUM.toString());
+				final String value = request.getParameter(XWPostParams.DATASHASUM.toString());
 				if (value != null) {
-					if (dataUploadmd5sum == null) {
-						dataUploadmd5sum = value;
+					if (dataUploadshasum == null) {
+						dataUploadshasum = value;
 					}
 				}
-				logger.debug("Parameters upload size = " + dataUpload.getSize() + " dataUploadmd5sum = " + dataUploadmd5sum);
+				logger.debug("Parameters upload size = " + dataUpload.getSize() + " dataUploadshasum = " + dataUploadshasum);
 			}
 
 
@@ -1188,7 +1182,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 								response.setHeader(LASTMODIFIEDLABEL, lastModified.toString());
 							}
 							response.setHeader(CONTENTLENGTHLABEL, "" + theData.getSize());
-							response.setHeader(CONTENTMD5LABEL, theData.getMD5());
+							response.setHeader(CONTENTSHASUMLABEL, theData.getShasum());
 							response.setHeader(CONTENTDISPOSITIONLABEL,
 									"attachment; filename=\"" + theData.getName() + "\"");
 						}
@@ -1585,11 +1579,8 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 	 * Data must be defined on server side (i.e. sendData() must be called
 	 * first)
 	 *
-	 * @param client
-	 *            is the caller attributes
-	 * @param uid
-	 *            is the UID of the data to upload
-	 * @see #sendData(UserInterface, DataInterface)
+	 * @param command
+	 *            is the command
 	 */
 	@Override
 	public synchronized long uploadData(final XMLRPCCommand command)
@@ -1628,13 +1619,13 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 				dFile.delete();
 				throw new IOException("Upload file size error should be " + dataUpload.getSize() + " but found " + fsize);
 			}
-			if ((dataUploadmd5sum == null) || (dataUploadmd5sum.compareToIgnoreCase(shasum) != 0)) {
+			if ((dataUploadshasum == null) || (dataUploadshasum.compareToIgnoreCase(shasum) != 0)) {
 				dFile.delete();
 				throw new IOException(
-						"Upload file MD5sum error should be " + dataUploadmd5sum + " but found " + shasum);
+						"Upload file SHASUM error should be " + dataUploadshasum + " but found " + shasum);
 			}
 			theData.setSize(fsize);
-			theData.setMD5(shasum);
+			theData.setShasum(shasum);
 			theData.setStatus(StatusEnum.AVAILABLE);
 			theData.update();
 			ret = dFile.length();
@@ -1656,7 +1647,7 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
 			throw new RemoteException(e.toString());
 		} finally {
 			dataUpload = null;
-			dataUploadmd5sum = null;
+			dataUploadshasum = null;
 			mileStone("</uploadData>");
 			notifyAll();
 		}

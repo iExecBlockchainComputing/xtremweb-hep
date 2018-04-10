@@ -157,22 +157,33 @@ public class XWTools {
 	 */
 	public static final long TWOGIGABYTES = 2 * ONEGIGABYTES;
 	/**
-	 * This defines file size limit : 500Mb
+	 * This defines the default wall cloacktime to 300s (5mn)
+	 * @since 13.0.0
+	 */
+	public static final int DEFAULTWALLCLOCKTIME = 300;
+	/**
+	 * This defines the default CPU speed in percentage
+	 * @href https://docs.docker.com/engine/reference/run/#cpu-period-constraint
+	 * @since 13.0.0
+	 */
+	public static final float DEFAULTCPUSPEED = 0.5f;
+	/**
+	 * This defines file size limit : 100Mb
 	 * @since 12.2.3
 	 */
-	public static final long MAXFILESIZE = 500 * ONEMEGABYTES;
+	public static final long MAXFILESIZE = 100 * ONEMEGABYTES;
 	/**
 	 * This defines the maximum size of work disk space (30Gb)
 	 *
 	 * @since 8.0.0
 	 */
-	public static final long MAXDISKSIZE = 30 * ONEGIGABYTES;
+	public static final long MAXDISKSIZE = 5 * ONEGIGABYTES;
 	/**
 	 * This defines the maximum size of work RAM space (1Gb) 
 	 *
 	 * @since 9.1.0
 	 */
-	public static final long MAXRAMSIZE = ONEGIGABYTES;
+	public static final long MAXRAMSIZE = 512 * ONEKILOBYTES;
 	/**
 	 * This helps to format date : the format is "yyyy-MM-dd HH:mm:ss"
 	 */

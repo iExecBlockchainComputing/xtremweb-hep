@@ -33,11 +33,7 @@ import java.io.InputStream;
 import java.util.Hashtable;
 import java.util.Map;
 
-import xtremweb.common.CPUEnum;
-import xtremweb.common.Logger;
-import xtremweb.common.OSEnum;
-import xtremweb.common.Version;
-import xtremweb.common.XWPropertyDefs;
+import xtremweb.common.*;
 
 /**
  * Provider of architecture dependent classes.
@@ -73,9 +69,10 @@ public class ArchDepFactory {
 	 * This is the default constructor This creates all needed maps to retrieve
 	 * Libraries accordingly to the OS
 	 */
-	protected ArchDepFactory() {
+    protected ArchDepFactory() {
 
 		logger = new Logger(this);
+		logger.setLoggerLevel(LoggerLevel.FINEST);
 
 		final Map<OSEnum, String> mapUtil = new Hashtable<OSEnum, String>(10);
 		final Map<OSEnum, String> mapTracer = new Hashtable<OSEnum, String>(10);
@@ -129,7 +126,7 @@ public class ArchDepFactory {
 
 	/**
 	 * This retrieves the resource name of the JNI library Such names are
-	 * composed as follow: <libName>.jni.<version>.<osName>-<cpuName>
+	 * composed as follow: "platforms/worker/"<os>"-"<cpu>"/jni/"<libname>".jni"
 	 *
 	 * @param lib
 	 *            name of the library
@@ -143,7 +140,10 @@ public class ArchDepFactory {
 		final OSEnum os = OSEnum.getOs();
 		final CPUEnum cpu = CPUEnum.getCpu();
 
-		return lib + ".jni." + v.full() + "." + os + "-" + cpu;
+		return "platforms/worker/" +
+				os.toString().toLowerCase() + "-" + cpu.toString().toLowerCase() +
+				"/jni/" + lib + ".jni";
+//		return lib + ".jni." + v.full() + "." + os + "-" + cpu;
 	}
 
 	/**
@@ -173,7 +173,7 @@ public class ArchDepFactory {
 
 			final File f = new File(System.getProperty(XWPropertyDefs.CACHEDIR.toString()), libResName);
 			f.deleteOnExit();
-
+            XWTools.checkDir(f.getParent());
 			logger.finest("Copying " + libResName + " to " + f.getAbsolutePath());
 
 			String libpath = System.getProperty(JAVALIBPATH);
@@ -196,7 +196,7 @@ public class ArchDepFactory {
 				f.delete();
 			}
 
-			final String resname = "jni/" + libResName;
+			final String resname = libResName;
 			writeRes(resname, f);
 
 			if (f.exists()) {
@@ -226,7 +226,10 @@ public class ArchDepFactory {
 		
 		try (final FileOutputStream lf = new FileOutputStream(f);
 				final InputStream ls = getClass().getClassLoader().getResourceAsStream(resName)){
-			if ((ls != null) && (ls.available() > 0)) {
+
+		    if (ls != null) logger.finest(resName + " bytes : " + ls.available());
+
+                if ((ls != null) && (ls.available() > 0)) {
 				final byte[] buf = new byte[1024];
 				for (int n = ls.read(buf); n > 0; n = ls.read(buf)) {
 					lf.write(buf, 0, n);

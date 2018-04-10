@@ -567,7 +567,7 @@ public class HTTPClient extends CommClient {
 		try (final DataInputStream inputStream = new DataInputStream(post.getResponseBodyAsStream());
 				final StreamIO io = new StreamIO(null, inputStream, nio);) {
 			mileStone("<readFile>");
-			io.readFile(f, getConfig().getLong(XWPropertyDefs.MAXFILESIZE));
+			io.readFile(f, XWPostParams.MAXUPLOADSIZE);
 		} catch (final Exception e) {
 			getLogger().exception(e);
 			mileStone("<error method='readFile' msg='" + e.getMessage() + "' />");

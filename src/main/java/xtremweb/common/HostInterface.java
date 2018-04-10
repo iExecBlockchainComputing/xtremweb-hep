@@ -41,16 +41,13 @@ import xtremweb.database.SQLRequest;
 import xtremweb.security.XWAccessRights;
 
 /**
+ * This class describes a row of the hosts SQL table.
  * HostsInterface.java
  *
  * Created: Feb 19th, 2002
  *
  * @author <a href="mailto:lodygens /at\ .in2p3.fr>Oleg Lodygensky</a>
  * @version %I%, %G%
- */
-
-/**
- * This class describes a row of the hosts SQL table.
  */
 public final class HostInterface extends Table {
 
@@ -88,7 +85,7 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -112,7 +109,7 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an URI representing the column value
-			 * @throws Exception
+			 * @throws URISyntaxException
 			 *             is thrown on instantiation error
 			 */
 			@Override
@@ -137,8 +134,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -156,8 +151,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -197,8 +190,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -218,8 +209,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -232,16 +221,6 @@ public final class HostInterface extends Table {
 		 * @since 2.0.0
 		 */
 		UPLOADBANDWIDTH {
-			/**
-			 * This creates an object from String representation for this column
-			 * value
-			 *
-			 * @param v
-			 *            the String representation
-			 * @return a Float representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
-			 */
 			@Override
 			public Float fromString(final String v) {
 				return new Float(v);
@@ -253,16 +232,6 @@ public final class HostInterface extends Table {
 		 * @since 2.0.0
 		 */
 		DOWNLOADBANDWIDTH {
-			/**
-			 * This creates an object from String representation for this column
-			 * value
-			 *
-			 * @param v
-			 *            the String representation
-			 * @return a Float representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
-			 */
 			@Override
 			public Float fromString(final String v) {
 				return new Float(v);
@@ -279,8 +248,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an XWOses representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public OSEnum fromString(final String v) {
@@ -312,8 +279,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -333,8 +298,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -352,8 +315,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an XWCPUs representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public CPUEnum fromString(final String v) {
@@ -371,8 +332,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -394,8 +353,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -413,8 +370,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Long representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Long fromString(final String v) {
@@ -435,8 +390,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Long representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -454,8 +407,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Long representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Long fromString(final String v) {
@@ -474,8 +425,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Long representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Long fromString(final String v) {
@@ -494,8 +443,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Long representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Long fromString(final String v) {
@@ -519,8 +466,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Date representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Date fromString(final String v) {
@@ -539,12 +484,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -561,12 +504,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -582,12 +523,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -603,12 +542,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -624,13 +561,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public String fromString(final String v) {
-				final String val = v;
-				return val.replaceAll("[\\n\\s\'\"]+", "_");
+				return v.replaceAll("[\\n\\s\'\"]+", "_");
 			}
 		},
 		/**
@@ -644,8 +578,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -664,12 +596,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -683,8 +613,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -702,8 +630,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -722,12 +648,10 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return a Boolean representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Boolean fromString(final String v) {
-				return new Boolean(v);
+				return Boolean.valueOf(v);
 			}
 		},
 		/**
@@ -767,8 +691,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -789,8 +711,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -811,8 +731,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -830,8 +748,6 @@ public final class HostInterface extends Table {
 			 * @param v
 			 *            the String representation
 			 * @return an Integer representing the column value
-			 * @throws Exception
-			 *             is thrown on instantiation error
 			 */
 			@Override
 			public Integer fromString(final String v) {
@@ -841,9 +757,6 @@ public final class HostInterface extends Table {
 		/**
 		 * This is the index based on ordinal so that the first value is
 		 * TableColumns + 1
-		 *
-		 * @see xtremweb.common#TableColumns
-		 * @see Enum#ordinal()
 		 * @since 8.2.0
 		 */
 		private int ord;
@@ -970,7 +883,7 @@ public final class HostInterface extends Table {
 	 *
 	 * @param rs
 	 *            is an SQL request result
-	 * @exception IOException
+	 * @exception IOException is thrown on error
 	 */
 	public HostInterface(final ResultSet rs) throws IOException {
 		this();
@@ -983,7 +896,7 @@ public final class HostInterface extends Table {
 	 * @since 9.0.0
 	 * @param rs
 	 *            is the SQL data set
-	 * @throws IOException
+	 * @exception IOException is thrown on error
 	 */
 	@Override
 	public void fill(final ResultSet rs) throws IOException {
@@ -1073,7 +986,6 @@ public final class HostInterface extends Table {
 				setVersion((String) Columns.VERSION.fromResultSet(rs));
 			} catch (final Exception e) {
 			}
-
 			try {
 				setJobId((URI) Columns.JOBID.fromResultSet(rs));
 			} catch (final Exception e) {
@@ -1204,8 +1116,6 @@ public final class HostInterface extends Table {
 	 * @param attrs
 	 *            contains attributes XML representation
 	 * @see Table#fromXml(Attributes)
-	 * @throws IOException
-	 *             on XML error
 	 */
 	public HostInterface(final Attributes attrs) {
 		this();
@@ -1342,6 +1252,8 @@ public final class HostInterface extends Table {
 		setPoolWorkSize(itf.getPoolWorkSize());
 		setJobId(itf.getJobId());
 		setBatchId(itf.getBatchId());
+		setUploadBandwidth(itf.getUploadBandwidth());
+		setDownloadBandwidth(itf.getDownloadBandwidth());
 	}
 
 	/**
@@ -2349,24 +2261,16 @@ public final class HostInterface extends Table {
 
 	/**
 	 * This sets the minimal amount of available RAM this host give to a job, in
-	 * Kb. This must comply to resource owner policy. Provided value must be
-	 * positive and can not exceed XWPropertyDefs.MAXRAMSPACE. If(v >
-	 * XWPropertyDefs.MAXDISKSPACE) v is forced to XWPropertyDefs.MAXDISKSPACE.
-	 * If(v < 0) v is forced to 0.
+	 * Kb.
 	 *
 	 * @param v
 	 *            is the minimal amount of RAM this work needs in Kb.
 	 * @return true if value has changed, false otherwise
-	 * @see XWPropertyDefs#MAXRAMSPACE
 	 * @since 9.1.0
 	 */
 	public final boolean setAvailableMem(final long v) {
 		try {
-			final String sysValueStr = System.getProperty(XWPropertyDefs.MAXRAMSPACE.toString());
-			final String maxValueStr = sysValueStr == null ? XWPropertyDefs.MAXRAMSPACE.defaultValue() : sysValueStr;
-			final long maxValue = Long.parseLong(maxValueStr);
-			final long value = v > maxValue ? maxValue : v;
-			return setValue(Columns.AVAILABLEMEM, Long.valueOf(value < 0 ? 0 : value));
+			return setValue(Columns.AVAILABLEMEM, Long.valueOf(v < 0L ? 0L : v));
 		} catch (final Exception e) {
 			return setValue(Columns.AVAILABLEMEM, Long.valueOf(v));
 		}

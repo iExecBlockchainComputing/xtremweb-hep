@@ -24,5 +24,5 @@ Description: XWHEP is a global computing platform based on XtremWeb, aiming not 
  .
  This package installs the client part.
  .
- This platform is distributed under GPL license and provided "as is".
+ This platform is distributed under Apache 2 license and provided "as is".
  Use it at your own risk.

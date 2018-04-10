@@ -193,25 +193,82 @@ public enum AppTypeEnum {
 	 */
 	private static final String[] dockerForbiddenParams = {
 			"--add-host",
-			"-c",
+			"--attach",
+			"--blkio-weight",
+			"--blkio-weight-device",
 			"--cap-add",
+			"--cap-drop",
 			"--cgroup-parent",
 			"--cidfile",
-			"--cpu-count",
-			"--cpu-percent",
+			"--cpu-period",
+			"--cpu-quota",
+			"--cpu-rt-period",
+			"--cpu-rt-runtime",
 			"--cpu-shares",
 			"--cpus",
+			"--cpuset-cpus",
+			"--cpuset-mems",
+			"--detach",
+			"--detach-keys",
 			"--device",
+			"--device-cgroup-rule",
+			"--device-read-bps",
+			"--device-read-iops",
+			"--device-write-bps",
+			"--device-write-iops",
+			"--dns",
+			"--dns-option",
+			"--dns-search",
 			"--entrypoint",
-			"-i",
+			"--expose",
+			"--group-add",
+			"--health-cmd",
+			"--health-interval",
+			"--health-retries",
+			"--health-start-period",
+			"--health-timeout",
+			"--hostname",
+			"--init",
+			"--interactive",
+			"--ip",
+			"--ip6",
+			"--ipc",
+			"--isolation",
+			"--kernel-memory",
+			"--link",
+			"--link-local-ip",
+			"--log-driver",
+			"--mac-address",
+			"--memory",
+			"--memory-reservation",
+			"--memory-swap",
+			"--memory-swappiness",
+			"--mount",
+			"--network",
+			"--network-alias",
+			"--no-healthcheck",
+			"--oom-kill-disable",
+			"--oom-score-adj",
+			"--pids-limit",
+			"--platform",
 			"--privileged",
-			"-v",
-			"--volume",
+			"--runtime",
+			"--security-opt",
+			"--shm-size",
+			"--sig-proxy",
+			"--stop-signal",
+			"--stop-timeout",
+			"--storage-opt",
+			"--sysctl",
+			"--tmpfs",
+			"--ulimit",
+			"--user",
+			"--userns",
+			"--uts",
 			"--volume-driver",
 			"--volumes-from",
-			"-ti",
-			"-t",
-			"--tty"
+			"--volume",
+			"--workdir"
 	};
     /**
      * This contains forbidden Docker command line parameters set
@@ -334,13 +391,11 @@ public enum AppTypeEnum {
      * @since 12.2.8
      */
     final protected void checkParams (final String params, final Set<String> paramSet) throws AccessControlException {
-/*
         for(final String p : paramSet){
             if(params.indexOf(p) >= 0) {
-                throw new AccessControlException("parameter forbidden : " + p);
+                throw new AccessControlException(this.toString() + " [ERROR] parameter forbidden : " + p);
             }
         }
-*/
     }
 
 	/**

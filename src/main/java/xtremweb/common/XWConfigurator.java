@@ -795,9 +795,9 @@ public final class XWConfigurator extends Properties {
 			final String pSysEnv = System.getenv(pstr);
 			final String pSysProp = System.getProperty(pstr);
 			final String pProp = getProperty(pstr);
-			logger.debug("pProp(" + p + ") = " + pProp);
-			logger.debug("pSysProp(" + p + ") = " + pSysProp);
-			logger.debug("pSysEnv(" + p + ") = " + pSysEnv);
+			logger.finest("pProp(" + p + ") = " + pProp);
+			logger.finest("pSysProp(" + p + ") = " + pSysProp);
+			logger.finest("pSysEnv(" + p + ") = " + pSysEnv);
 			if (pSysProp != null) {
 				setProperty(p, pSysProp);
 			}
@@ -1184,19 +1184,15 @@ public final class XWConfigurator extends Properties {
 		_host.setOs(OSEnum.getOs());
 
 		_host.setCpu(CPUEnum.getCpu());
+		_host.setCpuNb(Runtime.getRuntime().availableProcessors());
 		_host.setAvailable(false);
 		_host.setPilotJob(false);
 
 		if (!XWRole.isWorker()) {
 			return;
 		}
-
 		_host.setAcceptBin(getBoolean(XWPropertyDefs.ACCEPTBIN));
 		if (ArchDepFactory.xwutil() != null) {
-			try {
-				_host.setCpuNb(Runtime.getRuntime().availableProcessors());
-			} catch (final UnsatisfiedLinkError e) {
-			}
 			try {
 				_host.setCpuSpeed(ArchDepFactory.xwutil().getSpeedProc());
 			} catch (final UnsatisfiedLinkError e) {

@@ -142,6 +142,10 @@ task copyMiscToDist(type: Copy) {
     into("/conf") {
         from(project.res + '/conf')
     }
+
+    into("/platforms") {
+        from(project.res + '/platforms')
+    }
 }
 
 task mkdirKeystore(type: Exec) {

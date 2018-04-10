@@ -79,6 +79,11 @@ public enum UserRightEnum {
 	 */
 	GETUSER,
 	/**
+	 * retrieve envelope
+	 * @since 13.0.0
+	 */
+	GETENVELOPE,
+	/**
 	 * This allows user rights delegation to workers e.g. workers must be able
 	 * to update works and change works status (among others)
 	 */
@@ -168,6 +173,11 @@ public enum UserRightEnum {
 	 */
 	LISTAPP,
 	/**
+	 * retrieve envelopes list
+	 * @since 13.0.0
+	 */
+	LISTENVELOPE,
+	/**
 	 * this is the default user right
 	 */
 	STANDARD_USER,
@@ -192,6 +202,11 @@ public enum UserRightEnum {
 	 * this is a privileged right : send/update host
 	 */
 	INSERTHOST,
+	/**
+	 * this is a privileged right : send/update envelope
+	 * @sonce 13.0.0
+	 */
+	INSERTENVELOPE,
 	/**
 	 * this is a privileged right : delete host
 	 */

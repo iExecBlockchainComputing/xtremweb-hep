@@ -250,9 +250,9 @@ public final class DataInterface extends Table {
 			}
 		},
 		/**
-		 * This is the column index of the MD5
+		 * This is the column index of the SHASUM
 		 */
-		MD5,
+		SHASUM,
 		/**
 		 * This is the column index of the URI
 		 */
@@ -549,7 +549,7 @@ public final class DataInterface extends Table {
 			} catch (final Exception e) {
 			}
 			try {
-				setMD5((String) Columns.MD5.fromResultSet(rs));
+				setShasum((String) Columns.SHASUM.fromResultSet(rs));
 			} catch (final Exception e) {
 			}
 			try {
@@ -628,7 +628,7 @@ public final class DataInterface extends Table {
 	/**
 	 * This sets this objects attributes from provided interface This does not
 	 * insert/update this object into DB Updated attributes: access rights;
-	 * name; type; cpu; os; status; size; md5
+	 * name; type; cpu; os; status; size; shasum
 	 *
 	 * @since 9.0.0
 	 */
@@ -648,7 +648,7 @@ public final class DataInterface extends Table {
 		setPackage(itf.getPackage());
 		setOs(itf.getOs());
 		setSize(itf.getSize());
-		setMD5(itf.getMD5());
+		setShasum(itf.getShasum());
 	}
 
 	/**
@@ -857,13 +857,13 @@ public final class DataInterface extends Table {
 	}
 
 	/**
-	 * This retrieves the MD5
+	 * This retrieves the SHASUM
 	 *
 	 * @return this attribute or null if not set
 	 */
-	public String getMD5() {
+	public String getShasum() {
 		try {
-			return (String) getValue(Columns.MD5);
+			return (String) getValue(Columns.SHASUM);
 		} catch (final Exception e) {
 		}
 		return null;
@@ -959,12 +959,12 @@ public final class DataInterface extends Table {
 	}
 
 	/**
-	 * This sets the MD5
+	 * This sets the SHASUM
 	 *
 	 * @return true is value has changed
 	 */
-	public boolean setMD5(final String v) {
-		return setValue(Columns.MD5, v == null ? null : v);
+	public boolean setShasum(final String v) {
+		return setValue(Columns.SHASUM, v == null ? null : v);
 	}
 
 	/**

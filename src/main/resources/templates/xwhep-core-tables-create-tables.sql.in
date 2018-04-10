@@ -6,23 +6,20 @@
 --  
 --       This file is part of XtremWeb-HEP.
 -- 
---     XtremWeb-HEP is free software: you can redistribute it and/or modify
---     it under the terms of the GNU General Public License as published by
---     the Free Software Foundation, either version 3 of the License, or
---     (at your option) any later version.
--- 
---     XtremWeb-HEP is distributed in the hope that it will be useful,
---     but WITHOUT ANY WARRANTY; without even the implied warranty of
---     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---     GNU General Public License for more details.
--- 
---     You should have received a copy of the GNU General Public License
---     along with XtremWeb-HEP.  If not, see <http://www.gnu.org/licenses/>.
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--     http://www.apache.org/licenses/LICENSE-2.0
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 -- ===========================================================================
 
 -- ===========================================================================
 -- 
--- Version : 9.0.0
+-- Version : 13.0.0
 -- 
 -- File    : xwsetupdb.sql
 -- 
@@ -263,7 +260,8 @@ insert into statuses (statusId, statusName, statusObjects, statusComment, status
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (10, 'RESULTREQUEST', 'works',               'The worker should retry to upload the results',                                     null);
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (11, 'AVAILABLE',     'datas',               'The data is available and can be downloaded on demand',                             null);
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (12, 'UNAVAILABLE',   'datas',               'The data is not available and can not be downloaded on demand',                     null);
-insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (13, 'REPLICATING',   'works',               'The object is being replicated',                                                   null);
+insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (13, 'REPLICATING',   'works',               'The object is being replicated',                                                    null);
+insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (14, 'FAILED',        'works',               'The job does not fill its envelope requirements',                                   null);
 
 -- ---------------------------------------------------------------------------
 -- Data for table "dataTypes"
@@ -314,14 +312,16 @@ insert into oses (osId, osName, osDescription) values (6, 'WIN64',   'MS-Windows
 -- ---------------------------------------------------------------------------
 -- Data for table "cpuTypes"
 -- ---------------------------------------------------------------------------
+
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (0, 'NONE',   'Unknown');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (1, 'ALL',    'Architecture independant');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (2, 'AMD64',  'AMD - 64 bits');
-insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (3, 'ARM',    'Advanced RISC Machines');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (3, 'ARM32',  'Advanced RISC Machines Cortex A7');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (4, 'IA64',   'Intel Itanium - 64 bits');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (5, 'IX86',   'Intel x86 - 32 bits');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (6, 'PPC',    'Power PC');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (7, 'X86_64', 'Intel x86 - 64 bits');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (8, 'ARM64',  'Advanced RISC Machines v8');
 
 commit;
 
@@ -608,7 +608,7 @@ create table if not exists  datas  (
   links          int(4)                                       comment 'How many times it is used. can be deleted if 0',
   accessDate     datetime                                     comment 'Last access date',
   insertionDate  datetime                                     comment 'Creation date',
-  md5            varchar(254)                                 comment 'Data md5',
+  shasum         varchar(254)                                 comment 'Data sha sum',
   size           bigint                                       comment 'Effective file size',
   sendToClient   char(5)                     default 'false'  comment 'Optionnal. used by replication',
   replicated     char(5)                     default 'false'  comment 'Optionnal. used by replication',
@@ -800,6 +800,42 @@ create table if not exists  groups_history  like  groups;
 
 show warnings;
 
+-- ---------------------------------------------------------------------------
+-- Table "envs" :
+-- This table contains "envelopes" that each work must belong to
+-- An envelope defines maximum usage of CPU, bandwith, wall clocktime
+-- Since 13.0.0
+-- ---------------------------------------------------------------------------
+create table if not exists  envs  (
+  envId              int unsigned   not null  auto_increment     comment 'EnvID referenced by smart contracts',
+  uid                char(36)       not null  primary key        comment 'Primary key',
+  ownerUID           char(36)       not null                     comment 'User UID',
+  accessRights       int(4)                   default 0x755      comment 'Please note that an envelope is always public',
+  errorMsg           varchar(254)                                comment 'Error message',
+  mtime              timestamp                                   comment 'Timestamp of last update',
+  name               varchar(254)   not null  default 'NONE'     comment 'Envelope name is a free text',
+  maxWallClockTime   int(10)        not null  default 300        comment 'Max amount of seconds a job can be computed; default 5mn',
+  maxFreeMassStorage bigint         not null  default 5368709120 comment 'Max mass storage usage in bytes; default 5Gb',
+  maxFileSize        bigint         not null  default 104857600  comment 'Max file length in bytes; default 100Mb',
+  maxMemory          bigint         not null  default 536870912  comment 'Max RAM usage in bytes; default 512Mb',
+  maxCpuSpeed        float          not null  default 0.5        comment 'Max CPU usage in percentage; default 50% (https://docs.docker.com/engine/reference/run/#cpu-period-constraint)',
+
+
+  index  name     (name),
+  index  envId    (envId),
+  index  ownerUID (ownerUID),
+  foreign key (owneruid) references users(uid)
+  )
+engine  = @DBENGINE@,
+comment = 'envs = envelopes defining resources usage limit';
+
+show warnings;
+
+create table if not exists  envs_history  like  envs;
+
+show warnings;
+
+
 
 -- ---------------------------------------------------------------------------
 -- Table "works" :
@@ -808,6 +844,7 @@ show warnings;
 create table if not exists  works  (
   uid                 char(36)          not null  primary key      comment 'Primary key',
   appUID              char(36)          not null                   comment 'Application UID',
+  envId               int unsigned      not null  default 1        comment 'envId. See common/Envs.java',
   statusId            tinyint unsigned  not null  default 255      comment 'Status Id. See common/XWStatus.java',
   status              varchar(36)       not null  default 'NONE'   comment 'Status. see common/XWStatus.java',
   sessionUID          char(36)                                     comment 'Optionnal. session UID',
@@ -819,14 +856,18 @@ create table if not exists  works  (
   userproxy           varchar(254)                                 comment 'This is the X.509 user proxy URI to identify the owner of this work. this is not a certificate',
   accessRights        int(4)                      default 0x700    comment 'This defines access rights "a la" linux FS  See xtremweb.common.XWAccessRights.java',
   sgid                varchar(254)                                 comment 'external id - xw 7.2.0: Service Grid Identifier set by the DG 2 SG bridge; xw 11.1.0 : blockchain transaction hash',
-  wallclocktime       int(10)                                      comment 'Wallclocktime : how many seconds a job can be computed  The job is stopped as the wall clocktime is reached  If wallclocktime < 0, the job is not stopped  Since 8.2.0',
   maxRetry            int(3)                                       comment 'How many time should we try to compute',
   retry               int(3)                                       comment 'How many time have we tried to compute  Since 8.0.0',
-  diskSpace           bigint                      default 0        comment 'Optionnal. disk space needed  This is in Mb',
   minMemory           int(10)                     default 0        comment 'Optionnal. minimum memory needed in Kb',
   minCPUSpeed         int(10)                     default 0        comment 'Optionnal. minimum CPU speed needed in MHz',
   minFreeMassStorage  bigint                      default 0        comment 'Min free amount of mass storage in Mb',
-  maxWallClockTime    int(10)                                      comment 'Wallclocktime : how many seconds a job can be computed.  The job is stopped as the wall clocktime is reached.  If < 0, the job is not stopped.',
+  maxWallClockTime    int(10)                     default 300      comment 'Wallclocktime : how many seconds a job can be computed.  The job is stopped as the wall clocktime is reached.  If < 0, the job is not stopped.',
+  maxFreeMassStorage  bigint            not null  default 5368709120 comment 'Max mass storage usage in bytes; default 5Gb',
+  maxFileSize         bigint            not null  default 104857600  comment 'Max file length in bytes; default 100Mb',
+  maxMemory           bigint            not null  default 536870912  comment 'Max RAM usage in bytes; default 512Mb',
+  maxCpuSpeed         float             not null  default 0.5      comment 'Max CPU usage in percentage; default 50% (https://docs.docker.com/engine/reference/run/#cpu-period-constraint)',
+  uploadbandwidth     float                       default 0.0      comment 'Upload bandwidth usage (in Mb/s)',
+  downloadbandwidth   float                       default 0.0      comment 'Download bandwidth usage (in Mb/s)',
   returnCode          int(3)                                       comment 'Application return code',
   server              varchar(254)                                 comment 'For replication',
   cmdLine             text                                         comment 'This work command line to provide to application',
@@ -864,8 +905,11 @@ create table if not exists  works  (
   index  groupUID            (groupUID),
   index  expectedhostUID     (expectedhostUID),
   index  ownerUID            (ownerUID),
+  index  envId               (envId),
   index  sgId                (sgId),
-  index  completedDate       (completedDate)
+  index  completedDate       (completedDate),
+  foreign key (envId) references envs(envId)
+
   )
 engine  = @DBENGINE@,
 comment = 'works = Jobs submitted by a user with app and input data';
@@ -946,6 +990,13 @@ insert into users (uid,login,password,fname,lname,email,rights,owneruid,accessri
        values ("@VWORKERUID@","@XWVWORKERLOGIN@","@XWVWORKERPASSWORD@", "@DBADMINFNAME@", "@DBADMINLNAME@",
                "@DBADMINEMAIL@","VWORKER_USER","@ADMINUID@","1792",
                (select userRightId from userRights where userRightName = 'VWORKER_USER'));
+
+-- ---------------------------------------------------------------------------
+-- Data for table "envs"
+-- ---------------------------------------------------------------------------
+
+insert into envs (uid, owneruid, accessrights, errormsg, name, envid)
+        values ("@ENVUID@", "@ADMINUID@", "1877", '', 'DefaultEnv', 0);
 
 -- If your dispatcher complains about handshake, try this :
 -- set password for xtremweb@localhost = old_password('xwpassword');

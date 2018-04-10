@@ -58,10 +58,12 @@ public class XWUtilMacOSX extends XWUtilImpl {
 	@Override
 	public long getTotalMem() {
 		try {
-			return Integer.parseInt(callsysctl(LABEL_TOTALMEM)) / XWTools.ONEKILOBYTES;
+			return Long.parseLong(callsysctl(LABEL_TOTALMEM)) / XWTools.ONEKILOBYTES;
 		}
 		catch(final Exception e) {
-			return 0;
+            e.printStackTrace();
+
+            return 0;
 		}
 	}
 
@@ -71,9 +73,10 @@ public class XWUtilMacOSX extends XWUtilImpl {
 	@Override
 	public int getSpeedProc() {
 		try {
-			return Integer.parseInt(callsysctl(LABEL_SPEEDPROC)) / 1000000;
+			return (int)(Long.parseLong(callsysctl(LABEL_SPEEDPROC)) / 1000000);
 		}
 		catch(final Exception e) {
+		    e.printStackTrace();
 			return 0;
 		}
 	}
@@ -90,6 +93,8 @@ public class XWUtilMacOSX extends XWUtilImpl {
 	 */
 	private String callsysctl(final String key) {
 
+		System.out.println("XWUtilMacOSX callsysctl(" + key + ")");
+
 		try (final FileOutputStream out = new FileOutputStream(new File(".", XWTools.STDOUT));
 			 final FileOutputStream err = new FileOutputStream(new File(".", XWTools.STDERR))) {
 
@@ -98,7 +103,7 @@ public class XWUtilMacOSX extends XWUtilImpl {
 			if (exec.startAndWait() != 0) {
 				return "";
 			}
-		} catch (IOException | ExecutorLaunchException | InterruptedException e1) {
+		} catch (Exception e1) {
 			new File(".", XWTools.STDOUT).delete();
 			new File(".", XWTools.STDERR).delete();
 			return "";
@@ -108,9 +113,12 @@ public class XWUtilMacOSX extends XWUtilImpl {
 			String l = "";
 			while (l != null) {
 				if (l.indexOf(key) != -1) {
+                    System.out.println("found " + key + " in " + l);
 					final int start = l.indexOf(':') + 1;
+                    System.out.println("start " + start);
 					if (start != -1) {
-						return l.substring(start);
+                        System.out.println("return " + l.substring(start));
+						return l.substring(start).trim();
 					}
 				}
 				l = bufferFile.readLine();
@@ -122,5 +130,12 @@ public class XWUtilMacOSX extends XWUtilImpl {
 			new File(".", XWTools.STDERR).delete();
 		}
 		return "";
+	}
+
+	public  static void main(String[] args) {
+		XWUtilMacOSX util = new XWUtilMacOSX();
+		System.out.println("procModel= " + util.getProcModel());
+		System.out.println("speedProc = " + util.getSpeedProc());
+		System.out.println("totalMem = " + util.getTotalMem());
 	}
 }

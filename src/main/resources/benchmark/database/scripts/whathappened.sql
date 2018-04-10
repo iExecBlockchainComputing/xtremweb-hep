@@ -5,27 +5,23 @@
 -- 
 --       This file is part of XtremWeb-HEP.
 -- 
---     XtremWeb-HEP is free software: you can redistribute it and/or modify
---     it under the terms of the GNU General Public License as published by
---     the Free Software Foundation, either version 3 of the License, or
---     (at your option) any later version.
--- 
---     XtremWeb-HEP is distributed in the hope that it will be useful,
---     but WITHOUT ANY WARRANTY; without even the implied warranty of
---     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---     GNU General Public License for more details.
--- 
---     You should have received a copy of the GNU General Public License
---     along with XtremWeb-HEP.  If not, see <http://www.gnu.org/licenses/>.
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--     http://www.apache.org/licenses/LICENSE-2.0
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 -- 
 
 --
--- Since : 5.8.0
+-- Since : 13.0.0
 --
--- File    : whathappened.sql
--- Purpose : this file contains the needed SQL commands to 
---           retreive pilot jobs from DB
--- Usage   : mysql < whathappened.sql
+-- Purpose : this file contains the needed SQL commands to
+--           jobs from DB
+-- Usage   : mysql < whathappened3.sql
 --
 
 
@@ -33,72 +29,52 @@
 
 create temporary table completedjobs (
        thedate datetime,
-       completeds int(10) default 0
+       completeds int(10) default 0,
+       retries int(10) default 0
 );
 
 -- select "fill temporary table completedjobs";
 
-insert into completedjobs (thedate,completeds)
-       select date(completeddate),count(*) 
+insert into completedjobs (thedate,completeds, retries)
+       select date(completeddate),count(*), sum(retry)
          from works 
 	 where not isnull(completeddate)
-	   and date(completeddate)>"2009-10-01" 
-	   and status="COMPLETED" 
+	   and status="COMPLETED"
+	 group by date(completeddate);
+
+--  since 5.9.0 deleted rows go to works_history
+
+insert into completedjobs (thedate,completeds)
+       select date(completeddate),count(*) 
+         from works_history 
+	 where not isnull(completeddate)
+	   and status="COMPLETED"
 	 group by date(completeddate);
 
 -- select "create a temporary table for error jobs"
 
 create temporary table errorjobs (
        thedate datetime,
-       errors int(10) default 0
+       errs int(10) default 0
 );
 
 -- select "fill temporary table errorjobs";
 
-insert into errorjobs (thedate,errors)
+insert into errorjobs (thedate,errs)
        select date(arrivaldate),count(*) 
          from works 
 	 where not isnull(arrivaldate)
-	   and date(arrivaldate)>"2009-10-01" 
-	   and status="ERROR" 
+	   and status="ERROR"
 	 group by date(arrivaldate);
 
--- select "create temporary table for proxy jobs (jobs inserted with a valid X509 proxy)";
+-- since 5.9.0 deleted rows go to works_history
 
-create temporary table proxyjobs (
-       thedate datetime,
-       proxieds int(10) default 0
-);
-
--- select "fill temporary table pilotedjobs";
-
-insert into proxyjobs (thedate,proxieds)
+insert into errorjobs (thedate,errs)
        select date(arrivaldate),count(*) 
-         from works 
+         from works_history 
 	 where not isnull(arrivaldate)
-	   and date(arrivaldate)>"2009-10-01" 
-	   and not isnull(userproxy)
+	   and status="ERROR"
 	 group by date(arrivaldate);
-
--- select "create temporary table for piloted jobs (jobs run on EGEE ressources)";
-
-create temporary table pilotedjobs (
-       thedate datetime,
-       piloteds int(10) default 0
-);
-
--- select "fill temporary table pilotedjobs";
-
-insert into pilotedjobs (thedate,piloteds)
-       select date(completeddate),count(*) 
-       from works , tasks, hosts 
-       where tasks.workuid=works.uid 
-       	 and works.status="COMPLETED" 
-	 and not isnull(works.completeddate)
-	 and date(works.completeddate)>"2009-10-01" 
-	 and tasks.hostuid=hosts.uid 
-	 and hosts.pilotjob="true" 
-       group by date(completeddate);
 
 -- select "create temporary table for pilot jobs (EGEE ressources)";
 
@@ -110,30 +86,11 @@ create temporary table resources (
 -- select "fill temporary table pilotedjobs";
 
 insert into resources (thedate,resources)
-       select date(lastalive),count(*) 
-       from hosts 
+       select date(lastalive),count(*)
+       from hosts
        where not isnull(lastalive)
-       and   date(lastalive)>"2009-10-01" 
        group by date(lastalive);
 
--- select "create temporary table for pilot jobs (EGEE ressources)";
-
-create temporary table pilotjobs (
-       thedate datetime,
-       pilotjobs int(10) default 0
-);
-
--- select "fill temporary table pilotedjobs";
-
-insert into pilotjobs (thedate,pilotjobs)
-       select date(lastalive),count(*) 
-       from hosts 
-       where not isnull(lastalive)
-       and   pilotjob="true"
-       and   date(lastalive)>"2009-10-01" 
-       group by date(lastalive);
-
--- select date(thedate),piloteds from pilotedjobs group by date(thedate) order by date(thedate);
 
 
 -- select "create temporary table stats";
@@ -141,42 +98,33 @@ insert into pilotjobs (thedate,pilotjobs)
 create temporary table stats (
        thedate datetime,
        completeds int(10) default 0,
-       errors int(10) default 0,
-       proxieds int(10) default 0,
-       piloteds int(10) default 0,
+       errs int(10) default 0,
        resources int(10) default 0,
-       pilotjobs int(10) default 0
+       retry int(10) default 0
 );
 
 -- select "inserta all possible dates"
 
-insert into stats (thedate,completeds)
-       select thedate,completeds
+insert into stats (thedate,completeds,retry)
+       select date(thedate),completeds,retries
        from completedjobs;
-insert into stats (thedate,errors)
-       select thedate,errors
-       from errorjobs;
-insert into stats (thedate,proxieds)
-       select thedate,proxieds
-       from proxyjobs;
-insert into stats (thedate,piloteds)
-       select thedate,piloteds
-       from pilotedjobs;
+insert into stats (thedate,errs)
+       select date(completedjobs.thedate),errorjobs.errs
+       from completedjobs
+	      join errorjobs
+	      on date(errorjobs.thedate)=date(completedjobs.thedate);
 insert into stats (thedate,resources)
-       select thedate,resources
-       from resources;
-insert into stats (thedate,pilotjobs)
-       select thedate,pilotjobs
-       from pilotjobs;
+       select date(resources.thedate),resources
+       from resources
+	      join completedjobs
+	      on date(resources.thedate)=date(completedjobs.thedate);
 
 
 select date(thedate),
        max(completeds) as completed,
-       max(errors) as errors,
-       max(proxieds) as proxieds,
-       max(piloteds) as piloteds,
-       max(resources) as resources,
-       max(pilotjobs) as pilotjobs
+       max(retry) as retry,
+       max(errs) as errors,
+       max(resources) as resources
        from stats 
        group by thedate
        order by thedate;

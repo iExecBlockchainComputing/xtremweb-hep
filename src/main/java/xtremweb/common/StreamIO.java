@@ -23,6 +23,9 @@
 
 package xtremweb.common;
 
+import xtremweb.communications.XMLRPCResult;
+import xtremweb.communications.XWCommException;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -634,7 +637,7 @@ public class StreamIO implements AutoCloseable {
 	 * @see #readFileContent(File, long)
 	 * @see XWTools#MAXFILESIZE
 	 */
-	public void readFileContent(final File file) throws IOException {
+	public void readFileContent(final File file) throws IOException, XWCommException {
 		readFileContent(file , XWTools.MAXFILESIZE);
 	}
 	/**
@@ -644,7 +647,7 @@ public class StreamIO implements AutoCloseable {
 	 * @since 12.2.3 
 	 * @exception IOException is thrown on IO error or is file size is greater than maxlength
 	 */
-	public void readFileContent(final File file, final long maxlength) throws IOException {
+	public void readFileContent(final File file, final long maxlength) throws IOException, XWCommException {
 
 		final byte[] buffer = new byte[bufferLength];
 
@@ -659,7 +662,8 @@ public class StreamIO implements AutoCloseable {
 						written += n;
 					}
 					if (written > maxlength) {
-						throw new IOException("StreamIO#readFile() : file too long");
+						throw new XWCommException(new XMLRPCResult(XWReturnCode.DISK,
+								"readFileContent: file too long for the envelope"));
 					}
 				}
 				logger.finest("readFileContent : bytes read = " + written);

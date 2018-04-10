@@ -241,7 +241,7 @@ public abstract class Table extends Type {
 	/**
 	 * This reads a new XMLRPCCommand object from input stream
 	 *
-	 * @param in
+	 * @param input
 	 *            is the input stream
 	 * @param itf
 	 *            is the interface to read
@@ -299,6 +299,13 @@ public abstract class Table extends Type {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
 			final Table ret = new DataInterface();
+			return readInterface(input, ret);
+		} catch (final SAXException e) {
+		}
+		try {
+			input.reset();
+			input.mark(XWTools.BUFFEREND);
+			final Table ret = new EnvelopeInterface();
 			return readInterface(input, ret);
 		} catch (final SAXException e) {
 		}

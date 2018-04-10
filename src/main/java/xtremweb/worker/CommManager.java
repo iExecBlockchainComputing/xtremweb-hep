@@ -51,10 +51,8 @@ import java.util.Iterator;
 import org.xml.sax.SAXException;
 
 import xtremweb.common.*;
-import xtremweb.communications.CommClient;
-import xtremweb.communications.Connection;
+import xtremweb.communications.*;
 import xtremweb.communications.URI;
-import xtremweb.communications.XMLRPCCommandSend;
 
 public final class CommManager extends Thread {
 
@@ -460,8 +458,8 @@ public final class CommManager extends Thread {
 	 * @throws InvalidKeyException
 	 * @since 8.0.0
 	 */
-	protected File uriPassThrough(final URI throughUri) throws IOException, URISyntaxException, InvalidKeyException,
-	AccessControlException, ClassNotFoundException, SAXException {
+	protected File uriPassThrough(final URI throughUri, final long maxLength) throws IOException, URISyntaxException, InvalidKeyException,
+	AccessControlException, ClassNotFoundException, SAXException, XWCommException {
 
 		final File ret = null;
 		boolean islocked = false;
@@ -497,7 +495,7 @@ public final class CommManager extends Thread {
 					throw new URISyntaxException(line, "syntax error (sheme or host is null)");
 				}
 				logger.debug("uriPassThrough uri = " + line);
-				downloadData(uri);
+				downloadData(uri, maxLength, false);
 			}
 		} finally {
 			if (islocked) {
@@ -518,26 +516,28 @@ public final class CommManager extends Thread {
 	/**
 	 * This all data associated to the current work
 	 *
-	 * @param w is the work
+	 * @param theWork is the work
 	 *
 	 */
-	private void downloadWork(final Work w) throws IOException {
+	private void downloadWork(final Work theWork) throws IOException {
 
 		try {
-			downloadData(w.getStdin());
+			final float downloadBandwidth = downloadData(theWork.getStdin(), theWork.getMaxFileSize(), false);
+			theWork.setDownloadBandwidth(downloadBandwidth);
 		} catch (final Exception e) {
-			throw new IOException("can't download stdin (" + w.getStdin() + ")");
+			throw new IOException("can't download stdin (" + theWork.getStdin() + ")");
 		}
 
 		try {
-			final URI uri = w.getDirin();
-			downloadData(uri);
-			final DataInterface dirin = getData(uri, false);
+			final URI uri = theWork.getDirin();
+			final float downloadBandwidth = downloadData(uri, theWork.getMaxFileSize(), false);
+            theWork.setDownloadBandwidth(downloadBandwidth);
+            final DataInterface dirin = getData(uri, false);
 			if (dirin != null) {
 				final DataTypeEnum dirinType = dirin.getType();
 				logger.debug("dirinType = " + dirinType);
 				if ((dirinType != null) && (dirinType == DataTypeEnum.URIPASSTHROUGH)) {
-					uriPassThrough(uri);
+					uriPassThrough(uri, theWork.getMaxFileSize());
 				}
 			}
 		} catch (final Exception e) {
@@ -546,7 +546,7 @@ public final class CommManager extends Thread {
 		}
 
 		try {
-			final DataInterface drivenData = getData(w.getDataDriven(), false);
+			final DataInterface drivenData = getData(theWork.getDataDriven(), false);
 			if (drivenData != null) {
 				final String sharedDataPkgs = Worker.getConfig().getHost().getSharedDatas();
 				logger.debug("downloadWork worker sharedDataPkg = " + sharedDataPkgs);
@@ -555,7 +555,7 @@ public final class CommManager extends Thread {
 				for (final Iterator<String> datasIterator = datas.iterator(); datasIterator.hasNext();) {
 					final String sharedData = datasIterator.next();
 					if (drivenData.getPackage().compareTo(sharedData) == 0) {
-						w.setDataPackage(sharedData);
+						theWork.setDataPackage(sharedData);
 						found = true;
 						break;
 					}
@@ -571,93 +571,114 @@ public final class CommManager extends Thread {
 		}
 	}
 
-	/**
-	 * This retrieves the app This also retrieves all app files contents (bin,
-	 * stdin, dirin...)
-	 *
-	 * @param uid
-	 *            is the data uid
-	 * @throws AccessControlException
-	 * @throws InvalidKeyException
-	 */
-	private void downloadApp(final UID uid) throws ClassNotFoundException, UnknownHostException, ConnectException,
-	IOException, SAXException, URISyntaxException, InvalidKeyException, AccessControlException {
+    /**
+     * This retrieves the app This also retrieves all app files contents (bin,
+     * stdin, dirin...)
+     *
+     * @param uid
+     *            is the data uid
+     * @throws AccessControlException
+     * @throws InvalidKeyException
+     */
+    private void downloadApp(final UID uid) throws ClassNotFoundException, UnknownHostException, ConnectException,
+            IOException, SAXException, URISyntaxException, InvalidKeyException, AccessControlException {
 
-		final AppInterface app = getApp(uid);
-		final CPUEnum cpu = Worker.getConfig().getHost().getCpu();
-		final OSEnum os = Worker.getConfig().getHost().getOs();
+        final AppInterface app = getApp(uid);
+        final CPUEnum cpu = Worker.getConfig().getHost().getCpu();
+        final OSEnum os = Worker.getConfig().getHost().getOs();
 
-		URI uri = null;
+        URI uri = null;
 
-		final AppTypeEnum appType = app.getType();
-		final String apptypestr = appType.toString();
-		final boolean localapp = Worker.getConfig().getLocalApps() == null ? 
-				false: 
-					Worker.getConfig().getLocalApps().contains(apptypestr);
+        final AppTypeEnum appType = app.getType();
+        final String apptypestr = appType.toString();
+        final boolean localapp = Worker.getConfig().getLocalApps() == null ?
+                false:
+                    Worker.getConfig().getLocalApps().contains(apptypestr);
 
-		logger.error("CommManager : can't use app library; please use executables");
-		uri = app.getBinary(cpu, os);
+        logger.error("CommManager : can't use app library; please use executables");
+        uri = app.getBinary(cpu, os);
 
-		if ((!localapp) && (uri == null)) {
-			throw new IOException("binary not defined");
-		}
+        if ((!localapp) && (uri == null)) {
+            throw new IOException("binary not defined");
+        }
 
-		try {
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download binary (" + uri + ")");
-		}
+        try {
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download binary (" + uri + ")");
+        }
 
-		try {
-			logger.error("CommManager : can't use app library; please use executables");
-			uri = app.getLibrary(cpu, os);
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download library (" + uri + ")");
-		}
+        try {
+            logger.error("CommManager : can't use app library; please use executables");
+            uri = app.getLibrary(cpu, os);
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download library (" + uri + ")");
+        }
 
-		try {
-			uri = app.getLaunchScript(os);
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download init script (" + uri + ")");
-		}
+        try {
+            uri = app.getLaunchScript(os);
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download init script (" + uri + ")");
+        }
 
-		try {
-			uri = app.getUnloadScript(os);
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download unload script (" + uri + ")");
-		}
+        try {
+            uri = app.getUnloadScript(os);
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download unload script (" + uri + ")");
+        }
 
-		try {
-			uri = app.getBaseDirin();
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download base dirin (" + uri + ")");
-		}
+        try {
+            uri = app.getBaseDirin();
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download base dirin (" + uri + ")");
+        }
 
-		try {
-			uri = app.getDefaultDirin();
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download default dirin (" + uri + ")");
-		}
+        try {
+            uri = app.getDefaultDirin();
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download default dirin (" + uri + ")");
+        }
 
-		try {
-			uri = app.getDefaultStdin();
-			downloadData(uri);
-		} catch (final Exception e) {
-			logger.exception(e);
-			throw new IOException("can't download default stdin (" + uri + ")");
-		}
-	}
+        try {
+            uri = app.getDefaultStdin();
+            final DataInterface data = getData(uri, false);
+            downloadData(uri,
+                    data != null ? data.getSize() : 0,
+                    false);
+        } catch (final Exception e) {
+            logger.exception(e);
+            throw new IOException("can't download default stdin (" + uri + ")");
+        }
+    }
 
 	/**
 	 * This retrieves the data for the given URI
@@ -707,12 +728,13 @@ public final class CommManager extends Thread {
 	 *
 	 * @param uri
 	 *            is the data uri
+     * @param maxLength is the max data size as definedby the envelope
 	 * @throws URISyntaxException
 	 * @throws AccessControlException
 	 * @throws InvalidKeyException
 	 */
-	private void uploadData(final URI uri) throws ClassNotFoundException, UnknownHostException, ConnectException,
-	IOException, SAXException, InvalidKeyException, AccessControlException, URISyntaxException {
+	private float uploadData(final URI uri, final long maxLength) throws ClassNotFoundException, UnknownHostException, ConnectException,
+	IOException, SAXException, InvalidKeyException, AccessControlException, URISyntaxException, XWCommException {
 
 		if (uri == null) {
 			throw new IOException("uploadData() : uri is null");
@@ -730,9 +752,16 @@ public final class CommManager extends Thread {
 			commClient.lock(uri);
 			islocked = true;
 			final File fdata = commClient.getContentFile(uri);
-			if (fdata == null) {
-				throw new IOException("uploadData(" + uri.toString() + ") can't get content file");
-			}
+            if (fdata == null) {
+                throw new IOException("uploadData(" + uri.toString() + ") can't get content file");
+            }
+            if (fdata.length() > maxLength) {
+                throw new XWCommException(new XMLRPCResult(XWReturnCode.DISK,
+                        "uploadData(" + uri.toString() +
+                        ") file too long for the envelope (" +
+                        fdata.length() + ", " +
+                        maxLength + ")"));
+            }
 			final long fsize = fdata.length();
 
 			logger.debug("CommManager#uploadData " + fdata);
@@ -744,23 +773,13 @@ public final class CommManager extends Thread {
 			final float bandwidth = fsize / (end - start);
 			logger.info("Upload bandwidth = " + bandwidth);
 			Worker.getConfig().getHost().setUploadBandwidth(bandwidth);
+			return bandwidth;
 		} finally {
 			if (islocked && (commClient != null)) {
 				commClient.unlock(uri);
 			}
 			commClient = null;
 		}
-	}
-
-	/**
-	 * This calls downloadData(uri, false)
-	 *
-	 * @see #downloadData(URI, boolean)
-	 */
-	public void downloadData(final URI uri) throws ClassNotFoundException, UnknownHostException, ConnectException,
-	IOException, SAXException, InvalidKeyException, AccessControlException, URISyntaxException {
-
-		downloadData(uri, false);
 	}
 
 	/**
@@ -772,6 +791,7 @@ public final class CommManager extends Thread {
 	 *
 	 * @param uri
 	 *            is the data uri
+	 * @param maxLength is the data size limit given by the envelope
 	 * @param bypass
 	 *            if false, data content is not downloaded if data already in
 	 *            cache and if data integrity is fine; if true, data content is
@@ -779,10 +799,11 @@ public final class CommManager extends Thread {
 	 * @throws URISyntaxException
 	 * @throws AccessControlException
 	 * @throws InvalidKeyException
+	 * @since 13.0.0
 	 */
-	private synchronized void downloadData(URI uri, final boolean bypass)
+	protected synchronized float downloadData(URI uri, final long maxLength, final boolean bypass)
 			throws ClassNotFoundException, UnknownHostException, ConnectException, IOException, SAXException,
-			InvalidKeyException, AccessControlException, URISyntaxException {
+			InvalidKeyException, AccessControlException, URISyntaxException, XWCommException {
 
 		File fdata = null;
 		boolean islocked = false;
@@ -794,14 +815,13 @@ public final class CommManager extends Thread {
 
 			if ((uri == null) || (uri.isNull())) {
 				logger.finest("downloadData : uri is null");
-				return;
+				return -1;
 			}
 
 			commClient = commClient(uri);
 
 			if (uri.isHttp() || uri.isHttps() || uri.isAttic()) {
-				wget(uri);
-				return;
+				return wget(uri, maxLength);
 			}
 
 			DataInterface data = null;
@@ -815,9 +835,16 @@ public final class CommManager extends Thread {
 				throw new IOException("can't retreive data " + uri);
 			}
 
-			if (data.getMD5() == null) {
-				throw new IOException(uri.toString() + " MD5 is not set");
+			if (data.getShasum() == null) {
+				throw new IOException(uri.toString() + " SHASUM is not set");
 			}
+            if (data.getSize() > maxLength) {
+                throw new XWCommException(new XMLRPCResult(XWReturnCode.DISK,
+                        "downloadData(" + uri.toString() +
+                                ") file too long for the envelope (" +
+                                fdata.length() + ", " +
+                                maxLength + ")"));
+            }
 			commClient.lock(uri);
 			islocked = true;
 			final URI datauri = data.getURI();
@@ -850,10 +877,10 @@ public final class CommManager extends Thread {
 			final long start = System.currentTimeMillis();
 			long fsize = fdata.length();
 
-			if ((fdata.exists()) && (!bypass) && (data.getMD5().compareTo(XWTools.sha256CheckSum(fdata)) == 0)
+			if ((fdata.exists()) && (!bypass) && (data.getShasum().compareTo(XWTools.sha256CheckSum(fdata)) == 0)
 					&& (data.getSize() == fsize)) {
 				logger.config("Not necessary to download data " + data.getUID());
-				return;
+				return -1;
 			}
 
 			if (uri.isHttp() || uri.isAttic()) {
@@ -862,7 +889,7 @@ public final class CommManager extends Thread {
 					islocked = false;
 				}
 				final String name = data.getName();
-				wget(uri);
+				wget(uri, maxLength);
 				commClient.lock(uri);
 				islocked = true;
 				data = getData(uri, bypass);
@@ -880,11 +907,16 @@ public final class CommManager extends Thread {
 			Worker.getConfig().getHost().setDownloadBandwidth(bandwidth);
 			logger.info("Download bandwidth = " + bandwidth);
 
-			if ((data.getMD5().compareTo(XWTools.sha256CheckSum(fdata)) != 0) || (data.getSize() != fsize)) {
-				throw new IOException(uri.toString() + " MD5 or size differs");
+			if ((data.getShasum().compareTo(XWTools.sha256CheckSum(fdata)) != 0) || (data.getSize() != fsize)) {
+				throw new IOException(uri.toString() + " SHASUM or size differs");
 			}
-		} catch (NoSuchAlgorithmException e) {
-			logger.exception(e);
+
+            return bandwidth;
+
+        } catch (XWCommException e) {
+            throw e;
+        } catch (NoSuchAlgorithmException e) {
+            logger.exception(e);
 		} finally {
 			if (fdata != null) {
 				for (int nbtry = 0; nbtry < 2; nbtry++) {
@@ -902,9 +934,10 @@ public final class CommManager extends Thread {
 				commClient.unlock(uri);
 			}
 			commClient = null;
+            fdata = null;
 			notifyAll();
-			fdata = null;
 		}
+		return -1;
 	}
 
 	/**
@@ -916,16 +949,15 @@ public final class CommManager extends Thread {
 	 * @throws AccessControlException
 	 * @throws InvalidKeyException
 	 */
-	private void wget(final URI uri) throws ClassNotFoundException, UnknownHostException, ConnectException, IOException,
-	SAXException, InvalidKeyException, AccessControlException, URISyntaxException {
+	private float wget(final URI uri, final long maxLength) throws ClassNotFoundException, UnknownHostException, ConnectException, IOException,
+	SAXException, InvalidKeyException, AccessControlException, URISyntaxException, XWCommException {
 
 		if (uri == null) {
-			return;
+			return -1;
 		}
 		CommClient commClient = null;
 		DataInterface data = null;
 		boolean islocked = false;
-		File fdata = null;
 
 		try {
 			commClient = commClient(uri);
@@ -940,7 +972,7 @@ public final class CommManager extends Thread {
 			data = (DataInterface) commClient.get(uri);
 			commClient.lock(uri);
 			islocked = true;
-			fdata = commClient.getContentFile(uri);
+			final File fdata = commClient.getContentFile(uri);
 
 			logger.debug("wget(" + uri + ") = " + fdata);
 
@@ -962,8 +994,10 @@ public final class CommManager extends Thread {
 				mileStone.println("<readfile file='" + fdata + "'>");
 //				io = new StreamIO(null, new DataInputStream(url.openStream()), false);
 				io = new StreamIO(null, new DataInputStream(conn.getInputStream()), false);
-				io.readFileContent(fdata);
+				io.readFileContent(fdata, maxLength);
 				mileStone.println("</readfile>");
+            } catch (final XWCommException e) {
+                throw e;
 			} catch (final Exception e) {
 				logger.exception(e);
 				throw new IOException(e.getMessage());
@@ -978,12 +1012,12 @@ public final class CommManager extends Thread {
 			final float bandwidth = fsize / (end - start);
 			Worker.getConfig().getHost().setDownloadBandwidth(bandwidth);
 			logger.info("Download bandwidth = " + bandwidth);
+			return bandwidth;
 		} finally {
 			if (islocked && (commClient != null)) {
 				commClient.unlock(uri);
 			}
 			commClient = null;
-			fdata = null;
 		}
 	}
 
@@ -1110,7 +1144,7 @@ public final class CommManager extends Thread {
 						throw new IOException("can't download work :" + e.getMessage());
 					}
 					try {
-						downloadApp(newWork.getApplication());
+                        downloadApp(newWork.getApplication());
 					} catch (final Exception e) {
 						logger.exception("Download app err : ", e);
 						throw new IOException("can't download app : " + e.getMessage());
@@ -1128,8 +1162,7 @@ public final class CommManager extends Thread {
 					logger.exception("Downloading error", e);
 
 					if (newWork != null) {
-						newWork.setError();
-						newWork.setErrorMsg("IOError : " + e.getMessage());
+						newWork.setError("IOError : " + e.getMessage());
 						sendResult(newWork);
 					} else {
 						logger.error("Downloading error : newWork = null ?!?!");
@@ -1200,7 +1233,7 @@ public final class CommManager extends Thread {
 	 * @throws InvalidKeyException
 	 */
 	protected void uploadResults(final Work theWork) throws IOException, ClassNotFoundException, SAXException,
-	URISyntaxException, InvalidKeyException, AccessControlException {
+	URISyntaxException, InvalidKeyException, AccessControlException, XWCommException {
 
 		if (theWork == null) {
 			logger.error("uploadResults : theWork is null");
@@ -1216,7 +1249,7 @@ public final class CommManager extends Thread {
 			return;
 		}
 
-		IOException ioe = null;
+		Exception except = null;
 		try {
 			final DataInterface data = getData(resultURI, false);
 			final CommClient commClient = commClient(resultURI);
@@ -1225,39 +1258,43 @@ public final class CommManager extends Thread {
 			if (content.exists()) {
 				commClient.send(data);
 				logger.debug("CommManager#uploadResults " + data.toXml());
-				uploadData(resultURI);
-				theWork.setStatus(StatusEnum.COMPLETED);
+				final float updloadBandwidth = uploadData(resultURI, theWork.getMaxFileSize());
+                theWork.setStatus(StatusEnum.COMPLETED);
+                theWork.setUploadBandwidth(updloadBandwidth);
 			}
-		} catch (final Exception e) {
+
+            message(false);
+
+        } catch (final XWCommException e) {
+            logger.exception("CommManager#uploadResults", e);
+            theWork.setFailed(e.getMessage());
+            throw e;
+        } catch (final Exception e) {
 			logger.exception("CommManager#uploadResults", e);
-			logger.exception(e);
-			ioe = new IOException(e);
-			theWork.setStatus(StatusEnum.DATAREQUEST);
-		}
+            theWork.setStatus(StatusEnum.DATAREQUEST);
+            theWork.setErrorMsg(e.getMessage());
+            throw e;
+		} finally {
 
-		try {
-			logger.finest("CommManager#uploadResults : " + theWork.toXml());
-			workSend(theWork);
-		} catch (final Exception e) {
-			logger.exception(e);
-		}
+            try {
+                logger.debug("CommManager#uploadResults : " + theWork.toXml());
+                workSend(theWork);
+            } catch (final Exception e) {
+                logger.exception(e);
+            }
 
-		getPoolWork().saveWork(theWork);
+            getPoolWork().saveWork(theWork);
 
-		if (Worker.getConfig().stopComputing()) {
-			System.err.println("XWHEP Worker (" + Version.currentVersion.full() + ") [" + new Date()
-					+ "] ended : enough computings (" + Worker.getConfig().getNbJobs() + " > "
-					+ Worker.getConfig().getInt(XWPropertyDefs.COMPUTINGJOBS) + ")");
+            if (Worker.getConfig().stopComputing()) {
+                System.err.println("XWHEP Worker (" + Version.currentVersion.full() + ") [" + new Date()
+                        + "] ended : enough computings (" + Worker.getConfig().getNbJobs() + " > "
+                        + Worker.getConfig().getInt(XWPropertyDefs.COMPUTINGJOBS) + ")");
 
-			System.exit(0);
-		}
+                System.exit(0);
+            }
 
-		message(false);
-
-		if (ioe != null) {
-			throw ioe;
-		}
-		mileStone.println("results sent");
+            mileStone.println("results sent");
+        }
 	}
 
 	/**

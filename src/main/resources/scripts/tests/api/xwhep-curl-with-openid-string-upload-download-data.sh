@@ -3,7 +3,19 @@
 #
 #  Copyright 2013  E. URBAH
 #                  at LAL, Univ Paris-Sud, IN2P3/CNRS, Orsay, France
-#  License GPL v3
+# Copyright [2018] [CNRS]
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 #  Shell script issuing REST 'send', 'get', 'uploaddata', 'downloaddata' and
 #  'remove' commands to XtremWeb-HEP.
@@ -88,13 +100,13 @@ curl  -s  -S  $CURL_CHECK_CERT_OPTION  "$XWHEP_URL?$OPENID_STRING"  |  \
 
 #---------------------------------------------------------------------------
 #  REST command to XtremWeb-HEP with parameters :
-#  uploaddata/UUID?DATASIZE=...&DATAMD5SUM=...   --post-data=DATAFILE=...
+#  uploaddata/UUID?DATASIZE=...&DATASHASUM=...   --post-data=DATAFILE=...
 #  Upload is NOT handled by 'wget', we really have to use 'curl'.
 #---------------------------------------------------------------------------
 DATAFILE="$0"
 DATASIZE=$(stat -c '%s' "$DATAFILE")
 DATAMD5SUM=$(md5sum "$DATAFILE"  |   cut -d ' ' -f 1)
-XWHEP_URL="$XWHEP_BASE_URL/uploaddata/$XWHEP_UUID?DATASIZE=$DATASIZE&DATAMD5SUM=$DATAMD5SUM"
+XWHEP_URL="$XWHEP_BASE_URL/uploaddata/$XWHEP_UUID?DATASIZE=$DATASIZE&DATASHASUM=$DATAMD5SUM"
 XWHEP_URL_OPENID="$XWHEP_URL&$OPENID_STRING"
 
 CURL_UPLOAD_PARAM="DATAFILE=@$DATAFILE"

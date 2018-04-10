@@ -258,48 +258,4 @@ public final class Work extends WorkInterface {
 	public String getScratchDirName() throws IOException {
 		return scratchDir.getAbsolutePath();
 	}
-
-	public boolean isRunning() {
-		return (getStatus() == StatusEnum.RUNNING);
-	}
-
-	@Override
-	public synchronized void setRunning() {
-		setStatus(StatusEnum.RUNNING);
-		notifyAll();
-	}
-
-	public boolean isCompleted() {
-		return (getStatus() == StatusEnum.COMPLETED);
-	}
-
-	@Override
-	public synchronized void setCompleted() {
-		setStatus(StatusEnum.COMPLETED);
-		notifyAll();
-	}
-
-	public synchronized void setAborted() {
-		setStatus(StatusEnum.ABORTED);
-		notifyAll();
-	}
-
-	public boolean isError() {
-		return (getStatus() == StatusEnum.ERROR);
-	}
-
-	public synchronized void setError() {
-		setStatus(StatusEnum.ERROR);
-		notifyAll();
-	}
-
-	public boolean isPending() {
-		return (getStatus() == StatusEnum.PENDING);
-	}
-
-	@Override
-	public synchronized void setPending() {
-		setStatus(StatusEnum.PENDING);
-		notifyAll();
-	}
 }

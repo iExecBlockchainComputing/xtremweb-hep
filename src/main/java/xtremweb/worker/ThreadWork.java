@@ -31,7 +31,6 @@ import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
@@ -49,6 +48,7 @@ import xtremweb.communications.SmartSocketsProxy;
 import xtremweb.communications.URI;
 import xtremweb.exec.Executor;
 import xtremweb.exec.ExecutorLaunchException;
+import xtremweb.exec.ExecutorWallClockTimeException;
 
 /**
  * ThreadWork.java Launch a java Work
@@ -302,12 +302,14 @@ public class ThreadWork extends Thread {
 
 					final String jobuid = currentWork.getUID().toString();
 					addEnvVar(XWJOBUIDNAME, jobuid);
-					addEnvVar(XWCPULOADNAME, "" + Worker.getConfig().getHost().getCpuLoad());
-					if (currentWork.getDiskSpace() > 0) {
-						addEnvVar(XWDISKSPACENAME, "" + currentWork.getDiskSpace());
+					if (currentWork.getMaxFreeMassStorage() > 0) {
+						addEnvVar(XWDISKSPACENAME, "" + currentWork.getMaxFreeMassStorage());
 					}
-					if (currentWork.getMinMemory() > 0) {
-						addEnvVar(XWRAMSIZENAME, "" + currentWork.getMinMemory());
+					if (currentWork.getMaxMemory() > 0) {
+						addEnvVar(XWRAMSIZENAME, "" + currentWork.getMaxMemory());
+					}
+					if (currentWork.getMaxCpuSpeed() > 0) {
+						addEnvVar(XWCPULOADNAME, "" + currentWork.getMaxCpuSpeed());
 					}
 					status = executeJob();
 				} catch (final Throwable e) {
@@ -591,7 +593,7 @@ public class ThreadWork extends Thread {
 			unloader.setDelay(Long.parseLong(Worker.getConfig().getProperty(XWPropertyDefs.TIMEOUT)));
 			try {
 				unloader.startAndWait();
-			} catch (final ExecutorLaunchException | InterruptedException e) {
+			} catch (final ExecutorLaunchException | ExecutorWallClockTimeException e) {
 				logger.exception(e);
 			}
 
@@ -651,7 +653,12 @@ public class ThreadWork extends Thread {
 	 *
 	 * @see #resumeProcess()
 	 */
-	private StatusEnum executeJob() throws Exception {
+	private StatusEnum executeJob() throws
+            ClassNotFoundException,
+            SAXException,
+            URISyntaxException,
+            InvalidKeyException,
+            IOException {
 
 		StatusEnum ret;
 
@@ -705,8 +712,7 @@ public class ThreadWork extends Thread {
 				}
 			} catch (final IOException e) {
 				ret = StatusEnum.ERROR;
-                currentWork.setError();
-                currentWork.setErrorMsg("Worker result error : " + e);
+                currentWork.setError("Worker result error : " + e);
 				logger.exception("Result error(" + workUID + ")", e);
 			}
         }
@@ -988,7 +994,6 @@ public class ThreadWork extends Thread {
 	 * @see xtremweb.common.AppTypeEnum#checkParams(String)
 	 * @since 12.2.8
 	 */
-/*
 	private void checkAppParams(final String params)
 			throws AccessControlException,
 			IOException,
@@ -1011,7 +1016,7 @@ public class ThreadWork extends Thread {
 
 		app.checkParams(params);
 	}
-*/
+
 	/**
 	 * This retrieves the current work command line
 	 *
@@ -1138,7 +1143,7 @@ public class ThreadWork extends Thread {
 				final StreamIO io = new StreamIO(output, null, 10240, Worker.getConfig().nio())) {
 
 			logger.debug("installFile = " + fData + " is not a zip file; just copy it to PWD : " + fout);
-			io.writeFileContent(fData);
+			io.writeFileContent(fData, currentWork.getMaxFileSize());
 			return fout;
 		} finally {
 			CommManager.getInstance().commClient().unlock(uri);
@@ -1347,7 +1352,7 @@ public class ThreadWork extends Thread {
 			}
 			if (resultFile.exists()) {
 				try {
-					data.setMD5(XWTools.sha256CheckSum(resultFile));
+					data.setShasum(XWTools.sha256CheckSum(resultFile));
 				} catch (NoSuchAlgorithmException e) {
 					logger.exception(e);
 				}
@@ -1420,18 +1425,23 @@ public class ThreadWork extends Thread {
 			exec = new Executor(command.toString(), envvarsArray, currentWork.getScratchDirName(), in, out, err,
 					Long.parseLong(Worker.getConfig().getProperty(XWPropertyDefs.TIMEOUT)));
 			exec.setMaxWallClockTime(currentWork.getMaxWallClockTime());
+			logger.debug("" + workUID + " max wallclocktime " + exec.getMaxWallClockTime());
 			exec.setLoggerLevel(logger.getLoggerLevel());
 
 			mileStone.println("executing (Executor)", workUID);
 			processReturnCode = exec.startAndWait();
             currentWork.setCompleted();
 
-		} catch (final ExecutorLaunchException | InterruptedException e) {
-			currentWork.setError();
-			currentWork.setErrorMsg(e.getMessage());
+		} catch (final ExecutorLaunchException e) {
+			currentWork.setError(e.getMessage());
 			logger.exception(e);
 			killed = true;
-            processReturnCode = XWReturnCode.WALLCLOCKTIME.ordinal();
+			processReturnCode = XWReturnCode.WALLCLOCKTIME.ordinal();
+		} catch (final ExecutorWallClockTimeException wcte) {
+			currentWork.setFailed("wall clock time reached");
+			logger.exception(wcte);
+			killed = true;
+			processReturnCode = XWReturnCode.WALLCLOCKTIME.ordinal();
 		} finally {
 			exec = null;
 		}

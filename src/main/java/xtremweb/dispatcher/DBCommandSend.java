@@ -57,9 +57,11 @@ public abstract class DBCommandSend extends DBCommand implements CommCallback {
 			return new DBCommandSendUsergroup();
 		case SENDWORK:
 			return new DBCommandSendWork();
-		default:
-			throw new ClassCastException("invalid RPC " + rpc);
+		case SENDENVELOPE:
+			return new DBCommandSendEnvelope();
 		}
+
+		throw new ClassCastException("invalid RPC " + rpc);
 	}
 
 	public DBCommandSend() throws IOException {

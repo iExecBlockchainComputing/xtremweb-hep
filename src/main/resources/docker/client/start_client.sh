@@ -24,6 +24,14 @@ fi
 # download the certificate from the server
 echo "Downloading certificate from scheduler..."
 echo -n | openssl s_client -connect $SCHEDULER_DOMAIN:443 | sed -ne "/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p" > /iexec/certificate/xwscheduler.crt
+if [ -s /iexec/certificate/xwscheduler.crt ]
+then
+	echo "Certificate has been downloaded"
+else
+	echo "Certificate couldn't be downloaded, stopping now"
+	kill -9 `pidof bash`	
+fi
+
 echo "Converting downloaded certificate to x509 DER..."
 openssl x509 -outform der -in /iexec/certificate/xwscheduler.crt -out /iexec/certificate/xwscheduler.pem
 

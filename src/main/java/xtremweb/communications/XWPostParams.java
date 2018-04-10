@@ -124,11 +124,11 @@ public enum XWPostParams {
 	 */
 	DATAFILE,
 	/**
-	 * This is the md5sum of a data to upload
+	 * This is the shasum of a data to upload
 	 *
 	 * @since 8.0.2
 	 */
-	DATAMD5SUM,
+	DATASHASUM,
 	/**
 	 * This is the size of a data to upload
 	 *
@@ -233,7 +233,7 @@ public enum XWPostParams {
 	XWPASSWD;
 
 	/**
-	 * @see xtreweb.commonn.XWTools#MAXFILESIZE
+	 * @see xtremweb.common.XWTools#MAXFILESIZE
 	 */
 	public static final long MAXUPLOADSIZE = XWTools.MAXFILESIZE;
 }

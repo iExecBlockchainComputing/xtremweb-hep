@@ -38,29 +38,7 @@ import java.util.Iterator;
 
 import javax.mail.MessagingException;
 
-import xtremweb.common.AppInterface;
-import xtremweb.common.AppTypeEnum;
-import xtremweb.common.Cache;
-import xtremweb.common.DataInterface;
-import xtremweb.common.DataTypeEnum;
-import xtremweb.common.GroupInterface;
-import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.MileStone;
-import xtremweb.common.SessionInterface;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.Table;
-import xtremweb.common.TableColumns;
-import xtremweb.common.TaskInterface;
-import xtremweb.common.TraceInterface;
-import xtremweb.common.UID;
-import xtremweb.common.UserGroupInterface;
-import xtremweb.common.UserInterface;
-import xtremweb.common.UserRightEnum;
-import xtremweb.common.WorkInterface;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
+import xtremweb.common.*;
 import xtremweb.communications.EmailSender;
 import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommand;
@@ -505,6 +483,65 @@ public final class DBInterface {
 		return DBConnPoolThread.getInstance().selectAll(row, conditions);
 	}
 
+    /**
+     * This retrieves an object independently of access rights from cache
+     * or from DB
+     *
+     * @param uid
+     *            is the UID of the host to retrieve
+     * @since 13.0.0
+     */
+    protected <T extends Table> T object(final T t, final UID uid) throws IOException {
+        T ret = getFromCache(uid, t);
+        if (ret != null) {
+            return ret;
+        }
+        ret = select(t, uid);
+        return ret;
+    }
+    /**
+     * This creates a new readable object to retrieve from DB
+     * @param t is the object type
+     * @param u
+     *            is the requesting user
+     * @since 13.0.0
+     */
+    private <T extends Table> T readableObject(final T t, final UserInterface u) throws IOException {
+        final SQLRequestReadable r = new SQLRequestReadable(t.tableName(), u, ColumnSelection.selectAll);
+        t.setRequest(r);
+        return t;
+    }
+    /**
+     * This creates a new readable object to retrieve from DB
+     * @param t is the object type
+     * @param u
+     *            is the requesting user
+     * @param uid
+     *            is the UID of the application to retrieve
+     * @since 13.0.0
+     * @return the object which uid is provided; null if uid is null
+     */
+    private <T extends Table> T readableObject(final T t, final UserInterface u, final UID uid) throws IOException {
+        if (uid == null) {
+            return null;
+        }
+        final SQLRequestReadable r = new SQLRequestReadable(t.tableName(), u, ColumnSelection.selectAll, uid);
+        t.setRequest(r);
+        return t;
+    }
+    /**
+     * This creates a new readable object to retrieve apps UID from DB
+     * @param t is the object type
+     * @param u
+     *            is the requesting user
+     * @since 5.8.0
+     */
+    private <T extends Table> T readableObjectUID(final T t, final UserInterface u) throws IOException {
+        final SQLRequestReadable r = new SQLRequestReadable(t.tableName(), u, ColumnSelection.selectUID);
+        t.setRequest(r);
+        return t;
+    }
+
 	/**
 	 * This retrieves UIDs from DB
 	 *
@@ -738,8 +775,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private AppInterface readableApp(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(AppInterface.APPTABLENAME, u, ColumnSelection.selectAll);
-		return new AppInterface(r);
+        return readableObject(new AppInterface(), u);
 	}
 
 	/**
@@ -753,12 +789,7 @@ public final class DBInterface {
 	 * @return the application which uid is provided; null if uid is null
 	 */
 	private AppInterface readableApp(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(AppInterface.APPTABLENAME, u, ColumnSelection.selectAll,
-				uid);
-		return new AppInterface(r);
+        return readableObject(new AppInterface(), u, uid);
 	}
 
 	/**
@@ -769,30 +800,19 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private AppInterface readableAppUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(AppInterface.APPTABLENAME, u, ColumnSelection.selectUID);
-		return new AppInterface(r);
+        return readableObjectUID(new AppInterface(), u);
 	}
-
-	/**
-	 * This retrieves an application independently of access rights from cache
-	 * or from DB
-	 *
-	 * @param uid
-	 *            is the UID of the host to retrieve
-	 * @since 8.0.0
-	 */
-	protected AppInterface app(final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final AppInterface rowType = new AppInterface();
-		AppInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		ret = select(rowType, uid);
-		return ret;
-	}
+    /**
+     * This retrieves an application independently of access rights from cache
+     * or from DB
+     *
+     * @param uid
+     *            is the UID of the host to retrieve
+     * @since 8.0.0
+     */
+    protected AppInterface app(final UID uid) throws IOException {
+        return object(new AppInterface(), uid);
+    }
 
 	/**
 	 * This retrieves an application from cache or from DB
@@ -915,11 +935,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private DataInterface readableData(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(DataInterface.DATATABLENAME, u, ColumnSelection.selectAll, uid);
-		return new DataInterface(r);
+	    return readableObject(new DataInterface(), u, uid);
 	}
 
 	/**
@@ -930,8 +946,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private DataInterface readableDataUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(DataInterface.DATATABLENAME, u, ColumnSelection.selectUID);
-		return new DataInterface(r);
+        return readableObjectUID(new DataInterface(), u);
 	}
 
 	/**
@@ -943,16 +958,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	protected DataInterface data(final UID uid) throws IOException, AccessControlException {
-		if (uid == null) {
-			return null;
-		}
-		final DataInterface rowType = new DataInterface();
-		DataInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		ret = select(rowType, uid);
-		return ret;
+        return object(new DataInterface(), uid);
 	}
 
 	/**
@@ -1017,6 +1023,188 @@ public final class DBInterface {
 		return 0;
 	}
 
+    /**
+     * This creates a new readable session to retrieve from DB
+     *
+     * @param u
+     *            is the requesting user
+     * @since 13.0.0
+     */
+    private EnvelopeInterface readableEnvelope(final UserInterface u) throws IOException {
+        return readableObject(new EnvelopeInterface(), u);
+    }
+    /**
+     * This creates a new readable session to retrieve from DB
+     *
+     * @param u
+     *            is the requesting user
+     * @param uid
+     *            is the UID of the session to retrieve
+     * @since 13.0.0
+     */
+    private EnvelopeInterface readableEnvelope(final UserInterface u, final UID uid) throws IOException {
+        return readableObject(new EnvelopeInterface(), u, uid);
+    }
+
+    /**
+     * This creates a new readable Envelope to retrieve Envelopes UID from DB
+     *
+     * @param u
+     *            is the requesting user
+     * @since 13.0.0
+     */
+    private EnvelopeInterface readableEnvelopeUID(final UserInterface u) throws IOException {
+        return readableObjectUID(new EnvelopeInterface(), u);
+    }
+
+    /**
+     * This retrieves a Envelope for the requesting user. Envelope access rights
+     * are checked.
+     *
+     * @param u
+     *            is the requesting user
+     * @param uid
+     *            is the UID of the Envelope to retrieve
+     * @since 13.0.0
+     */
+    protected EnvelopeInterface envelope(final UserInterface u, final UID uid)
+            throws IOException, AccessControlException {
+
+        if (uid == null) {
+            return null;
+        }
+        final EnvelopeInterface row = new EnvelopeInterface();
+        final EnvelopeInterface ret = getFromCache(u, uid, row);
+        if (ret != null) {
+            return ret;
+        }
+        final EnvelopeInterface readableRow = readableEnvelope(u, uid);
+        return select(readableRow);
+    }
+
+	/**
+	 * This retrieves an envelope
+	 *
+	 * @param command
+	 * @return an envelope interface
+	 * @since 13.0.0
+	 */
+	protected EnvelopeInterface envelope(final XMLRPCCommand command) throws InvalidKeyException, IOException, AccessControlException {
+		final UID uid = command.getURI().getUID();
+		if (uid == null) {
+			return null;
+		}
+
+		final EnvelopeInterface row = new EnvelopeInterface();
+		final UserInterface mandatingClient = checkClient(command, UserRightEnum.GETENVELOPE);
+		final EnvelopeInterface ret = getFromCache(mandatingClient, uid, row);
+		if (ret != null) {
+			return ret;
+		}
+		final EnvelopeInterface readableRow = readableEnvelope(mandatingClient, uid);
+		return select(readableRow);
+	}
+    /**
+     * This retrieves a Envelope from DB by its ID
+     *
+     * @param u
+     *            is the requesting user
+     * @param id is the envelope ID
+     * @return the last loaded row
+     * @since 13.0.0
+     */
+    protected EnvelopeInterface envelope(final UserInterface u, final int id) throws IOException {
+        final EnvelopeInterface row = readableEnvelope(u);
+        return selectOne(row, "maintable.envid='" + id + "'");
+    }
+
+    /**
+     * This retrieves a Envelope from DB for the requesting user according to
+     * conditions
+     *
+     * @param u
+     *            is the requesting user
+     * @param conditions
+     *            restrict selected rows
+     * @return the last loaded row
+     * @since 13.0.0
+     */
+    protected EnvelopeInterface envelope(final UserInterface u, final String conditions) throws IOException {
+        final EnvelopeInterface row = readableEnvelope(u);
+        return selectOne(row, conditions);
+    }
+
+    /**
+     * This retrieves a Envelope from DB for the requesting user
+     *
+     * @param u
+     *            is the requesting user
+     * @return a Collection of Envelopes
+     * @since 13.0.0
+     */
+    protected Collection<EnvelopeInterface> envelopes(final UserInterface u) throws IOException {
+        final EnvelopeInterface row = readableEnvelope(u);
+        return selectAll(row);
+    }
+
+    /**
+     * This retrieves a Envelope from DB for the requesting user according to
+     * criteria
+     *
+     * @param u
+     *            is the requesting user
+     * @param criteria
+     *            restrict selected rows
+     * @return a Collection of Envelopes
+     * @since 13.0.0
+     */
+    protected Collection<EnvelopeInterface> envelopes(final UserInterface u, final String criteria) throws IOException {
+        final EnvelopeInterface row = readableEnvelope(u);
+        return selectAll(row, criteria);
+    }
+
+    /**
+     * This retrieves Envelope UID from DB for the requesting user
+     *
+     * @param u
+     *            is the requesting user
+     * @return a Collection of UID
+     * @since 13.0.0
+     */
+    protected Collection<UID> envelopesUID(final UserInterface u) throws IOException {
+        return envelopesUID(u, (String) null);
+    }
+
+    /**
+     * This retrieves a Envelope from DB for the requesting user according to
+     * criteria
+     *
+     * @param u
+     *            is the requesting user
+     * @return a Collection of UID
+     * @since 13.0.0
+     */
+    protected Collection<UID> envelopesUID(final UserInterface u, final String criterias) throws IOException {
+        final EnvelopeInterface row = readableEnvelopeUID(u);
+        return selectUID(row, criterias);
+    }
+
+    /**
+     * This retrieves the number of Envelopes
+     *
+     * @param u
+     *            is the requesting user
+     * @return how many Envelopes exist
+     * @since 13.0.0
+     */
+    protected int envelopeSize(final UserInterface u) throws IOException {
+        try {
+            envelopesUID(u).size();
+        } catch (final Exception e) {
+        }
+        return 0;
+    }
+
 	/**
 	 * This creates a new readable group to retrieve from DB
 	 *
@@ -1025,10 +1213,8 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private GroupInterface readableGroup(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(GroupInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new GroupInterface(r);
+	    return readableObject(new GroupInterface(), u);
 	}
-
 	/**
 	 * This creates a new readable group to retrieve from DB
 	 *
@@ -1039,14 +1225,8 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private GroupInterface readableGroup(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(GroupInterface.TABLENAME, u, ColumnSelection.selectAll,
-				uid);
-		return new GroupInterface(r);
+        return readableObject(new GroupInterface(), u);
 	}
-
 	/**
 	 * This creates a new readable group to retrieve groups UID from DB
 	 *
@@ -1055,10 +1235,8 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private GroupInterface readableGroupUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(GroupInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new GroupInterface(r);
+        return readableObjectUID(new GroupInterface(), u);
 	}
-
 	/**
 	 * This retrieves a group for the requesting user. It first looks in cache,
 	 * then in DB. Group access rights are checked.
@@ -1151,11 +1329,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private HostInterface readableHost(final UserInterface u) throws IOException {
-		if (u == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(HostInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new HostInterface(r);
+        return readableObject(new HostInterface(), u);
 	}
 
 	/**
@@ -1168,11 +1342,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private HostInterface readableHost(final UserInterface u, final UID uid) throws IOException {
-		if ((u == null) || (uid == null)) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(HostInterface.TABLENAME, u, ColumnSelection.selectAll, uid);
-		return new HostInterface(r);
+        return readableObject(new HostInterface(), u, uid);
 	}
 
 	/**
@@ -1183,11 +1353,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private HostInterface readableHostUID(final UserInterface u) throws IOException {
-		if (u == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(HostInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new HostInterface(r);
+        return readableObjectUID(new HostInterface(), u);
 	}
 
 	/**
@@ -1198,15 +1364,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	protected HostInterface host(final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final HostInterface rowType = new HostInterface();
-		final HostInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		return select(rowType, uid);
+        return object(new HostInterface(), uid);
 	}
 
 	/**
@@ -1331,10 +1489,8 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private SessionInterface readableSession(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(SessionInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new SessionInterface(r);
+            return readableObject(new SessionInterface(), u);
 	}
-
 	/**
 	 * This creates a new readable session to retrieve from DB
 	 *
@@ -1345,12 +1501,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private SessionInterface readableSession(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(SessionInterface.TABLENAME, u, ColumnSelection.selectAll,
-				uid);
-		return new SessionInterface(r);
+        return readableObject(new SessionInterface(), u, uid);
 	}
 
 	/**
@@ -1361,8 +1512,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private SessionInterface readableSessionUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(SessionInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new SessionInterface(r);
+        return readableObjectUID(new SessionInterface(), u);
 	}
 
 	/**
@@ -1487,8 +1637,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private TaskInterface readableTask(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(TaskInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new TaskInterface(r);
+        return readableObject(new TaskInterface(), u);
 	}
 
 	/**
@@ -1501,11 +1650,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private TaskInterface readableTask(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(TaskInterface.TABLENAME, u, ColumnSelection.selectAll, uid);
-		return new TaskInterface(r);
+        return readableObject(new TaskInterface(), u, uid);
 	}
 
 	/**
@@ -1516,8 +1661,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private TaskInterface readableTaskUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(TaskInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new TaskInterface(r);
+        return readableObjectUID(new TaskInterface(), u);
 	}
 
 	/**
@@ -1530,15 +1674,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	protected TaskInterface task(final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final TaskInterface rowType = new TaskInterface();
-		final TaskInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		return select(rowType, uid);
+        return object(new TaskInterface(), uid);
 	}
 
 	/**
@@ -1770,8 +1906,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private TraceInterface readableTrace(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(TraceInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new TraceInterface(r);
+        return readableObject(new TraceInterface(), u);
 	}
 
 	/**
@@ -1784,12 +1919,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private TraceInterface readableTrace(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(TraceInterface.TABLENAME, u, ColumnSelection.selectAll,
-				uid);
-		return new TraceInterface(r);
+        return readableObject(new TraceInterface(), u, uid);
 	}
 
 	/**
@@ -1800,8 +1930,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private TraceInterface readableTraceUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(TraceInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new TraceInterface(r);
+        return readableObjectUID(new TraceInterface(), u);
 	}
 
 	/**
@@ -1885,8 +2014,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private UserGroupInterface readableUserGroup(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(UserGroupInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new UserGroupInterface(r);
+        return readableObject(new UserGroupInterface(), u);
 	}
 
 	/**
@@ -1899,12 +2027,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private UserGroupInterface readableUserGroup(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(UserGroupInterface.TABLENAME, u, ColumnSelection.selectAll,
-				uid);
-		return new UserGroupInterface(r);
+        return readableObject(new UserGroupInterface(), u, uid);
 	}
 
 	/**
@@ -1915,8 +2038,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private UserGroupInterface readableUserGroupUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(UserGroupInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new UserGroupInterface(r);
+        return readableObjectUID(new UserGroupInterface(), u);
 	}
 
 	/**
@@ -1969,16 +2091,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	protected UserGroupInterface usergroup(final UID uid) throws IOException {
-
-		if (uid == null) {
-			return null;
-		}
-		final UserGroupInterface rowType = new UserGroupInterface();
-		final UserGroupInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		return select(rowType, uid);
+        return object(new UserGroupInterface(), uid);
 	}
 
 	/**
@@ -2031,8 +2144,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private UserInterface readableUser(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(UserInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new UserInterface(r);
+        return readableObject(new UserInterface(), u);
 	}
 
 	/**
@@ -2045,11 +2157,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private UserInterface readableUser(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(UserInterface.TABLENAME, u, ColumnSelection.selectAll, uid);
-		return new UserInterface(r);
+        return readableObject(new UserInterface(), u, uid);
 	}
 
 	/**
@@ -2060,8 +2168,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private UserInterface readableUserUID(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(UserInterface.TABLENAME, u, ColumnSelection.selectUID);
-		return new UserInterface(r);
+        return readableObjectUID(new UserInterface(), u);
 	}
 
 	/**
@@ -2087,16 +2194,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	protected UserInterface user(final UID uid) throws IOException {
-
-		if (uid == null) {
-			return null;
-		}
-		final UserInterface rowType = new UserInterface();
-		final UserInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		return select(rowType, uid);
+        return object(new UserInterface(), uid);
 	}
 
 	/**
@@ -2176,8 +2274,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private WorkInterface readableWork(final UserInterface u) throws IOException {
-		final SQLRequestReadable r = new SQLRequestReadable(WorkInterface.TABLENAME, u, ColumnSelection.selectAll);
-		return new WorkInterface(r);
+        return readableObject(new WorkInterface(), u);
 	}
 
 	/**
@@ -2190,11 +2287,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	private WorkInterface readableWork(final UserInterface u, final UID uid) throws IOException {
-		if (uid == null) {
-			return null;
-		}
-		final SQLRequestReadable r = new SQLRequestReadable(WorkInterface.TABLENAME, u, ColumnSelection.selectAll, uid);
-		return new WorkInterface(r);
+        return readableObject(new WorkInterface(), u, uid);
 	}
 
 	/**
@@ -2233,16 +2326,7 @@ public final class DBInterface {
 	 * @since 5.8.0
 	 */
 	protected WorkInterface work(final UID uid) throws IOException {
-
-		if (uid == null) {
-			return null;
-		}
-		final WorkInterface rowType = new WorkInterface();
-		final WorkInterface ret = getFromCache(uid, rowType);
-		if (ret != null) {
-			return ret;
-		}
-		return select(rowType, uid);
+        return object(new WorkInterface(), uid);
 	}
 
 	/**
@@ -2313,7 +2397,7 @@ public final class DBInterface {
 	 * This retrieves readable works for the given user
 	 *
 	 * @param command
-	 * @return a vector of works
+	 * @return a work interface
 	 * @since 11.4.0
 	 */
 	protected WorkInterface work(final XMLRPCCommand command) throws InvalidKeyException, IOException, AccessControlException {
@@ -3650,61 +3734,68 @@ public final class DBInterface {
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = getTask(command);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = getTask(command);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = data(command);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = data(command);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = getApplication(command);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = getApplication(command);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = getUser(command);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = getUser(command);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = getUserGroup(command);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = getUserGroup(command);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = getSession(client, uid);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = getSession(client, uid);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
 		try {
-		ret = getGroup(client, uid);
-		if (ret != null) {
-			return ret;
-		}
+    		ret = getGroup(client, uid);
+	    	if (ret != null) {
+		    	return ret;
+		    }
 		} catch (final AccessControlException e) {
 		}
-		try {
-		ret = getHost(command);
-		if (ret != null) {
-			return ret;
-		}
-		} catch (final AccessControlException e) {
-		}
+        try {
+            ret = getHost(command);
+            if (ret != null) {
+                return ret;
+            }
+        } catch (final AccessControlException e) {
+        }
+        try {
+            ret = getEnvelope(command);
+            if (ret != null) {
+                return ret;
+            }
+        } catch (final AccessControlException e) {
+        }
 
 		return null;
 	}
@@ -3747,43 +3838,79 @@ public final class DBInterface {
 		return theTaskbyWork;
 	}
 
-	/**
-	 * This retrieves a work given its external id
-	 *
-	 * @param command is the command to execute
-	 * @return null on error; a TaskInterface otherwise
-	 * @exception IOException
-	 *                is thrown general error
-	 * @exception InvalidKeyException
-	 *                is thrown on credential error
-	 * @exception AccessControlException
-	 *                is thrown on access rights violation
-	 * @since 11.1.0
-	 */
-	public WorkInterface getWorkByExternalId(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+    /**
+     * This retrieves a work given its external id
+     *
+     * @param command is the command to execute
+     * @return null on error; a TaskInterface otherwise
+     * @exception IOException
+     *                is thrown general error
+     * @exception InvalidKeyException
+     *                is thrown on credential error
+     * @exception AccessControlException
+     *                is thrown on access rights violation
+     * @since 11.1.0
+     */
+    public WorkInterface getWorkByExternalId(final XMLRPCCommand command)
+            throws IOException, InvalidKeyException, AccessControlException {
 
-		final UserInterface theClient = checkClient(command, UserRightEnum.GETJOB);
-		final URI uri = command.getURI();
-		final String extId = uri.getPath().substring(1, uri.getPath().length());
+        final UserInterface theClient = checkClient(command, UserRightEnum.GETJOB);
+        final URI uri = command.getURI();
+        final String extId = uri.getPath().substring(1, uri.getPath().length());
 
-		final WorkInterface theWorkById = work(theClient,
-				WorkInterface.Columns.SGID.toString() + "='" + extId + "'");
+        final WorkInterface theWorkById = work(theClient,
+                WorkInterface.Columns.SGID.toString() + "='" + extId + "'");
 
-		if (theWorkById == null) {
-			return null;
-		}
+        if (theWorkById == null) {
+            return null;
+        }
 
-		final UserInterface owner = user(theWorkById.getOwner());
-		final UID ownerGroup = (owner == null ? null : owner.getGroup());
-		if (!theWorkById.canRead(theClient, ownerGroup)
-				&& theClient.getRights().lowerThan(UserRightEnum.SUPER_USER)) {
-			throw new AccessControlException(theClient.getLogin() + " can't read " + extId);
-		}
-		return theWorkById;
-	}
+        final UserInterface owner = user(theWorkById.getOwner());
+        final UID ownerGroup = (owner == null ? null : owner.getGroup());
+        if (!theWorkById.canRead(theClient, ownerGroup)
+                && theClient.getRights().lowerThan(UserRightEnum.SUPER_USER)) {
+            throw new AccessControlException(theClient.getLogin() + " can't read " + extId);
+        }
+        return theWorkById;
+    }
 
-	/**
+    /**
+     * This retrieves an envelope given its id
+     *
+     * @param command is the command to execute
+     * @return null on error; a TaskInterface otherwise
+     * @exception IOException
+     *                is thrown general error
+     * @exception InvalidKeyException
+     *                is thrown on credential error
+     * @exception AccessControlException
+     *                is thrown on access rights violation
+     * @since 13.0.0
+     */
+    public EnvelopeInterface getEnvelopeById(final XMLRPCCommand command)
+            throws IOException, InvalidKeyException, AccessControlException {
+
+        final UserInterface theClient = checkClient(command, UserRightEnum.GETENVELOPE);
+        final URI uri = command.getURI();
+        final String id = uri.getPath().substring(1, uri.getPath().length());
+
+        final EnvelopeInterface theEnvelope = envelope(theClient,
+                EnvelopeInterface.Columns.ENVID.toString() + "='" + id + "'");
+
+        if (theEnvelope == null) {
+            return null;
+        }
+
+        final UserInterface owner = user(theEnvelope.getOwner());
+        final UID ownerGroup = (owner == null ? null : owner.getGroup());
+        if (!theEnvelope.canRead(theClient, ownerGroup)
+                && theClient.getRights().lowerThan(UserRightEnum.SUPER_USER)) {
+            throw new AccessControlException(theClient.getLogin() + " can't read " + id);
+        }
+        return theEnvelope;
+    }
+
+    /**
 	 * This retrieves an application given its name
 	 *
 	 * @param command is the command to execute
@@ -4744,30 +4871,32 @@ public final class DBInterface {
 		receivedJob.setAccessRights(newJobRights);
 		final UserRightEnum clientRights = mandatingClient.getRights();
 
+
 		if (receivedJob.getOwner() == null) {
 			receivedJob.setOwner(mandatingClient.getUID());
 		}
 
-		final Long wct = config.getLong(XWPropertyDefs.WALLCLOCKTIMEVALUE);
-		System.out.println("DBInterface#addWork update work wct = " + wct);
-		if (wct > 0) {
-			if ((receivedJob.getMaxWallClockTime() <= 0) || (receivedJob.getMaxWallClockTime() > wct)) {
-				System.out.println("DBInterface#addWork update work receivedJob.setWallClocktime("+wct+")");
-				receivedJob.setMaxWallClockTime(wct);
-			}
+		if (receivedJob.getMinCpuSpeed() < theApp.getMinCpuSpeed()) {
+			throw new IOException("job.getMinCpuSpeed < app.getMinCpuSpeed");
 		}
-		System.out.println("DBInterface#addWork update work receivedJob = " + receivedJob.toXml());
-		if ((receivedJob.getMinMemory() == 0) || (receivedJob.getMinMemory() < theApp.getMinMemory())) {
-			receivedJob.setMinMemory(theApp.getMinMemory());
-		}
-		if ((receivedJob.getMinCpuSpeed() == 0) || (receivedJob.getMinCpuSpeed() < theApp.getMinCpuSpeed())) {
-			receivedJob.setMinCpuSpeed(theApp.getMinCpuSpeed());
-		}
-		if ((receivedJob.getDiskSpace() == 0) || (receivedJob.getDiskSpace() < theApp.getMinFreeMassStorage())) {
-			receivedJob.setDiskSpace(theApp.getMinFreeMassStorage());
+		if (receivedJob.getMinFreeMassStorage() < theApp.getMinFreeMassStorage()) {
+			throw new IOException("job getMinFreeMassStorage < app.getMinFreeMassStorage");
 		}
 
-		final WorkInterface theWork = work(mandatingClient, jobUID);
+        final EnvelopeInterface envelopeItf = select(new EnvelopeInterface(),
+                "maintable.envid='" + receivedJob.getEnvId() + "'");
+
+        if(envelopeItf == null) {
+            throw new IOException("envelope not found " + receivedJob.getEnvId());
+        }
+
+        receivedJob.setMaxWallClockTime(envelopeItf.getMaxWallClockTime());
+		receivedJob.setMaxMemory(envelopeItf.getMaxMemory());
+        receivedJob.setMaxCpuSpeed(envelopeItf.getMaxCpuSpeed());
+        receivedJob.setMaxFreeMassStorage(envelopeItf.getMaxFreeMassStorage());
+		receivedJob.setMaxFileSize(envelopeItf.getMaxFileSize());
+
+        final WorkInterface theWork = work(mandatingClient, jobUID);
 		if (theWork != null) {
 			if (theWork.canWrite(mandatingClient, appOwnerGroup) || clientRights.higherOrEquals(UserRightEnum.WORKER_USER)) {
 
@@ -4913,20 +5042,32 @@ public final class DBInterface {
 						}
 					}
 					break;
-				case ERROR:
-					if (theHost != null) {
-						theHost.incErrorJobs();
-						theHost.decRunningJobs();
-					}
-					theApp.decRunningJobs();
-					theApp.incErrorJobs();
-					jobOwner.incErrorJobs();
-					jobOwner.decRunningJobs();
-					theWork.setError(receivedJob.getErrorMsg());
-					if (theTask != null) {
-						theTask.setError();
-					}
-					break;
+					case ERROR:
+						if (theHost != null) {
+							theHost.incErrorJobs();
+							theHost.decRunningJobs();
+						}
+						theApp.decRunningJobs();
+						theApp.incErrorJobs();
+						jobOwner.incErrorJobs();
+						jobOwner.decRunningJobs();
+						theWork.setError(receivedJob.getErrorMsg());
+						if (theTask != null) {
+							theTask.setError();
+						}
+						break;
+					case FAILED:
+						if (theHost != null) {
+							theHost.decRunningJobs();
+						}
+						theApp.decRunningJobs();
+						jobOwner.incErrorJobs();
+						jobOwner.decRunningJobs();
+						theWork.setFailed(receivedJob.getErrorMsg());
+						if (theTask != null) {
+							theTask.setFailed();
+						}
+						break;
 				}
 
 				if (theTask != null) {
@@ -5028,30 +5169,30 @@ public final class DBInterface {
 		return work.getStatus();
 	}
 
-	/**
-	 * This retrieves works UIDs for the specified client. Since 7.0.0 non
-	 * privileged users get their own jobs only
-	 *
-	 * @param command is the command to execute
-	 * @return null on error; a Collection of UID otherwise
-	 * @exception IOException
-	 *                is thrown general error
-	 * @exception InvalidKeyException
-	 *                is thrown on credential error
-	 * @exception AccessControlException
-	 *                is thrown on access rights violation
-	 */
-	public Collection<UID> getAllJobs(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+    /**
+     * This retrieves works UIDs for the specified client. Since 7.0.0 non
+     * privileged users get their own jobs only
+     *
+     * @param command is the command to execute
+     * @return null on error; a Collection of UID otherwise
+     * @exception IOException
+     *                is thrown general error
+     * @exception InvalidKeyException
+     *                is thrown on credential error
+     * @exception AccessControlException
+     *                is thrown on access rights violation
+     */
+    public Collection<UID> getAllJobs(final XMLRPCCommand command)
+            throws IOException, InvalidKeyException, AccessControlException {
 
-		final UserInterface theClient = checkClient(command, UserRightEnum.LISTJOB);
-		final StatusEnum status = ((XMLRPCCommandGetWorks) command).getStatus();
+        final UserInterface theClient = checkClient(command, UserRightEnum.LISTJOB);
+        final StatusEnum status = ((XMLRPCCommandGetWorks) command).getStatus();
 
-		if (theClient.getRights().higherOrEquals(UserRightEnum.ADVANCED_USER)) {
-			return worksUID(theClient, status);
-		}
-		return ownerWorksUID(theClient, status);
-	}
+        if (theClient.getRights().higherOrEquals(UserRightEnum.ADVANCED_USER)) {
+            return worksUID(theClient, status);
+        }
+        return ownerWorksUID(theClient, status);
+    }
 
 	/**
 	 * This checks client rights and returns getJob(UserInterface, UID)
@@ -5064,6 +5205,78 @@ public final class DBInterface {
 		return work(command);
 	}
 
+	/**
+	 * This retrieves envelopes UID
+	 *
+	 * @param command is the command to execute
+	 * @return null on error; a Collection of UID otherwise
+	 * @exception IOException
+	 *                is thrown general error
+	 * @exception InvalidKeyException
+	 *                is thrown on credential error
+	 * @exception AccessControlException
+	 *                is thrown on access rights violation
+	 * @since 13.0.0
+	 */
+	public Collection<UID> getAllEnvelopes(final XMLRPCCommand command)
+			throws IOException, InvalidKeyException, AccessControlException {
+
+		final UserInterface theClient = checkClient(command, UserRightEnum.LISTENVELOPE);
+		return envelopesUID(theClient);
+	}
+
+	/**
+	 * This checks client rights and returns getJob(UserInterface, UID)
+	 *
+	 * @see #getJob(XMLRPCCommand)
+	 * @since 13.0.0
+	 */
+	protected EnvelopeInterface getEnvelope(final XMLRPCCommand command)
+			throws IOException, InvalidKeyException, AccessControlException {
+		return envelope(command);
+	}
+
+
+    /**
+     * This adds/updates an envelope
+     *
+     * @param command is the command to execute
+     * @return true on success; false on DB error or group already exists
+     * @exception IOException
+     *                is thrown on DB access or I/O error
+     * @exception InvalidKeyException
+     *                is thrown on client integrity error (user unknown, bad
+     *                password...)
+     * @exception AccessControlException
+     *                is thrown if client does not have enough rights
+     * @since 13.0.0
+     */
+    protected boolean addEnvelope(final XMLRPCCommand command)
+            throws IOException, InvalidKeyException, AccessControlException {
+
+        final UserInterface theClient = checkClient(command, UserRightEnum.INSERTGROUP);
+        final EnvelopeInterface envitf = (EnvelopeInterface) command.getParameter();
+        final EnvelopeInterface env = envelope(theClient, envitf.getUID());
+        if (env != null) {
+            env.updateInterface(envitf);
+            update(theClient, UserRightEnum.INSERTENVELOPE, env);
+            return true;
+        }
+
+        if (envitf.getUID() == null) {
+            final UID uid = new UID();
+            envitf.setUID(uid);
+        }
+        if (envitf.getOwner() == null) {
+            envitf.setOwner(theClient.getUID());
+        }
+        insert(envitf);
+
+        // read from DB, in case some values are null (and set to default by insert db)
+        putToCache(envelope(theClient, "maintable.uid='" + envitf.getUID() + "'"));
+
+        return true;
+    }
 	/**
 	 * This checks client integrity and returns getHost(UserInterface, UID)
 	 *

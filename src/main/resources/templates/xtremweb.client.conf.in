@@ -254,16 +254,6 @@ PASSWORD=@XWADMINPASSWORD@
 #
 #OPTIMIZENETWORK=true
 
-#
-# This limits size in upload, download and file length
-# Upload cancelled is size is greater
-#
-# Default is 500Mb
-# Since 12.2.3
-#
-#MAXFILESIZE=
-
-
 
 #### Keystore
 # SSL requires a file to store the certificate provided by the XtremWeb Server

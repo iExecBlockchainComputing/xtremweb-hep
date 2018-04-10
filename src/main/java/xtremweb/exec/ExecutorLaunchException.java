@@ -24,9 +24,6 @@
 package xtremweb.exec;
 
 /**
- * ExecutorLaunchException.java
- *
- *
  * Created: Sun Mar 28 22:21:40 2004
  *
  * @author <a href="mailto:fedak@lri.fr">Gilles Fedak</a>
@@ -34,8 +31,14 @@ package xtremweb.exec;
  */
 public class ExecutorLaunchException extends Exception {
 
-	public ExecutorLaunchException() {
+	private String errmsg;
+    public String getErrMsg() { return errmsg; }
 
-	} // ExecutorLaunchException constructor
+    public ExecutorLaunchException() {
+        errmsg = null;
+    } // ExecutorLaunchException constructor
+    public ExecutorLaunchException(final String m) {
+        errmsg = m;
+    } // ExecutorLaunchException constructor
 
 } // ExecutorLaunchException

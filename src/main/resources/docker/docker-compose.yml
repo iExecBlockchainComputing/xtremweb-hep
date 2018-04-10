@@ -36,9 +36,7 @@ services:
       - LOGGERLEVEL=${LOGGERLEVEL}
       - JWTETHISSUER=${JWTETHISSUER}
       - JWTETHSECRET=${JWTETHSECRET}
-      - WALLCLOCKTIMEVALUE=${WALLCLOCKTIMEVALUE}
       - DELEGATEDREGISTRATION=${DELEGATEDREGISTRATION}
-      - MAXFILESIZE=${MAXFILESIZE}
     networks:
       - iexec-net
     restart: unless-stopped
@@ -62,29 +60,6 @@ services:
     networks:
       - iexec-net
     restart: unless-stopped
-
-  gmond:
-    image: iexechub/ganglia-gmond
-    container_name: iexecgmond
-    environment:
-      DBUSER: ${MYSQL_ADMIN_USER}
-      DBPASSWORD: ${MYSQL_ADMIN_PASSWORD}
-      DATABASE: ${MYSQL_DB_NAME}
-      DBHOST: ${DBHOST}
-    ports:
-      - 8694:8694
-    networks:
-      - iexec-net
-
-  gmetad:
-    image: iexechub/ganglia-gmetad
-    container_name: iexecgmetad
-    environment:
-      GMOND_CONTAINER_NAME: iexecgmond
-    ports:
-      - 80:80
-    networks:
-      - iexec-net
   
   db:
     image: mysql:5.7

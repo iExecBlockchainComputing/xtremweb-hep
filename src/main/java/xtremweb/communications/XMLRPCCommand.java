@@ -855,7 +855,42 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			logger.exception(e);
 		}
-		logger.finest("not a command getworks");
+		try {
+			input.reset();
+			input.mark(XWTools.BUFFEREND);
+			return new XMLRPCCommandGetEnvelopes(input);
+		} catch (final SAXException e) {
+			if (e instanceof XMLEndParseException) {
+				return ret;
+			}
+		} catch (final InvalidKeyException e) {
+			logger.exception(e);
+		}
+		logger.finest("not a command getenvelopes");
+		try {
+			input.reset();
+			input.mark(XWTools.BUFFEREND);
+			return new XMLRPCCommandGetEnvelopeById(input);
+		} catch (final SAXException e) {
+			if (e instanceof XMLEndParseException) {
+				return ret;
+			}
+		} catch (final InvalidKeyException e) {
+			logger.exception(e);
+		}
+		logger.finest("not a command getenvelopebyid");
+		try {
+			input.reset();
+			input.mark(XWTools.BUFFEREND);
+			return new XMLRPCCommandSendEnvelope(input);
+		} catch (final SAXException e) {
+			if (e instanceof XMLEndParseException) {
+				return ret;
+			}
+		} catch (final InvalidKeyException e) {
+			logger.exception(e);
+		}
+		logger.finest("not a command sendenvelope");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);

@@ -232,8 +232,6 @@ class JobsTableModel extends TableModel {
 
 	/**
 	 * This retreives a Vector of work UID from server
-	 *
-	 * @see xtremweb.communications.CommAPI#getTasks()
 	 */
 	@Override
 	public XMLVector getRows() throws ConnectException {
@@ -361,8 +359,6 @@ class JobsTableModel extends TableModel {
 
 	/**
 	 * This retreives job results
-	 *
-	 * @see xtremweb.client.Client#result()
 	 */
 	public void result() {
 
@@ -443,8 +439,6 @@ class JobsTableModel extends TableModel {
 
 	/**
 	 * This adds a job by calling CommClient.java::send(WorkInterface)
-	 *
-	 * @see xtremweb.communications.CommClient#send(WorkInterface)
 	 */
 	@Override
 	public void add() {

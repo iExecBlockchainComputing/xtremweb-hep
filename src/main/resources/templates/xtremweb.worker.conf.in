@@ -459,14 +459,6 @@ COMMHANDLERS=attic:xtremweb.communications.HTTPClient
 #
 #OPTIMIZENETWORK=true
 
-#
-# This limits size in upload, download and file length
-# Upload cancelled is size is greater
-#
-# Default is 500Mb
-# Since 12.2.3
-#
-#MAXFILESIZE=
 
 #
 # This contains the maximum disk space a job can use

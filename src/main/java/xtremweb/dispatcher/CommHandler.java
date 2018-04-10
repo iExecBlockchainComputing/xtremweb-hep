@@ -42,18 +42,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 
-import xtremweb.common.AppInterface;
 import xtremweb.common.DataInterface;
-import xtremweb.common.GroupInterface;
 import xtremweb.common.HostInterface;
 import xtremweb.common.Logger;
 import xtremweb.common.MileStone;
-import xtremweb.common.SessionInterface;
 import xtremweb.common.StatusEnum;
 import xtremweb.common.TaskInterface;
-import xtremweb.common.TraceInterface;
 import xtremweb.common.UID;
-import xtremweb.common.UserGroupInterface;
 import xtremweb.common.UserInterface;
 import xtremweb.common.UserRightEnum;
 import xtremweb.common.Version;
@@ -408,6 +403,9 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			case GETWORKBYEXTERNALID:
 				result = get((XMLRPCCommandGetWorkByExternalId)command);
 				break;
+			case GETENVELOPEBYID:
+				result = get((XMLRPCCommandGetEnvelopeById)command);
+				break;
 			case GETAPPBYNAME:
 				result = get((XMLRPCCommandGetAppByName)command);
 				break;
@@ -421,6 +419,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			case SEND:
 			case SENDAPP:
 			case SENDDATA:
+			case SENDENVELOPE:
 			case SENDGROUP:
 			case SENDSESSION:
 //			case SENDTRACE:
@@ -490,6 +489,9 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 				break;
 			case GETWORKS:
 				result = getWorks(command);
+				break;
+			case GETENVELOPES:
+				result = getEnvelopes(command);
 				break;
 			case BROADCASTWORK: {
 				broadcast(command);
@@ -951,11 +953,20 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	}
 	/**
 	 * This retrieves a work given its external id
-     * @since 11.1.0
+	 * @since 11.1.0
 	 */
 	protected XMLable get(final XMLRPCCommandGetWorkByExternalId command)
 			throws IOException, InvalidKeyException, AccessControlException {
-		final DBCommandGetWorkByExternalId dbc = new DBCommandGetWorkByExternalId(DBInterface.getInstance()); 
+		final DBCommandGetWorkByExternalId dbc = new DBCommandGetWorkByExternalId(DBInterface.getInstance());
+		return dbc.exec(command);
+	}
+	/**
+	 * This retrieves a work given its external id
+	 * @since 13.1.0
+	 */
+	protected XMLable get(final XMLRPCCommandGetEnvelopeById command)
+			throws IOException, InvalidKeyException, AccessControlException {
+		final DBCommandGetEnvelopeById dbc = new DBCommandGetEnvelopeById(DBInterface.getInstance());
 		return dbc.exec(command);
 	}
     /**
@@ -1128,13 +1139,13 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 
 			theData = DBInterface.getInstance().data(uid);
 
-			if ((theData.getSize() > 0) && (theData.getMD5() == null)) {
-				error(command, "downloadData setstatus ERROR : size=" + theData.getSize() + ", md5=" + theData.getMD5());
+			if ((theData.getSize() > 0) && (theData.getShasum() == null)) {
+				error(command, "downloadData setstatus ERROR : size=" + theData.getSize() + ", shasum=" + theData.getShasum());
 				theData.setStatus(StatusEnum.ERROR);
 				theData.update();
-				mileStone(command, "<error method='downloadData' msg='MD5 error' />");
+				mileStone(command, "<error method='downloadData' msg='SHASUM error' />");
 				mileStone(command, "</downloadData>");
-				throw new IOException("downloadData(" + uid + ") MD5 should not be null");
+				throw new IOException("downloadData(" + uid + ") SHASUM should not be null");
 			}
 
 			final File dFile = theData.getPath();
@@ -1261,7 +1272,20 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	public XMLable getWorks(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		final DBCommandGetWorks dbc = new DBCommandGetWorks(DBInterface.getInstance()); 
+		final DBCommandGetWorks dbc = new DBCommandGetWorks(DBInterface.getInstance());
+		return dbc.exec(command);
+	}
+
+	/**
+	 * This retrieves all works from server
+	 *
+	 * @return a vector of UIDs
+	 * @since 13.0.0
+	 */
+	public XMLable getEnvelopes(final XMLRPCCommand command)
+			throws IOException, InvalidKeyException, AccessControlException {
+
+		final DBCommandGetEnvelopes dbc = new DBCommandGetEnvelopes(DBInterface.getInstance());
 		return dbc.exec(command);
 	}
 

@@ -40,9 +40,7 @@ replace_commented_var_in_conf () {
 
 replace_commented_var_in_conf JWTETHISSUER
 replace_commented_var_in_conf JWTETHSECRET
-replace_commented_var_in_conf WALLCLOCKTIMEVALUE
 replace_commented_var_in_conf DELEGATEDREGISTRATION
-replace_commented_var_in_conf MAXFILESIZE
 
 
 # keystore is generated from the script xwhepgenkeys directly in the container

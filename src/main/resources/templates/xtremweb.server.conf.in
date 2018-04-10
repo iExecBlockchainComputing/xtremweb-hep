@@ -531,13 +531,6 @@ X509CERTDIR=@X509CERTDIR@
 #DBCONNECTIONS=60
 
 #
-# this is the maximum computing seconds per job
-# when a job reaches the wallclocktime, it is killed
-# since 8.2.0
-# default : 21,600 s (6 hours)
-#WALLCLOCKTIMEVALUE=21600
-
-#
 # This is a very special case and should usually not be used
 # This tells the dispatcher to avoid writing on disk, if possible. 
 # Hence if server crashes, it will not be able to recover all informations
@@ -571,15 +564,6 @@ X509CERTDIR=@X509CERTDIR@
 # Default is true
 #
 #OPTIMIZENETWORK=false
-
-#
-# This limits size in upload, download and file length
-# Upload cancelled is size is greater
-#
-# Default is 500Mb
-# Since 12.2.3
-#
-#MAXFILESIZE=
 
 #
 # This contains class names to get time stamps for
@@ -630,7 +614,6 @@ X509CERTDIR=@X509CERTDIR@
 #  ERROR
 LOGGERLEVEL=INFO
 
-#MAXFILESIZE=
 
 #####
 ##### End of File

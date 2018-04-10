@@ -132,9 +132,8 @@ public class PoolWork {
 
 		logger.debug("PoolWork::addWork(" + mw.getUID() + ")");
 		work = new Work(mw);
-		Date d = new Date();
+		final Date d = new Date();
 		work.setReadyDate(d);
-		d = null;
 		work.setDataReadyDate(null);
 		work.setCompStartDate(null);
 		work.setCompEndDate(null);

@@ -230,8 +230,6 @@ public class UDPHandler extends xtremweb.dispatcher.CommHandler {
 	/**
 	 * This is the main loop; this is called by java.lang.Thread#start() This
 	 * executes one command form communication channel and exists
-	 *
-	 * @see CommHandler#run(XMLRPCCommand)
 	 */
 	@Override
 	public void run() {
