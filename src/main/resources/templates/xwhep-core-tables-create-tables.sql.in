@@ -317,11 +317,12 @@ insert into oses (osId, osName, osDescription) values (6, 'WIN64',   'MS-Windows
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (0, 'NONE',   'Unknown');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (1, 'ALL',    'Architecture independant');
 insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (2, 'AMD64',  'AMD - 64 bits');
-insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (3, 'ARM',    'Advanced RISC Machines');
-insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (4, 'IA64',   'Intel Itanium - 64 bits');
-insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (5, 'IX86',   'Intel x86 - 32 bits');
-insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (6, 'PPC',    'Power PC');
-insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (7, 'X86_64', 'Intel x86 - 64 bits');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (3, 'ARM32',    'Advanced RISC Machines 32 bits');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (4, 'ARM64',    'Advanced RISC Machines 64 bits');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (5, 'IA64',   'Intel Itanium - 64 bits');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (6, 'IX86',   'Intel x86 - 32 bits');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (7, 'PPC',    'Power PC');
+insert into cpuTypes (cpuTypeId, cpuTypeName, cpuTypeDescription) values (8, 'X86_64', 'Intel x86 - 64 bits');
 
 commit;
 

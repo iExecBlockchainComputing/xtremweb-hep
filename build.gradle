@@ -290,16 +290,8 @@ project.ext.getClientDockerImageName = {
 
 // ARM image names
 
-project.ext.getARM32ClientDockerImageName = {
-    return "iexechub/arm32-client:" + getDockerImageVersion()
-}
-
 project.ext.getARM32WorkerDockerImageName = {
     return "iexechub/arm32-worker:" + getDockerImageVersion()
-}
-
-project.ext.getARM64ClientDockerImageName = {
-    return "iexechub/arm64-client:" + getDockerImageVersion()
 }
 
 project.ext.getARM64WorkerDockerImageName = {
@@ -342,25 +334,11 @@ buildWorkerDockerImage.enabled = canBuildDockerImages
 
 // build ARM images
 
-task buildARM32ClientDockerImage(type: Exec) {
-    dependsOn copyConfigDockerClient
-    description 'Build a docker image for ARM32 client'
-    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/arm32-client/Dockerfile -t " + getARM32ClientDockerImageName() + " " + dist)
-}
-buildARM32ClientDockerImage.enabled = canBuildDockerImages
-
 task buildARM32WorkerDockerImage(type: Exec) {
     description 'Build a docker image for ARM32 worker'
     commandLine("sh", "-c", "docker image build -f " + dist + "/docker/arm32-worker/Dockerfile -t " + getARM32WorkerDockerImageName() + " " + dist)
 }
 buildARM32WorkerDockerImage.enabled = canBuildDockerImages
-
-task buildARM64ClientDockerImage(type: Exec) {
-    dependsOn copyConfigDockerClient
-    description 'Build a docker image for ARM64 client'
-    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/arm64-client/Dockerfile -t " + getARM64ClientDockerImageName() + " " + dist)
-}
-buildARM64ClientDockerImage.enabled = canBuildDockerImages
 
 task buildARM64WorkerDockerImage(type: Exec) {
     description 'Build a docker image for ARM64 worker'
@@ -370,8 +348,8 @@ buildARM64WorkerDockerImage.enabled = canBuildDockerImages
 
 
 task buildImages(){
-    dependsOn (buildWorkerDockerImage, buildClientDockerImage, buildServerDockerImage,
-            buildARM32ClientDockerImage, buildARM32WorkerDockerImage) // TODO buildARM64ClientDockerImage, buildARM64WorkerDockerImage)
+    dependsOn (buildWorkerDockerImage, buildClientDockerImage, buildServerDockerImage, buildARM32WorkerDockerImage)
+    // TODO buildARM64WorkerDockerImage)
 }
 
 buildImages.enabled = canBuildDockerImages
@@ -384,9 +362,7 @@ task pushImages(type: Exec){
                 "docker push " + getServerDockerImageName() + " && " +
                 "docker push " + getClientDockerImageName() + " && " +
                 "docker push " + getWorkerDockerImageName() + " && " +
-                "docker push " + getARM32ClientDockerImageName() + " && " +
                 "docker push " + getARM32WorkerDockerImageName() + " && " +
-                // TODO "docker push " + getARM64ClientDockerImageName() + " && " +
                 // TODO "docker push " + getARM64WorkerDockerImageName() + " && " +
                 "docker logout")
     } else {
