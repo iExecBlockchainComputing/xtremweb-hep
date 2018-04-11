@@ -70,6 +70,13 @@ if [ ! -z $SANDBOXENABLED ] ; then
 	sed -i "s/^SANDBOXENABLED=.*/SANDBOXENABLED=$SANDBOXENABLED/g" /iexec/conf/xtremweb.worker.conf
 fi
 
+# Change a flag in the docker start script to still be able to debug
+sed -i "s/TESTINGONLY=.*/TESTINGONLY=FALSE/g" /iexec/bin/xwstartdocker.sh
+
+# Add the bin folder to the path
+echo "export PATH=/iexec/bin:\$PATH" >> /root/.bashrc
+source .bashrc
+
 cat /etc/hosts
 
 # Start the worker
