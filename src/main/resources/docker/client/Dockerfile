@@ -17,9 +17,9 @@ RUN find . -type f ! -name 'xw*' ! -name 'xtr*' -exec rm -rf {} +
 # Add the script that will set up the configuration in the container
 ADD docker/client/start_client.sh /iexec/start_client.sh
 
-RUN apt-get update && \
-       export DEBIAN_FRONTEND=noninteractive && \
-       apt-get install -y openjdk-8-jre zip unzip wget openssl curl iputils-ping
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -y openjdk-8-jre zip unzip wget 
+
+RUN apt-get install -y openssl curl iputils-ping
 
 RUN chmod +x /iexec/start_client.sh
 
