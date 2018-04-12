@@ -8,6 +8,8 @@ COPY bin/xtremweb /iexec/bin/
 COPY bin/xtremwebconf.sh /iexec/bin/
 COPY lib /iexec/lib/
 
+RUN mkdir /iexec/certificate
+
 # Add the script that will set up the configuration in the container
 COPY docker/worker/start_worker.sh /iexec/start_worker.sh
 RUN chmod +x /iexec/start_worker.sh
