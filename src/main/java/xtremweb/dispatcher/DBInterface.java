@@ -3514,18 +3514,6 @@ public final class DBInterface {
 					|| theApp.canWrite(theClient, ownerGroup)
 					|| theClient.getRights().higherOrEquals(UserRightEnum.ADVANCED_USER)) {
 
-				useData(theClient, appitf.getLaunchScriptSh());
-				removeData(theClient, theApp.getLaunchScriptSh());
-				theApp.setLaunchScriptSh(appitf.getLaunchScriptSh());
-				useData(theClient, appitf.getLaunchScriptCmd());
-				removeData(theClient, theApp.getLaunchScriptCmd());
-				theApp.setLaunchScriptCmd(appitf.getLaunchScriptCmd());
-				useData(theClient, appitf.getUnloadScriptSh());
-				removeData(theClient, theApp.getUnloadScriptSh());
-				theApp.setUnloadScriptSh(appitf.getUnloadScriptSh());
-				useData(theClient, appitf.getUnloadScriptCmd());
-				removeData(theClient, theApp.getUnloadScriptCmd());
-				theApp.setUnloadScriptCmd(appitf.getUnloadScriptCmd());
 				useData(theClient, appitf.getDefaultStdin());
 				removeData(theClient, theApp.getDefaultStdin());
 				theApp.setDefaultStdin(appitf.getDefaultStdin());
@@ -3986,10 +3974,6 @@ public final class DBInterface {
 			throw new AccessControlException(theClient.getLogin() + " can not remove app " + theApp.getName());
 		}
 
-		removeData(theClient, theApp.getLaunchScriptSh());
-		removeData(theClient, theApp.getLaunchScriptCmd());
-		removeData(theClient, theApp.getUnloadScriptSh());
-		removeData(theClient, theApp.getUnloadScriptCmd());
 		removeData(theClient, theApp.getDefaultStdin());
 		removeData(theClient, theApp.getBaseDirin());
 		removeData(theClient, theApp.getDefaultDirin());

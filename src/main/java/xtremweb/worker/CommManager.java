@@ -623,29 +623,7 @@ public final class CommManager extends Thread {
             logger.exception(e);
             throw new IOException("can't download library (" + uri + ")");
         }
-
-        try {
-            uri = app.getLaunchScript(os);
-            final DataInterface data = getData(uri, false);
-            downloadData(uri,
-                    data != null ? data.getSize() : 0,
-                    false);
-        } catch (final Exception e) {
-            logger.exception(e);
-            throw new IOException("can't download init script (" + uri + ")");
-        }
-
-        try {
-            uri = app.getUnloadScript(os);
-            final DataInterface data = getData(uri, false);
-            downloadData(uri,
-                    data != null ? data.getSize() : 0,
-                    false);
-        } catch (final Exception e) {
-            logger.exception(e);
-            throw new IOException("can't download unload script (" + uri + ")");
-        }
-
+        
         try {
             uri = app.getBaseDirin();
             final DataInterface data = getData(uri, false);

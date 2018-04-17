@@ -103,6 +103,27 @@ public class XWTools {
 	 * This defines the name of the stderr file
 	 */
 	public static final String STDERR = "stderr" + DataTypeEnum.TEXT.getFileExtension();
+    /**
+     * This is the launchscript header name
+     * @since 13.0.0
+     */
+    public static final String LAUNCHSCRIPTHEADER = "xwstart";
+    /**
+     * This is the launchscript trailer name
+     * @since 13.0.0
+     */
+    public static final String LAUNCHSCRIPTTRAILER = ".sh";
+    /**
+     * This is the unload script header name
+     * @since 13.0.0
+     */
+    public static final String UNLOADSCRIPTHEADER = "xwstop";
+    /**
+     * This is the unload script trailer name
+     * @since 13.0.0
+     */
+    public static final String UNLOADSCRIPTTRAILER = ".sh";
+
 	/**
 	 * This defines buffer size for communications : 16Kb
 	 *

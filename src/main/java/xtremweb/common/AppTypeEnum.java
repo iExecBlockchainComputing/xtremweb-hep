@@ -113,17 +113,6 @@ public enum AppTypeEnum {
         public String getDefaultWorkingDirectoryCommandLine(final File pwd) {
             return  " -w " + pwd.getAbsolutePath();
         }
-		/**
-         * This calls checkParams(params, dockerForbiddenParamsSet)
-         * @see AppTypeEnum#checkParams(String)
-         * @see #checkParams(String, Set)
-         * @see #dockerForbiddenParamsSet
-		 * @since 12.2.8
-		 */
-		@Override
-		public void checkParams (final String params) throws AccessControlException {
-            checkParams(params, dockerForbiddenParamsSet);
-		}
 	},
 	/**
 	 * On Dec 2nd, 2011, this denotes our 1st shared application. This denotes
@@ -156,17 +145,6 @@ public enum AppTypeEnum {
 			}
 			throw new FileNotFoundException(NOBINPATH + this);
 		}
-        /**
-         * This calls checkParams(params, vboxForbiddenParamsSet)
-         * @see AppTypeEnum#checkParams(String)
-         * @see #checkParams(String, Set)
-         * @see #vboxForbiddenParamsSet
-         * @since 12.2.8
-         */
-        @Override
-        public void checkParams (final String params) throws AccessControlException {
-            checkParams(params, vboxForbiddenParamsSet);
-        }
 	};
 
 	public static final AppTypeEnum LAST = VIRTUALBOX;
@@ -186,133 +164,6 @@ public enum AppTypeEnum {
 			null, // SOLARIS
 			null // JAVA
 	};
-	/**
-	 * This contains forbidden Docker command line parameters
-	 *
-	 * @since 12.2.8
-	 */
-	private static final String[] dockerForbiddenParams = {
-			"--add-host",
-			"--attach",
-			"--blkio-weight",
-			"--blkio-weight-device",
-			"--cap-add",
-			"--cap-drop",
-			"--cgroup-parent",
-			"--cidfile",
-			"--cpu-period",
-			"--cpu-quota",
-			"--cpu-rt-period",
-			"--cpu-rt-runtime",
-			"--cpu-shares",
-			"--cpus",
-			"--cpuset-cpus",
-			"--cpuset-mems",
-			"--detach",
-			"--detach-keys",
-			"--device",
-			"--device-cgroup-rule",
-			"--device-read-bps",
-			"--device-read-iops",
-			"--device-write-bps",
-			"--device-write-iops",
-			"--dns",
-			"--dns-option",
-			"--dns-search",
-			"--entrypoint",
-			"--expose",
-			"--group-add",
-			"--health-cmd",
-			"--health-interval",
-			"--health-retries",
-			"--health-start-period",
-			"--health-timeout",
-			"--hostname",
-			"--init",
-			"--interactive",
-			"--ip",
-			"--ip6",
-			"--ipc",
-			"--isolation",
-			"--kernel-memory",
-			"--link",
-			"--link-local-ip",
-			"--log-driver",
-			"--mac-address",
-			"--memory",
-			"--memory-reservation",
-			"--memory-swap",
-			"--memory-swappiness",
-			"--mount",
-			"--network",
-			"--network-alias",
-			"--no-healthcheck",
-			"--oom-kill-disable",
-			"--oom-score-adj",
-			"--pids-limit",
-			"--platform",
-			"--privileged",
-			"--runtime",
-			"--security-opt",
-			"--shm-size",
-			"--sig-proxy",
-			"--stop-signal",
-			"--stop-timeout",
-			"--storage-opt",
-			"--sysctl",
-			"--tmpfs",
-			"--ulimit",
-			"--user",
-			"--userns",
-			"--uts",
-			"--volume-driver",
-			"--volumes-from",
-			"--volume",
-			"--workdir"
-	};
-    /**
-     * This contains forbidden Docker command line parameters set
-     *
-     * @since 12.2.8
-     */
-    public static final Set<String> dockerForbiddenParamsSet = new HashSet<String>(Arrays.asList(dockerForbiddenParams));
-    /**
-     * This contains forbidden VirtualBox command line parameters
-     *
-     * @since 12.2.8
-     */
-    private static final String[] vboxForbiddenParams = {
-            "-s",
-            "-startvm",
-            "--startvm",
-            "-v",
-            "-vrde",
-            "--vrde",
-            "-e",
-            "-vrdeproperty",
-            "--vrdeproperty",
-            "--settingspw",
-            "--settingspwfile",
-            "-start-paused",
-            "--start-paused",
-            "-c",
-            "-capture",
-            "--capture",
-            "-w",
-            "--width",
-            "-h",
-            "--height",
-            "-r",
-            "--bitrate",
-            "-f",
-            "--filename"
-};
-    /**
-     * This contains forbidden VirtualBox command line parameters set
-     *
-     * @since 12.2.8
-     */
-    public static final Set<String> vboxForbiddenParamsSet = new HashSet<String>(Arrays.asList(vboxForbiddenParams));
 
 	/**
 	 * This array stores default VirtualBox pathnames (one entry per OS). Each
@@ -372,31 +223,23 @@ public enum AppTypeEnum {
 	}
 
 	/**
-     * This checks command line parameters to avoid forbidden parameters.
-	 * This does nor throws nothing; this should be overridden
-	 * @param params
-	 *            is a String containing command line parameters
-     * @throws AccessControlException if params contains at least one forbidden parameter
-	 * @since 12.2.8
+	 * This retrieves application launch script name.
+	 * Since 13.0.0 applications do not have launchscript any more
+	 * @return application binary path if available
+	 * @since 13.0.0
 	 */
-	public void checkParams (final String params) throws AccessControlException {
+	final public String getLaunchScriptName() {
+		return XWTools.LAUNCHSCRIPTHEADER + this.toString().toLowerCase() + XWTools.LAUNCHSCRIPTTRAILER;
 	}
-    /**
-     * This checks command line parameters to avoid forbidden parameters.
-     * This does nor throws nothing; should be overridden
-     * @param params
-     *            is a String containing command line parameters
-     * @param paramSet is the set of forbidden params
-     * @throws AccessControlException if params contains at least one forbidden parameter
-     * @since 12.2.8
-     */
-    final protected void checkParams (final String params, final Set<String> paramSet) throws AccessControlException {
-        for(final String p : paramSet){
-            if(params.indexOf(p) >= 0) {
-                throw new AccessControlException(this.toString() + " [ERROR] parameter forbidden : " + p);
-            }
-        }
-    }
+	/**
+	 * This retrieves application unlaunch script name.
+	 * Since 13.0.0 applications do not have unloadscript any more
+	 * @return application unload script name
+	 * @since 13.0.0
+	 */
+	final public String getUnloadScriptName() {
+		return XWTools.UNLOADSCRIPTHEADER + this.toString().toLowerCase() + XWTools.UNLOADSCRIPTTRAILER;
+	}
 
 	/**
 	 * This retrieves application default pathname

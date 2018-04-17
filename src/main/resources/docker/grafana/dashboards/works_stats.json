@@ -1,0 +1,841 @@
+{
+  "dashboard":{
+    "id": null,
+    "uid": "Works",
+    "annotations": {
+      "list": [
+        {
+          "$$hashKey": "object:493",
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "iteration": 1523613749207,
+    "links": [],
+    "panels": [
+      {
+        "cacheTimeout": null,
+        "colorBackground": false,
+        "colorValue": true,
+        "colors": [
+          "#bf1b00",
+          "#bf1b00",
+          "#bf1b00"
+        ],
+        "datasource": null,
+        "format": "none",
+        "gauge": {
+          "maxValue": 100,
+          "minValue": 0,
+          "show": false,
+          "thresholdLabels": false,
+          "thresholdMarkers": true
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 3,
+          "x": 0,
+          "y": 0
+        },
+        "id": 8,
+        "interval": null,
+        "links": [],
+        "mappingType": 1,
+        "mappingTypes": [
+          {
+            "name": "value to text",
+            "value": 1
+          },
+          {
+            "name": "range to text",
+            "value": 2
+          }
+        ],
+        "maxDataPoints": 100,
+        "nullPointMode": "connected",
+        "nullText": null,
+        "postfix": "",
+        "postfixFontSize": "50%",
+        "prefix": "",
+        "prefixFontSize": "50%",
+        "rangeMaps": [
+          {
+            "from": "null",
+            "text": "N/A",
+            "to": "null"
+          }
+        ],
+        "sparkline": {
+          "fillColor": "rgba(31, 118, 189, 0.18)",
+          "full": false,
+          "lineColor": "rgb(31, 120, 193)",
+          "show": false
+        },
+        "tableColumn": "",
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select UNIX_TIMESTAMP(arrivaldate) as time_sec, count(*) as value\n       from (\n         (select arrivaldate from works \n         where not isnull(arrivaldate)\n\t       \tand status=\"ERROR\")\n\t union all\n\t (select arrivaldate from works_history \n         where not isnull(arrivaldate)\n\t       \tand status=\"ERROR\")\n \t  ) as t \ngroup by arrivaldate",
+            "refId": "A"
+          }
+        ],
+        "thresholds": "",
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Error Works",
+        "type": "singlestat",
+        "valueFontSize": "100%",
+        "valueMaps": [
+          {
+            "op": "=",
+            "text": "N/A",
+            "value": "null"
+          }
+        ],
+        "valueName": "total"
+      },
+      {
+        "cacheTimeout": null,
+        "colorBackground": false,
+        "colorValue": true,
+        "colors": [
+          "#7eb26d",
+          "#7eb26d",
+          "#7eb26d"
+        ],
+        "datasource": null,
+        "format": "none",
+        "gauge": {
+          "maxValue": 100,
+          "minValue": 0,
+          "show": false,
+          "thresholdLabels": false,
+          "thresholdMarkers": true
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 3,
+          "x": 10,
+          "y": 0
+        },
+        "id": 10,
+        "interval": null,
+        "links": [],
+        "mappingType": 1,
+        "mappingTypes": [
+          {
+            "name": "value to text",
+            "value": 1
+          },
+          {
+            "name": "range to text",
+            "value": 2
+          }
+        ],
+        "maxDataPoints": 100,
+        "nullPointMode": "connected",
+        "nullText": null,
+        "postfix": "",
+        "postfixFontSize": "50%",
+        "prefix": "",
+        "prefixFontSize": "50%",
+        "rangeMaps": [
+          {
+            "from": "null",
+            "text": "N/A",
+            "to": "null"
+          }
+        ],
+        "sparkline": {
+          "fillColor": "rgba(31, 118, 189, 0.18)",
+          "full": false,
+          "lineColor": "rgb(31, 120, 193)",
+          "show": false
+        },
+        "tableColumn": "",
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select UNIX_TIMESTAMP(completeddate) as time_sec, count(*) as value\n       from (\n         (select completeddate from works \n         where not isnull(completeddate)\n\t       \tand status=\"COMPLETED\")\n\t     union all\n         (select completeddate from works_history \n         where not isnull(completeddate)\n\t       \tand status=\"COMPLETED\")\n \t  ) as t \ngroup by completeddate",
+            "refId": "A"
+          }
+        ],
+        "thresholds": "",
+        "title": "Completed Works",
+        "type": "singlestat",
+        "valueFontSize": "100%",
+        "valueMaps": [
+          {
+            "op": "=",
+            "text": "N/A",
+            "value": "null"
+          }
+        ],
+        "valueName": "total"
+      },
+      {
+        "aliasColors": {
+          "Works": "#bf1b00"
+        },
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": null,
+        "fill": 1,
+        "gridPos": {
+          "h": 9,
+          "w": 10,
+          "x": 0,
+          "y": 3
+        },
+        "hideTimeOverride": false,
+        "id": 4,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 3,
+        "points": true,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select MIN(UNIX_TIMESTAMP(arrivaldate)) as time_sec, count(*) as value, 'Works' as metric\n       from (\n         (select DATE(arrivaldate) as arrivaldate from works \n         where not isnull(arrivaldate)\n\t       \tand status=\"ERROR\")\n\t union all\n\t (select DATE(arrivaldate) as arrivaldate from works_history \n         where not isnull(arrivaldate)\n\t       \tand status=\"ERROR\")\n \t  ) as t \nGROUP BY date_format(arrivaldate, \"$interval\")\nORDER BY date_format(arrivaldate, \"$interval\") ASC\n",
+            "refId": "A"
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Error Works",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ]
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": null,
+        "decimals": null,
+        "fill": 1,
+        "gridPos": {
+          "h": 9,
+          "w": 9,
+          "x": 10,
+          "y": 3
+        },
+        "id": 2,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 3,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select MIN(UNIX_TIMESTAMP(completeddate)) as time_sec, count(*) as value, 'Works' as metric\n       from (\n         (select completeddate from works \n         where not isnull(completeddate)\n\t       \tand status=\"COMPLETED\" and $__timeFilter(completeddate))\n\t     union all\n         (select completeddate from works_history \n         where not isnull(completeddate) and $__timeFilter(completeddate)\n\t       \tand status=\"COMPLETED\")\n \t  ) as t \nGROUP BY date_format(completeddate, \"$interval\")\nORDER BY date_format(completeddate, \"$interval\") ASC\n",
+            "refId": "A"
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Completed Works",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ]
+      },
+      {
+        "aliasColors": {
+          "Works": "#aea2e0"
+        },
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": null,
+        "fill": 1,
+        "gridPos": {
+          "h": 9,
+          "w": 10,
+          "x": 0,
+          "y": 12
+        },
+        "id": 14,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": true,
+          "values": true
+        },
+        "lines": true,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 5,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select MIN(UNIX_TIMESTAMP(laststartdate)) as time_sec, count(*) as value, 'Works' as metric\n       from (\n         (select laststartdate from tasks \n         where not isnull(laststartdate) and $__timeFilter(laststartdate))\n\t     union all\n         (select laststartdate from tasks_history \n         where not isnull(laststartdate) and $__timeFilter(laststartdate))) as t \nGROUP BY date_format(laststartdate, \"$interval\")\nORDER BY date_format(laststartdate, \"$interval\") ASC\n",
+            "refId": "A"
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Started Works",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ]
+      },
+      {
+        "aliasColors": {
+          "Works": "#fce2de"
+        },
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": null,
+        "fill": 1,
+        "gridPos": {
+          "h": 9,
+          "w": 9,
+          "x": 10,
+          "y": 12
+        },
+        "hideTimeOverride": false,
+        "id": 12,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": true,
+          "values": true
+        },
+        "lines": true,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 3,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select MIN(UNIX_TIMESTAMP(laststartdate)) as time_sec , count(*) as value, 'Works' as metric\n       from (\n         (select laststartdate, count(*) as restarteds from tasks \n         where not isnull(laststartdate)\n \t \t\tand not isnull(startdate)\n          group by laststartdate)\n\t     union all\n         (select laststartdate, count(*) as restarteds from tasks_history\n         where not isnull(laststartdate)\n \t \t\tand not isnull(startdate)\n          group by laststartdate)\n \t  ) as t \nGROUP BY date_format(laststartdate, \"$interval\")\nORDER BY date_format(laststartdate, \"$interval\") ASC",
+            "refId": "A"
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Restarted Works",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ]
+      },
+      {
+        "aliasColors": {
+          "Works": "#e5a8e2"
+        },
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": null,
+        "fill": 1,
+        "gridPos": {
+          "h": 8,
+          "w": 10,
+          "x": 0,
+          "y": 21
+        },
+        "id": 16,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": true,
+          "values": true
+        },
+        "lines": true,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 5,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "alias": "",
+            "format": "time_series",
+            "rawSql": "select MIN(UNIX_TIMESTAMP(arrivaldate)) as time_sec, count(*) as value, 'Works' as metric\n       from (\n         (select arrivaldate from works \n         where not isnull(arrivaldate) and $__timeFilter(arrivaldate))\n\t     union all\n         (select arrivaldate from works_history \n         where not isnull(arrivaldate) and $__timeFilter(arrivaldate))\n \t  ) as t\nGROUP BY date_format(arrivaldate, \"$interval\")\nORDER BY date_format(arrivaldate, \"$interval\") ASC\n\n",
+            "refId": "A"
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeShift": null,
+        "title": "Submitted Works",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "datasource": null,
+        "fontSize": "100%",
+        "gridPos": {
+          "h": 9,
+          "w": 19,
+          "x": 0,
+          "y": 29
+        },
+        "id": 20,
+        "links": [],
+        "pageSize": null,
+        "scroll": true,
+        "showHeader": true,
+        "sort": {
+          "col": 0,
+          "desc": true
+        },
+        "styles": [
+          {
+            "alias": "Time",
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "pattern": "Time",
+            "type": "date"
+          },
+          {
+            "alias": "",
+            "colorMode": null,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "decimals": 2,
+            "pattern": "/.*/",
+            "thresholds": [],
+            "type": "number",
+            "unit": "short"
+          }
+        ],
+        "targets": [
+          {
+            "alias": "",
+            "format": "table",
+            "rawSql": "select workuid, completeddate,\n       laststartdate,\n       startdate,\n       insertiondate,\n       arrivaldate,\n       run,\n       restart,\n       pending,\n       waiting\n       from (\n         (select workuid, date_format(completeddate,\"%Y/%m/%d %H:%i\") as completeddate,\n\t\t       laststartdate,\n\t\t       startdate,\n\t\t       insertiondate,\n\t\t       arrivaldate,\n\t\t       unix_timestamp(completeddate)-unix_timestamp(laststartdate) as run,\n\t\t       unix_timestamp(laststartdate)-unix_timestamp(startdate) as restart,\n\t\t       unix_timestamp(startdate)-unix_timestamp(insertiondate) as pending,\n\t\t       unix_timestamp(insertiondate)-unix_timestamp(arrivaldate) as waiting\n            from works, tasks\n            where works.uid=tasks.workuid\n\t       \t  and works.status=\"COMPLETED\" \n \t \t\t  and not isnull(completeddate))\n\t     union all\n         (select workuid, date_format(completeddate,\"%Y/%m/%d %H:%i\") as completeddate,\n\t\t       laststartdate,\n\t\t       startdate,\n\t\t       insertiondate,\n\t\t       arrivaldate,\n\t\t       unix_timestamp(completeddate)-unix_timestamp(laststartdate) as run,\n\t\t       unix_timestamp(laststartdate)-unix_timestamp(startdate) as restart,\n\t\t       unix_timestamp(startdate)-unix_timestamp(insertiondate) as pending,\n\t\t       unix_timestamp(insertiondate)-unix_timestamp(arrivaldate) as waiting\n            from works_history, tasks_history\n            where works_history.uid=tasks_history.workuid\n\t       \t  and works_history.status=\"COMPLETED\" \n \t \t\t  and not isnull(completeddate))\n \t  ) as t ",
+            "refId": "A"
+          }
+        ],
+        "title": "Works Stats",
+        "transform": "table",
+        "type": "table"
+      },
+      {
+        "columns": [],
+        "datasource": null,
+        "fontSize": "100%",
+        "gridPos": {
+          "h": 9,
+          "w": 19,
+          "x": 0,
+          "y": 38
+        },
+        "id": 18,
+        "links": [],
+        "pageSize": null,
+        "scroll": true,
+        "showHeader": true,
+        "sort": {
+          "col": 0,
+          "desc": true
+        },
+        "styles": [
+          {
+            "alias": "Time",
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "pattern": "Time",
+            "type": "date"
+          },
+          {
+            "alias": "",
+            "colorMode": null,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "decimals": 2,
+            "pattern": "/.*/",
+            "thresholds": [],
+            "type": "number",
+            "unit": "short"
+          }
+        ],
+        "targets": [
+          {
+            "alias": "",
+            "format": "table",
+            "rawSql": "select login,nbJobs,pendingJobs,runningJobs,errorJobs from users union select login,nbJobs,pendingJobs,runningJobs,errorJobs from users_history;",
+            "refId": "A"
+          }
+        ],
+        "title": "Users Works",
+        "transform": "table",
+        "type": "table"
+      },
+      {
+        "columns": [],
+        "datasource": null,
+        "fontSize": "100%",
+        "gridPos": {
+          "h": 8,
+          "w": 19,
+          "x": 0,
+          "y": 47
+        },
+        "id": 6,
+        "links": [],
+        "pageSize": null,
+        "scroll": true,
+        "showHeader": true,
+        "sort": {
+          "col": 3,
+          "desc": true
+        },
+        "styles": [
+          {
+            "alias": "Time",
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "pattern": "Time",
+            "type": "date"
+          },
+          {
+            "alias": "",
+            "colorMode": null,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "decimals": 2,
+            "pattern": "/.*/",
+            "thresholds": [],
+            "type": "number",
+            "unit": "short"
+          }
+        ],
+        "targets": [
+          {
+            "alias": "",
+            "format": "table",
+            "rawSql": "select hosts.name as Name, hosts.uid as Uid, hosts.ipaddr as IpAddress, count(*) as Works\n       from tasks,works,hosts \n       where works.status=\"COMPLETED\" \n       \t     and works.uid=tasks.workuid\n\t     and tasks.hostuid=hosts.uid\ngroup by hosts.uid",
+            "refId": "A"
+          }
+        ],
+        "title": "Workers works",
+        "transform": "table",
+        "type": "table"
+      }
+    ],
+    "refresh": false,
+    "schemaVersion": 16,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "allValue": null,
+          "current": {
+            "tags": [],
+            "text": "day",
+            "value": "%Y%m%d"
+          },
+          "datasource": "Xtremweb",
+          "hide": 0,
+          "includeAll": false,
+          "label": null,
+          "multi": false,
+          "name": "interval",
+          "options": [
+            {
+              "selected": false,
+              "text": "minute",
+              "value": "%Y%m%d%H%i"
+            },
+            {
+              "selected": false,
+              "text": "hour",
+              "value": "%Y%m%d%H"
+            },
+            {
+              "selected": true,
+              "text": "day",
+              "value": "%Y%m%d"
+            },
+            {
+              "selected": false,
+              "text": "month",
+              "value": "%Y%m"
+            }
+          ],
+          "query": "select 'minute' AS __text, '%Y%m%d%H%i' as __value union select 'hour' AS __text, '%Y%m%d%H' as __value union select 'day' AS __text, '%Y%m%d' as __value union select 'month' AS __text, '%Y%m' as __value",
+          "refresh": 0,
+          "regex": "",
+          "sort": 0,
+          "tagValuesQuery": "",
+          "tags": [],
+          "tagsQuery": "",
+          "type": "query",
+          "useTags": false
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6M",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ]
+    },
+    "timezone": "",
+    "title": "Works Statistics",
+    "version": 55
+  },
+  "folderId": 0,
+  "overwrite": false
+}

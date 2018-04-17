@@ -821,18 +821,16 @@ public class ThreadWork extends Thread {
 			throw new IOException("can`t find application " + workApp);
 		}
 
-		final URI scriptUri = app.getLaunchScript(Worker.getConfig().getHost().getOs());
-		if (scriptUri == null) {
+		final String launchScriptName = app.getLaunchScript();
+		if (launchScriptName == null) {
 			return null;
 		}
 
-		CommManager.getInstance().commClient().get(scriptUri);
-
-		final File scriptPath = CommManager.getInstance().commClient().getContentFile(scriptUri);
+		final File scriptPath = new File(launchScriptName);
 
 		if (scriptPath != null) {
 			if (!scriptPath.exists()) {
-				throw new IOException("can find local script " + scriptPath);
+				throw new IOException("can find script " + scriptPath);
 			}
 			ret = scriptPath.getAbsolutePath();
 		}
@@ -863,18 +861,16 @@ public class ThreadWork extends Thread {
 			throw new IOException("can't find application " + workApp);
 		}
 
-		final URI scriptUri = app.getUnloadScript(Worker.getConfig().getHost().getOs());
-		if (scriptUri == null) {
+		final String unloadScriptName = app.getUnloadScript();
+		if (unloadScriptName == null) {
 			return null;
 		}
 
-		CommManager.getInstance().commClient().get(scriptUri);
-
-		final File scriptPath = CommManager.getInstance().commClient().getContentFile(scriptUri);
+		final File scriptPath = new File(unloadScriptName);
 
 		if (scriptPath != null) {
 			if (!scriptPath.exists()) {
-				throw new IOException("can find local script " + scriptPath);
+				throw new IOException("can find script " + scriptPath);
 			}
 			scriptPath.setExecutable(true);
 			ret = scriptPath.getAbsolutePath();
@@ -990,34 +986,6 @@ public class ThreadWork extends Thread {
 	}
 
 	/**
-	 * This tests if work command line complies to app
-	 * @see xtremweb.common.AppTypeEnum#checkParams(String)
-	 * @since 12.2.8
-	 */
-	private void checkAppParams(final String params)
-			throws AccessControlException,
-			IOException,
-			ClassNotFoundException,
-			SAXException,
-			InvalidKeyException,
-			URISyntaxException {
-
-		final UID workApp = currentWork.getApplication();
-
-		if (workApp == null) {
-			throw new IOException(WARNNOAPPLI);
-		}
-
-		final AppInterface app = (AppInterface) CommManager.getInstance().commClient().get(workApp, false);
-
-		if (app == null) {
-			throw new IOException("application not found " + workApp);
-		}
-
-		app.checkParams(params);
-	}
-
-	/**
 	 * This retrieves the current work command line
 	 *
 	 * @throws AccessControlException
@@ -1035,7 +1003,6 @@ public class ThreadWork extends Thread {
 		final String wcmdline = currentWork.getCmdLine();
 
 		if (wcmdline != null) {
-//			checkAppParams(wcmdline);
 			final Collection<String> wcmdvector = XWTools.split(wcmdline);
 			if (ret == null) {
 				ret = wcmdvector;

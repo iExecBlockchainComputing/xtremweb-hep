@@ -103,7 +103,7 @@ public final class AppInterface extends Table {
 		 * application is a service<br />
 		 * A service is a java code inserted in the platform at compile time
 		 * <br />
-		 * At launch time, the server inserts its embedded services into
+		 * At boot time, the server inserts its embedded services into
 		 * database
 		 *
 		 * @since RPCXW
@@ -214,86 +214,6 @@ public final class AppInterface extends Table {
 			@Override
 			public Integer fromString(final String v) {
 				return Integer.valueOf(v);
-			}
-		},
-		/**
-		 * This is the column index of the launch script URI This is optional
-		 * This script is always executed before the job
-		 *
-		 * @since 8.0.0 (FG)
-		 */
-		LAUNCHSCRIPTSHURI {
-			/**
-			 * This creates an object from String representation for this column
-			 * value
-			 *
-			 * @param v
-			 *            the String representation
-			 * @return an URI representing the column value
-			 */
-			@Override
-			public URI fromString(final String v) throws URISyntaxException {
-				return new URI(v);
-			}
-		},
-		/**
-		 * This is the column index of the launch script URI This is optional
-		 * This script is always executed before the job
-		 *
-		 * @since 8.0.0 (FG)
-		 */
-		LAUNCHSCRIPTCMDURI {
-			/**
-			 * This creates an object from String representation for this column
-			 * value
-			 *
-			 * @param v
-			 *            the String representation
-			 * @return an URI representing the column value
-			 */
-			@Override
-			public URI fromString(final String v) throws URISyntaxException {
-				return new URI(v);
-			}
-		},
-		/**
-		 * This is the column index of the unload script URI This is optional
-		 * This script is always executed after the job
-		 *
-		 * @since 8.0.0 (FG)
-		 */
-		UNLOADSCRIPTSHURI {
-			/**
-			 * This creates an object from String representation for this column
-			 * value
-			 *
-			 * @param v
-			 *            the String representation
-			 * @return an URI representing the column value
-			 */
-			@Override
-			public URI fromString(final String v) throws URISyntaxException {
-				return new URI(v);
-			}
-		},
-		/**
-		 * This is the column index of the unload script URI This is optional
-		 * This script is always executed after the job
-		 *
-		 * @since 8.0.0 (FG)
-		 */
-		UNLOADSCRIPTCMDURI {
-			/**
-			 * This creates an object from String representation for this column
-			 * value
-			 *
-			 * @param v
-			 *            the String representation
-			 * @return an URI representing the column value
-			 */
-			@Override
-			public URI fromString(final String v) throws URISyntaxException {
-				return new URI(v);
 			}
 		},
 		/**
@@ -1384,22 +1304,6 @@ public final class AppInterface extends Table {
 		} catch (final Exception e) {
 		}
 		try {
-			setLaunchScriptSh((URI) Columns.LAUNCHSCRIPTSHURI.fromResultSet(rs));
-		} catch (final Exception e) {
-		}
-		try {
-			setLaunchScriptCmd((URI) Columns.LAUNCHSCRIPTCMDURI.fromResultSet(rs));
-		} catch (final Exception e) {
-		}
-		try {
-			setUnloadScriptSh((URI) Columns.UNLOADSCRIPTSHURI.fromResultSet(rs));
-		} catch (final Exception e) {
-		}
-		try {
-			setUnloadScriptCmd((URI) Columns.UNLOADSCRIPTCMDURI.fromResultSet(rs));
-		} catch (final Exception e) {
-		}
-		try {
 			setNbJobs((Integer) Columns.NBJOBS.fromResultSet(rs));
 		} catch (final Exception e) {
 		}
@@ -1571,60 +1475,6 @@ public final class AppInterface extends Table {
 	 */
 	public URL getWebPage() {
 		return (URL) getValue(Columns.WEBPAGE);
-	}
-
-	/**
-	 * This retrieves the URI to get init script accordingly to OS
-	 *
-	 * @param os
-	 *            is the os for the expected binary
-	 * @return binary URI for the given OS and CPU; otherwise null if no binary
-	 *         available the the given OS and CPU
-	 * @since 8.0.0 (FG)
-	 */
-	public URI getLaunchScript(final OSEnum os) {
-
-		if (os == null) {
-			return null;
-		}
-		switch (os) {
-		case LINUX:
-		case MACOSX:
-		case SOLARIS:
-			return getLaunchScriptSh();
-		case WIN32:
-			return getLaunchScriptCmd();
-		default:
-			break;
-		}
-		return null;
-	}
-
-	/**
-	 * This retrieves the URI to get unload script accordingly to OS
-	 *
-	 * @param os
-	 *            is the os for the expected binary
-	 * @return binary URI for the given OS and CPU; otherwise null if no binary
-	 *         available the the given OS and CPU
-	 * @since 8.0.0 (FG)
-	 */
-	public URI getUnloadScript(final OSEnum os) {
-
-		if (os == null) {
-			return null;
-		}
-		switch (os) {
-		case LINUX:
-		case MACOSX:
-		case SOLARIS:
-			return getUnloadScriptSh();
-		case WIN32:
-			return getUnloadScriptCmd();
-		default:
-			break;
-		}
-		return null;
 	}
 
 	/**
@@ -2311,47 +2161,6 @@ public final class AppInterface extends Table {
 	public URI getBaseDirin() {
 		return (URI) getValue(Columns.BASEDIRINURI);
 	}
-
-	/**
-	 * This gets an attribute
-	 *
-	 * @return this attribute, or null if not set
-	 * @since 8.0.0 (FG)
-	 */
-	public URI getLaunchScriptCmd() {
-		return (URI) getValue(Columns.LAUNCHSCRIPTCMDURI);
-	}
-
-	/**
-	 * This gets an attribute
-	 *
-	 * @return this attribute, or null if not set
-	 * @since 8.0.0 (FG)
-	 */
-	public URI getLaunchScriptSh() {
-		return (URI) getValue(Columns.LAUNCHSCRIPTSHURI);
-	}
-
-	/**
-	 * This gets an attribute
-	 *
-	 * @return this attribute, or null if not set
-	 * @since 8.0.0 (FG)
-	 */
-	public URI getUnloadScriptCmd() {
-		return (URI) getValue(Columns.UNLOADSCRIPTCMDURI);
-	}
-
-	/**
-	 * This gets an attribute
-	 *
-	 * @return this attribute, or null if not set
-	 * @since 8.0.0 (FG)
-	 */
-	public URI getUnloadScriptSh() {
-		return (URI) getValue(Columns.UNLOADSCRIPTSHURI);
-	}
-
 	/**
 	 * This gets an attribute
 	 *
@@ -2376,14 +2185,24 @@ public final class AppInterface extends Table {
 		setType(AppTypeEnum.NONE);
 		return AppTypeEnum.NONE;
 	}
-	/**
-	 * This test if command line complies to app
-	 * @see xtremweb.common.AppTypeEnum#checkParams(String)
-	 * @since 12.2.8
- 	*/
-	public void checkParams(final String params) throws AccessControlException {
-		getType().checkParams(params);
-	}
+    /**
+     * This retrieves launch script
+     * @return launch script or null
+     * @see AppTypeEnum#getLaunchScriptName()
+     * @since 13.0.0
+     */
+    public String getLaunchScript() throws AccessControlException {
+        return getType().getLaunchScriptName();
+    }
+    /**
+     * This retrieves unload script
+     * @return unload script or null
+     * @see AppTypeEnum#getUnloadScriptName()
+     * @since 13.0.0
+     */
+    public String getUnloadScript() throws AccessControlException {
+        return getType().getUnloadScriptName();
+    }
 	/**
 	 * This sets parameter value; this is called from
 	 * TableInterface#fromXml(Attributes)
@@ -3084,39 +2903,6 @@ public final class AppInterface extends Table {
 	public boolean setBaseDirin(final URI v) {
 		return setValue(Columns.BASEDIRINURI, v);
 	}
-
-	/**
-	 * @return true if value has changed, false otherwise
-	 * @since 8.0.0 (FG)
-	 */
-	public boolean setLaunchScriptCmd(final URI v) {
-		return setValue(Columns.LAUNCHSCRIPTCMDURI, v);
-	}
-
-	/**
-	 * @return true if value has changed, false otherwise
-	 * @since 8.0.0 (FG)
-	 */
-	public boolean setLaunchScriptSh(final URI v) {
-		return setValue(Columns.LAUNCHSCRIPTSHURI, v);
-	}
-
-	/**
-	 * @return true if value has changed, false otherwise
-	 * @since 8.0.0 (FG)
-	 */
-	public boolean setUnloadScriptCmd(final URI v) {
-		return setValue(Columns.UNLOADSCRIPTCMDURI, v);
-	}
-
-	/**
-	 * @return true if value has changed, false otherwise
-	 * @since 8.0.0 (FG)
-	 */
-	public boolean setUnloadScriptSh(final URI v) {
-		return setValue(Columns.UNLOADSCRIPTSHURI, v);
-	}
-
 	/**
 	 * @return true if value has changed, false otherwise
 	 */

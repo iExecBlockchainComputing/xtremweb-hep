@@ -1,0 +1,171 @@
+{
+  "dashboard":{
+    "id": null,
+    "uid": "Workers",
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+      {
+        "columns": [],
+        "datasource": null,
+        "fontSize": "100%",
+        "gridPos": {
+          "h": 13,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "links": [],
+        "pageSize": null,
+        "scroll": true,
+        "showHeader": true,
+        "sort": {
+          "col": null,
+          "desc": false
+        },
+        "styles": [
+          {
+            "alias": "Time",
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "pattern": "Time",
+            "type": "date"
+          },
+          {
+            "alias": "",
+            "colorMode": null,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "decimals": 2,
+            "pattern": "/.*/",
+            "thresholds": [],
+            "type": "number",
+            "unit": "short"
+          }
+        ],
+        "targets": [
+          {
+            "alias": "",
+            "format": "table",
+            "rawSql": "select name, uid,lastalive, os as osrelease, cpunb, max(poolworksize) as poolworksize, cpuspeed, cputype as machinetype, totalswap as swaptotal, totalmem as memtotal, totaltmp,freetmp,ipaddr,natedipaddr ,unix_timestamp(now())-unix_timestamp(lastalive) as delai,active,available,pilotjob,sum(nbjobs) as nbjobs,sum(pendingjobs) as pendingjobs,sum(runningjobs) as runningjobs ,sum(errorjobs) as errorjobs from hosts where isdeleted='false' /*and (unix_timestamp(now())-unix_timestamp(lastalive) < 4000)*/ group by uid order by lastalive",
+            "refId": "A"
+          }
+        ],
+        "title": "All Workers",
+        "transform": "table",
+        "type": "table"
+      },
+      {
+        "columns": [],
+        "datasource": null,
+        "fontSize": "100%",
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 13
+        },
+        "id": 4,
+        "links": [],
+        "pageSize": null,
+        "scroll": true,
+        "showHeader": true,
+        "sort": {
+          "col": null,
+          "desc": false
+        },
+        "styles": [
+          {
+            "alias": "Time",
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "pattern": "Time",
+            "type": "date"
+          },
+          {
+            "alias": "",
+            "colorMode": null,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "decimals": 2,
+            "pattern": "/.*/",
+            "thresholds": [],
+            "type": "number",
+            "unit": "short"
+          }
+        ],
+        "targets": [
+          {
+            "alias": "",
+            "format": "table",
+            "rawSql": "select name, uid, lastalive, os as osrelease, cpunb, max(poolworksize) as poolworksize, cpuspeed, cputype as machinetype, totalswap as swaptotal, totalmem as memtotal, totaltmp,freetmp,ipaddr,natedipaddr ,unix_timestamp(now())-unix_timestamp(lastalive) as delai,active,available,pilotjob,sum(nbjobs) as nbjobs,sum(pendingjobs) as pendingjobs,sum(runningjobs) as runningjobs ,sum(errorjobs) as errorjobs from hosts where isdeleted='false' and (unix_timestamp(now())-unix_timestamp(lastalive) < 900) group by uid",
+            "refId": "A"
+          }
+        ],
+        "title": "Alive Workers",
+        "transform": "table",
+        "type": "table"
+      }
+    ],
+    "schemaVersion": 16,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ]
+    },
+    "timezone": "",
+    "title": "Workers Statistics",
+    "version": 7
+  },
+  "folderId": 0,
+  "overwrite": false
+}

@@ -51,11 +51,9 @@ public class SQLRequestWorkRequest extends SQLRequest {
 	/**
 	 * This contains table names for the FROM part of the SQL request. There
 	 * must not be a space after the comma
-	 *
-	 * @see DBConnPool#rowTableNames(String)
 	 */
-	private static final String TABLENAMES = WorkInterface.TABLENAME + " as " + MAINTABLEALIAS + ","
-			+ AppInterface.APPTABLENAME + "," + UserInterface.TABLENAME + "," + DataInterface.DATATABLENAME;
+	protected static final String TABLENAMES = WorkInterface.TABLENAME + " as " + MAINTABLEALIAS + ","
+			+ AppInterface.APPTABLENAME + "," + UserInterface.TABLENAME;
 
 	/**
 	 * This is used if host.acceptBin == true. This helps to retrieve any
@@ -63,7 +61,7 @@ public class SQLRequestWorkRequest extends SQLRequest {
 	 * will have to download binary) or shared apps (the ones the worker
 	 * declares as sharing)
 	 */
-	private static final String WORKREQUESTCRITERIAS = " AND maintable.status='%s'"
+	protected static final String WORKREQUESTCRITERIAS = " AND maintable.status='%s'"
 			+ " AND (ISNULL(maintable.LISTENPORT)      OR maintable.LISTENPORT='' OR %s)"
 			+ " AND (ISNULL(maintable.EXPECTEDHOSTUID) OR maintable.EXPECTEDHOSTUID='%s')"
 			+ " AND ( ISNULL(maintable.MINCPUSPEED)          OR (maintable.MINCPUSPEED          <= %d))"
@@ -71,8 +69,7 @@ public class SQLRequestWorkRequest extends SQLRequest {
 			+ " AND ( ISNULL(maintable.MINFREEMASSSTORAGE)   OR (maintable.MINFREEMASSSTORAGE   <= %d))"
 			+ " AND ((NOT (ISNULL(apps.%s) AND ISNULL(apps.JAVAURI)) AND apps.TYPE='DEPLOYABLE') OR apps.TYPE IN (%s) )"
 			+ " AND (ISNULL(apps.NEEDEDPACKAGES)             OR  (apps.NEEDEDPACKAGES='')   OR  (apps.NEEDEDPACKAGES IN (%s)))"
-			+ " AND (maintable.appuid=apps.uid)"
-			+ " AND ((maintable.DATADRIVENURI IS NULL) OR (maintable.DATADRIVENURI='') OR ((maintable.DATADRIVENURI=datas.URI) AND (datas.PACKAGE IS NOT NULL) AND (datas.PACKAGE IN (%s))))";
+			+ " AND (maintable.appuid=apps.uid)";
 
 	/**
 	 * This is used if host.acceptBin == false. This retrieves job referring
@@ -80,15 +77,14 @@ public class SQLRequestWorkRequest extends SQLRequest {
 	 *
 	 * @since 8.0.0
 	 */
-	private static final String WORKREQUESTCRITERIAS_NOBIN = " AND maintable.status='%s'"
+	protected static final String WORKREQUESTCRITERIAS_NOBIN = " AND maintable.status='%s'"
 			+ " AND ((ISNULL(maintable.LISTENPORT))      OR maintable.LISTENPORT='' OR %s)"
 			+ " AND ((ISNULL(maintable.EXPECTEDHOSTUID)) OR maintable.EXPECTEDHOSTUID='%s')"
 			+ " AND ( (ISNULL(maintable.MINCPUSPEED))          OR (maintable.MINCPUSPEED          <= %d))"
 			+ " AND ( (ISNULL(maintable.MINMEMORY))            OR (maintable.MINMEMORY            <= %d))"
 			+ " AND ( (ISNULL(maintable.MINFREEMASSSTORAGE))   OR (maintable.MINFREEMASSSTORAGE   <= %d))"
 			+ " AND (apps.TYPE IN (%s))"
-			+ " AND (ISNULL(apps.NEEDEDPACKAGES)             OR  (apps.NEEDEDPACKAGES='')   OR  (apps.NEEDEDPACKAGES IN (%s)))"
-			+ " AND ((maintable.DATADRIVENURI IS NULL) OR (maintable.DATADRIVENURI='') OR ((maintable.DATADRIVENURI=datas.URI) AND (datas.PACKAGE IS NOT NULL) AND (datas.PACKAGE IN (%s))))";
+			+ " AND (ISNULL(apps.NEEDEDPACKAGES)             OR  (apps.NEEDEDPACKAGES='')   OR  (apps.NEEDEDPACKAGES IN (%s)))";
 
 	/**
 	 * This concatenates SQLRequestAccessible.CRITERIAS and
@@ -117,7 +113,7 @@ public class SQLRequestWorkRequest extends SQLRequest {
 	/**
 	 * This is used when host.project is set.
 	 */
-	private static final String PROJECT_ACCESS = "   AND maintable.owneruid IN" + // any
+	protected static final String PROJECT_ACCESS = "   AND maintable.owneruid IN" + // any
 																					// job
 																					// submitted
 																					// in
@@ -185,19 +181,19 @@ public class SQLRequestWorkRequest extends SQLRequest {
 	/**
 	 * This is the requesting host
 	 */
-	private HostInterface host;
+	protected HostInterface host;
 	/**
 	 * This is the requested status
 	 */
-	private StatusEnum status;
+	protected StatusEnum status;
 	/**
 	 * This is the other access rights
 	 */
-	private final int otherAccess;
+	protected final int otherAccess;
 	/**
 	 * This is the group access rights
 	 */
-	private final int groupAccess;
+	protected final int groupAccess;
 
 	private String sqlIsNull00(final String what) {
 		if (!getHsqldb()) {

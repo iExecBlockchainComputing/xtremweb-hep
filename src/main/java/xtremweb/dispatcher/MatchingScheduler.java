@@ -41,6 +41,7 @@ import xtremweb.communications.XMLRPCCommandWorkRequest;
 import xtremweb.database.DBConnPoolThread;
 import xtremweb.database.SQLRequest;
 import xtremweb.database.SQLRequestWorkRequest;
+import xtremweb.database.SQLRequestWorkRequestDataDriven;
 
 /**
  * This implements a scheduler which selects a job for the expected worker. This
@@ -73,10 +74,6 @@ public class MatchingScheduler extends SimpleScheduler {
 	 * return the same work several times. Then this can safelly update a vector
 	 * of rows
 	 *
-	 * @param host
-	 *            is the requesting worker identifier
-	 * @param user
-	 *            is the identity of the worker
 	 * @return a Work matching host; null if no work matches this host -or no
 	 *         pending work- found
 	 * @exception IOException
@@ -103,8 +100,7 @@ public class MatchingScheduler extends SimpleScheduler {
 		final DBInterface db = DBInterface.getInstance();
 
 		try {
-			final Collection<Table> rows = new Vector<>();
-			String criterias = null;
+			String moreCriterias = null;
 			final SQLRequestWorkRequest workRequest = new SQLRequestWorkRequest(host, user);
 			final WorkInterface workSelection = new WorkInterface(workRequest);
 
@@ -114,21 +110,28 @@ public class MatchingScheduler extends SimpleScheduler {
 			if (jobId != null) {
 				final UID uid = jobId.getUID();
 				if (uid != null) {
-					criterias = SQLRequest.MAINTABLEALIAS + "." + TableColumns.UID + "='" + uid + "'";
+                    moreCriterias = SQLRequest.MAINTABLEALIAS + "." + TableColumns.UID + "='" + uid + "'";
 				}
 			} else if (batchId != null) {
 				final UID uid = batchId.getUID();
 				if (uid != null) {
-					criterias = SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.GROUPUID + "='" + uid + "'";
+                    moreCriterias = SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.GROUPUID + "='" + uid + "'";
 				}
 			}
 
 			getLogger().debug("host      = " + host.toXml());
-			getLogger().debug("criterias = " + criterias);
-			theWork = db.selectOne(workSelection, criterias);
+			getLogger().debug("criterias = " + moreCriterias);
+			theWork = db.selectOne(workSelection, moreCriterias);
+
+			if(theWork == null) {
+				final SQLRequestWorkRequestDataDriven dataDrivenWorkRequest = new SQLRequestWorkRequestDataDriven(host, user);
+				final WorkInterface dataDrivenWorkSelection = new WorkInterface(dataDrivenWorkRequest);
+				theWork = db.selectOne(dataDrivenWorkSelection, moreCriterias);
+			}
 
 			if (theWork != null) {
-				final UID theAppUID = theWork.getApplication();
+                final Collection<Table> rows = new Vector<>();
+                final UID theAppUID = theWork.getApplication();
 				final UID theWorkOwnerUID = theWork.getOwner();
 				final AppInterface theApp = db.app(user, theAppUID);
 				final UserInterface theWorkOwner = db.user(theWorkOwnerUID);

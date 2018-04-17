@@ -48,6 +48,10 @@ insert into envs (uid, owneruid, accessrights, errormsg, name, envid)
         values ("cb2b401c-374a-11e8-a703-4f504e4b684f", (select uid from users where rights="SUPER_USER" limit 1), "1877", '', 'DefaultEnv', 0);
 
 
+ALTER TABLE  works ADD    COLUMN   uploadbandwidth     float default 0.0      comment 'Upload bandwidth usage (in Mb/s)';
+ALTER TABLE  works ADD    COLUMN   downloadbandwidth   float default 0.0      comment 'Download bandwidth usage (in Mb/s)';
+
+
 ALTER TABLE  works ADD    COLUMN envId              int unsigned   not null  default 1  comment 'envId. See common/Envs.java';
 ALTER TABLE  works ADD    COLUMN maxFreeMassStorage bigint         not null  default 5368709120   comment 'Max mass storage usage in bytes; default 5Gb';
 ALTER TABLE  works ADD    COLUMN maxFileSize        bigint         not null  default 104857600    comment 'Max file length in bytes; default 100Mb';
@@ -65,6 +69,70 @@ UPDATE works SET envid='1', maxWallClocktime='300', maxFreeMassStorage='53687091
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (14, 'FAILED', 'works', 'The job does not fill its envelope requirements', null);
 
 insert into versions (version, installation) values ('13.0.0', now());
+
+SET FOREIGN_KEY_CHECKS=0;
+
+
+drop table userRights;
+create table if not exists  userRights  (
+  userRightId           tinyint unsigned  not null  primary key,
+  userRightName         varchar(254)      not null  unique,
+  mtime                 timestamp,
+  userRightDescription  varchar(254)
+  )
+engine  = InnoDB,
+comment = 'userRights = Constants for "users"."rights"';
+
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 0, 'NONE',            null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 1, 'INSERTJOB',       null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 2, 'GETJOB',          null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 3, 'INSERTDATA',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 4, 'GETDATA',         null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 5, 'GETGROUP',        null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 6, 'GETSESSION',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 7, 'GETHOST',         null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 8, 'GETAPP',          null);
+insert into userRights (userRightId, userRightName, userRightDescription) values ( 9, 'GETUSER',         null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (10, 'GETENVELOPE',     null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (11, 'UPDATEWORK',      'worker can update work for the owner');
+insert into userRights (userRightId, userRightName, userRightDescription) values (12, 'WORKER_USER',     'worker cannot do everything');
+insert into userRights (userRightId, userRightName, userRightDescription) values (13, 'VWORKER_USER',    'vworker can take advantage of stickybit');
+insert into userRights (userRightId, userRightName, userRightDescription) values (14, 'BROADCAST',       'submit one job to all workers');
+insert into userRights (userRightId, userRightName, userRightDescription) values (15, 'LISTJOB',         null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (16, 'DELETEJOB',       null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (17, 'LISTDATA',        null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (18, 'DELETEDATA',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (19, 'LISTGROUP',       null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (20, 'INSERTGROUP',     null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (21, 'DELETEGROUP',     null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (22, 'LISTSESSION',     null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (23, 'INSERTSESSION',    null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (24, 'DELETESESSION',   null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (25, 'LISTHOST',        null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (26, 'LISTUSER',        null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (27, 'LISTUSERGROUP',   null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (28, 'GETUSERGROUP',    null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (29, 'INSERTAPP',       null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (30, 'DELETEAPP',       null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (31, 'LISTAPP',         null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (32, 'LISTENVELOPE',   'non privileged user');
+insert into userRights (userRightId, userRightName, userRightDescription) values (33, 'STANDARD_USER',   'non privileged user');
+insert into userRights (userRightId, userRightName, userRightDescription) values (34, 'INSERTUSER',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (35, 'DELETEUSER',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (36, 'ADVANCED_USER',   'privileged user (e.g. user group manager)');
+insert into userRights (userRightId, userRightName, userRightDescription) values (37, 'MANDATED_USER',   'can work in name of another user');
+insert into userRights (userRightId, userRightName, userRightDescription) values (38, 'INSERTHOST',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (39, 'INSERTENVELOPE',  null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (40, 'DELETEHOST',      null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (41, 'INSERTUSERGROUP', null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (42, 'DELETEUSERGROUP', null);
+insert into userRights (userRightId, userRightName, userRightDescription) values (43, 'SUPER_USER',      'can do all');
+
+
+UPDATE users SET userRightId=(select userRightId from userRights where userRightName=users.rights);
+
+SET FOREIGN_KEY_CHECKS=1;
+
 --
 -- End Of File
 --
