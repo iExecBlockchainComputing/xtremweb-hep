@@ -23,6 +23,8 @@
 
 package xtremweb.common;
 
+import xtremweb.communications.SocketProxy;
+
 import java.util.Arrays;
 
 /**
@@ -75,10 +77,6 @@ public enum CPUEnum {
 	 *                XtremWeb
 	 */
 	public static String getCpuName(final String archName) throws IllegalArgumentException {
-
-		final String[] armArchArray = {"arm", "aarch64" , "arm32", "arm64"}; // aarch64 returned by ARM64
-		if (Arrays.asList(armArchArray).contains(archName.toLowerCase()))
-			return valueOf(("ARM" + System.getProperty("sun.arch.data.model")).toUpperCase()).toString(); // ARM32 or ARM64
 
 		final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
 			"i586", "x586", "ix586", "i686", "x686", "ix686"};
