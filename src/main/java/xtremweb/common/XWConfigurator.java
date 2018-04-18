@@ -1183,7 +1183,7 @@ public final class XWConfigurator extends Properties {
 		_host.setTotalSwap(0);
 		_host.setOs(OSEnum.getOs());
 
-		_host.setCpu(CPUEnum.getCpu(ArchDepFactory.xwutil().getProcModel()));
+		_host.setCpu(CPUEnum.getCpu());
 		_host.setCpuNb(Runtime.getRuntime().availableProcessors());
 		_host.setAvailable(false);
 		_host.setPilotJob(false);

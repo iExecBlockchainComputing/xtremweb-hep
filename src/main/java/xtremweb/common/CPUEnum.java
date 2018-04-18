@@ -23,7 +23,6 @@
 
 package xtremweb.common;
 
-import xtremweb.archdep.XWUtilLinux;
 import java.util.Arrays;
 
 /**
@@ -52,47 +51,6 @@ public enum CPUEnum {
 	}
 
 	/**
-	 * Get Hardware name If this architecture is not supported by XtremWeb, this
-	 * forces the program to immediately stop
-	 *
-	 * @see #getCpuName(String)
-	 */
-	public static String getCpuName() {
-		try {
-			return getCpuName(System.getProperty("os.arch"));
-		} catch (final Exception e) {
-			XWTools.fatal(e.toString());
-		}
-		return null;
-	}
-
-	/**
-	 * This forces architecture name to predefined values to avoid confusion
-	 *
-	 * @param archName
-	 *            the architecture name
-	 * @exception ClassNotFound
-	 *                exception is thrown if archName is not supported by
-	 *                XtremWeb
-	 */
-	public static String getCpuName(String archName) throws IllegalArgumentException {
-
-		archName = archName.toLowerCase();
-
-		final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
-			"i586", "x586", "ix586", "i686", "x686", "ix686"};
-		if (Arrays.asList(ixArchArray).contains(archName)) return IX86.toString();
-
-		final String[] arm32ArchArray = {"armv5", "armv6", "armv7", "armhf"};
-		if (Arrays.asList(arm32ArchArray).contains(archName.substring(0, 4))) return ARM32.toString(); // substring: because of armv7l...
-
-		final String[] arm64ArchArray = {"armv8", "aarch64"};
-		if (Arrays.asList(arm64ArchArray).contains(archName.substring(0, 4))) return ARM64.toString();
-
-		return valueOf(archName.toUpperCase()).toString();
-	}
-
-	/**
 	 * Get Hardware type If this architecture is not supported by XtremWeb, this
 	 * forces the program to immediately stop
 	 *
@@ -100,11 +58,23 @@ public enum CPUEnum {
 	 */
 	public static CPUEnum getCpu() {
 		try {
-			return getCpu(System.getProperty("os.arch"));
+
+			String archName = System.getProperty("os.arch").toLowerCase();
+
+			final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
+					"i586", "x586", "ix586", "i686", "x686", "ix686"};
+			if (Arrays.asList(ixArchArray).contains(archName)) return IX86;
+
+			final String[] armArchArray = {"arm", "aarch64" , "arm32", "arm64"};
+			if (Arrays.asList(armArchArray).contains(archName.toLowerCase()))
+				return valueOf(("ARM" + System.getProperty("sun.arch.data.model")).toUpperCase()); // ARM32 or ARM64
+
+			return valueOf(archName.toUpperCase());
+
 		} catch (final Exception e) {
 			XWTools.fatal(e.toString());
+			return null;
 		}
-		return null;
 	}
 
 	/**
@@ -115,7 +85,13 @@ public enum CPUEnum {
 	 * @return architecture type
 	 */
 	public static CPUEnum getCpu(final String archName) throws IllegalArgumentException {
-		return valueOf(getCpuName(archName));
+		try {
+			return valueOf(archName.toUpperCase());
+		} catch (final Exception e) {
+			XWTools.fatal(e.toString());
+			return null;
+		}
+
 	}
 
 	/**
