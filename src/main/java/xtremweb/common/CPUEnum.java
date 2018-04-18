@@ -23,6 +23,7 @@
 
 package xtremweb.common;
 
+import xtremweb.archdep.XWUtilLinux;
 import xtremweb.communications.SocketProxy;
 
 import java.util.Arrays;
@@ -81,6 +82,18 @@ public enum CPUEnum {
 		final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
 			"i586", "x586", "ix586", "i686", "x686", "ix686"};
 		if (Arrays.asList(ixArchArray).contains(archName.toLowerCase())) return IX86.toString();
+
+		if (archName.toLowerCase().contains("arm")) {
+			try {
+				String armProcModel = (new XWUtilLinux()).getProcModel().split(" ")[0].toLowerCase();
+
+				final String[] arm32ArchArray = {"armv5", "armv6", "armv7", "armhf"};
+				if (Arrays.asList(arm32ArchArray).contains(armProcModel.substring(0, 4))) return ARM32.toString();
+
+				final String[] arm64ArchArray = {"armv8", "aarch64"};
+				if (Arrays.asList(arm64ArchArray).contains(armProcModel.substring(0, 4))) return ARM64.toString();
+			} catch (Exception e) {} // nothing to do
+		}
 
 		return valueOf(archName.toUpperCase()).toString();
 	}
