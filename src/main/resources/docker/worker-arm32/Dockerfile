@@ -17,6 +17,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         unzip \
         wget \
         zip \
+        && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

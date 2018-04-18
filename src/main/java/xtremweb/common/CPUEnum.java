@@ -73,8 +73,8 @@ public enum CPUEnum {
 
 		} catch (final Exception e) {
 			XWTools.fatal(e.toString());
-			return null;
 		}
+		return null;
 	}
 
 	/**
@@ -89,9 +89,8 @@ public enum CPUEnum {
 			return valueOf(archName.toUpperCase());
 		} catch (final Exception e) {
 			XWTools.fatal(e.toString());
-			return null;
 		}
-
+		return null;
 	}
 
 	/**
