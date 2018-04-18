@@ -24,8 +24,6 @@
 package xtremweb.common;
 
 import xtremweb.archdep.XWUtilLinux;
-import xtremweb.communications.SocketProxy;
-
 import java.util.Arrays;
 
 /**
@@ -77,23 +75,19 @@ public enum CPUEnum {
 	 *                exception is thrown if archName is not supported by
 	 *                XtremWeb
 	 */
-	public static String getCpuName(final String archName) throws IllegalArgumentException {
+	public static String getCpuName(String archName) throws IllegalArgumentException {
+
+		archName = archName.toLowerCase();
 
 		final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
 			"i586", "x586", "ix586", "i686", "x686", "ix686"};
-		if (Arrays.asList(ixArchArray).contains(archName.toLowerCase())) return IX86.toString();
+		if (Arrays.asList(ixArchArray).contains(archName)) return IX86.toString();
 
-		if (archName.toLowerCase().contains("arm")) {
-			try {
-				String armProcModel = (new XWUtilLinux()).getProcModel().split(" ")[0].toLowerCase();
+		final String[] arm32ArchArray = {"armv5", "armv6", "armv7", "armhf"};
+		if (Arrays.asList(arm32ArchArray).contains(archName.substring(0, 4))) return ARM32.toString(); // substring: because of armv7l...
 
-				final String[] arm32ArchArray = {"armv5", "armv6", "armv7", "armhf"};
-				if (Arrays.asList(arm32ArchArray).contains(armProcModel.substring(0, 4))) return ARM32.toString();
-
-				final String[] arm64ArchArray = {"armv8", "aarch64"};
-				if (Arrays.asList(arm64ArchArray).contains(armProcModel.substring(0, 4))) return ARM64.toString();
-			} catch (Exception e) {} // nothing to do
-		}
+		final String[] arm64ArchArray = {"armv8", "aarch64"};
+		if (Arrays.asList(arm64ArchArray).contains(archName.substring(0, 4))) return ARM64.toString();
 
 		return valueOf(archName.toUpperCase()).toString();
 	}
