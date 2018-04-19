@@ -108,6 +108,12 @@ DISPATCHERS=@XWSERVER@
 #PROXYSERVER=
 
 #
+# Do we try to connect to Ethereum blockchain
+# @since 13.0.0
+#
+BLOCKCHAINETHENABLED=false
+
+#
 # All : ethereum wallet path
 # Property type : string
 # Since 12.2.7

@@ -16,6 +16,7 @@ RUN chmod +x /iexec/start_server.sh
 
 COPY conf/xtremweb.server.conf /iexec/conf/
 COPY conf/xwconfigure.values /iexec/conf/
+COPY conf/iexec-scheduler.yml /iexec/conf/
 COPY lib /iexec/lib
 COPY bin /iexec/bin/
 

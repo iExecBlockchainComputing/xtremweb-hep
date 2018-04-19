@@ -858,7 +858,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
-			return new XMLRPCCommandGetEnvelopes(input);
+			return new XMLRPCCommandGetCategories(input);
 		} catch (final SAXException e) {
 			if (e instanceof XMLEndParseException) {
 				return ret;
@@ -866,11 +866,11 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			logger.exception(e);
 		}
-		logger.finest("not a command getenvelopes");
+		logger.finest("not a command getcategories");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
-			return new XMLRPCCommandGetEnvelopeById(input);
+			return new XMLRPCCommandGetCategoryById(input);
 		} catch (final SAXException e) {
 			if (e instanceof XMLEndParseException) {
 				return ret;
@@ -878,11 +878,11 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			logger.exception(e);
 		}
-		logger.finest("not a command getenvelopebyid");
+		logger.finest("not a command getvategorybyid");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
-			return new XMLRPCCommandSendEnvelope(input);
+			return new XMLRPCCommandSendCategory(input);
 		} catch (final SAXException e) {
 			if (e instanceof XMLEndParseException) {
 				return ret;
@@ -890,7 +890,7 @@ public abstract class XMLRPCCommand extends XMLable {
 		} catch (final InvalidKeyException e) {
 			logger.exception(e);
 		}
-		logger.finest("not a command sendenvelope");
+		logger.finest("not a command sendcategory");
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);

@@ -75,7 +75,13 @@ import org.json.JSONTokener;
  */
 
 public class XWTools {
-	private XWTools() {
+    /**
+     * This is a public path to retrieve iExec ETH configuration
+     * @since 13.0.0
+     */
+    public static final String IEXECETHCONFPATH = "/iexecethconf";
+
+    private XWTools() {
 	}
 
 	private static final Logger logger = new Logger();
@@ -123,6 +129,37 @@ public class XWTools {
      * @since 13.0.0
      */
     public static final String UNLOADSCRIPTTRAILER = ".sh";
+
+	/**
+	 * This is the header text to write/retrieve iExec Hub Addr
+	 * @since 13.0.0
+	 * @see xtremweb.dispatcher.HTTPHandler
+	 */
+	public static final String IEXECHUBADDRTEXT = "iExec Hub addr = ";
+	/**
+	 * This is the header text to write/retrieve iExec RLC Addr
+	 * @since 13.0.0
+	 * @see xtremweb.dispatcher.HTTPHandler
+	 */
+	public static final String IEXECRLCADDRTEXT = "iExec RLC addr = ";
+	/**
+	 * This is the header text to write/retrieve Eth node addr
+	 * @since 13.0.0
+	 * @see xtremweb.dispatcher.HTTPHandler
+	 */
+	public static final String ETHNODEADDRTEXT = "Eth node addr = ";
+	/**
+	 * This is the header text to write/retrieve iExec Woker Pool Addr
+	 * @since 13.0.0
+	 * @see xtremweb.dispatcher.HTTPHandler
+	 */
+	public static final String IEXECWORKERPOOLADDRTEXT = "iExec WorkerPool addr = ";
+	/**
+	 * This is the header text to write/retrieve iExec Woker Pool name
+	 * @since 13.0.0
+	 * @see xtremweb.dispatcher.HTTPHandler
+	 */
+	public static final String IEXECWORKERPOOLNAMETEXT = "iExec WorkerPool name = ";
 
 	/**
 	 * This defines buffer size for communications : 16Kb
@@ -178,33 +215,33 @@ public class XWTools {
 	 */
 	public static final long TWOGIGABYTES = 2 * ONEGIGABYTES;
 	/**
-	 * This defines the default wall cloacktime to 300s (5mn)
+	 * This defines the default wall cloacktime to 3600s (1h)
 	 * @since 13.0.0
 	 */
-	public static final int DEFAULTWALLCLOCKTIME = 300;
+	public static final int DEFAULTWALLCLOCKTIME = 3600;
 	/**
 	 * This defines the default CPU speed in percentage
 	 * @href https://docs.docker.com/engine/reference/run/#cpu-period-constraint
 	 * @since 13.0.0
 	 */
-	public static final float DEFAULTCPUSPEED = 0.5f;
+	public static final float DEFAULTCPUSPEED = 1.0f;
 	/**
-	 * This defines file size limit : 100Mb
+	 * This defines file size limit : 500Mb
 	 * @since 12.2.3
 	 */
-	public static final long MAXFILESIZE = 100 * ONEMEGABYTES;
+	public static final long MAXFILESIZE = 500 * ONEMEGABYTES;
 	/**
 	 * This defines the maximum size of work disk space (30Gb)
 	 *
 	 * @since 8.0.0
 	 */
-	public static final long MAXDISKSIZE = 5 * ONEGIGABYTES;
+	public static final long MAXDISKSIZE = 30 * ONEGIGABYTES;
 	/**
 	 * This defines the maximum size of work RAM space (1Gb) 
 	 *
 	 * @since 9.1.0
 	 */
-	public static final long MAXRAMSIZE = 512 * ONEKILOBYTES;
+	public static final long MAXRAMSIZE = 1 * ONEGIGABYTES;
 	/**
 	 * This helps to format date : the format is "yyyy-MM-dd HH:mm:ss"
 	 */
@@ -1005,14 +1042,11 @@ public class XWTools {
 //    	}
 //    	return hexString.toString();
 //    }
-    public static String sha256(String data) throws NoSuchAlgorithmException {
+    public static String sha256(final String data) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance( "SHA-256" );
-        String text = "Text to hash, cryptographically.";
-
         // Change this to UTF-16 if needed
-        md.update( text.getBytes( StandardCharsets.UTF_8 ) );
+        md.update( data.getBytes( StandardCharsets.UTF_8 ) );
         byte[] digest = md.digest();
-
         return String.format( "%064x", new BigInteger( 1, digest ) );
       }
     /**
@@ -1043,10 +1077,11 @@ public class XWTools {
 			logger.info("uid3 " + uid3 + " " + uid3.hashCode() + " " + (uid3.hashCode() % 1000));
 			logger.info("uid3 " + uid3 + " " + createDir("/tmp", uid3));
 
-			logger.info("sha256  (\"test string to sha256\") = " + sha256("test string to sha256"));
-
 			if (argv.length > 1) {
-				logger.info("sha256CheckSum  (" + argv[1] + ") = " + sha256CheckSum(new File(argv[1])));
+				logger.info("sha256  (\"" + argv[1] + "\") = " + sha256(argv[1]));
+				File f = new File(argv[1]);
+				if(f.exists())
+					logger.info("sha256CheckSum  (" + argv[1] + ") = " + sha256CheckSum(f));
 			}
 
 		} catch (final Exception e) {

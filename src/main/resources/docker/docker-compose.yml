@@ -28,6 +28,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${CERTIFICATE_AND_PRIVATE_KEYS_REPO}:/iexec/keystore
       - ${SCHEDULER_PERSISTING_FOLDER}:/var/xwhep
+      - ${SCHEDULERWALLETPATH}:/iexec/wallet/wallet.json
     environment:
       - DBHOST=${DBHOST}
       - DBNAME=${MYSQL_DB_NAME}
@@ -43,6 +44,12 @@ services:
       - JWTETHISSUER=${JWTETHISSUER}
       - JWTETHSECRET=${JWTETHSECRET}
       - DELEGATEDREGISTRATION=${DELEGATEDREGISTRATION}
+      - MAXFILESIZE=${MAXFILESIZE}
+      - ETHNODE=${ETHNODE}
+      - RLCCONTRACT=${RLCCONTRACT}
+      - IEXECHUBCONTRACT=${IEXECHUBCONTRACT}
+      - WALLETPATH=${SCHEDULERWALLETPATH}
+      - WALLETPASSWORD=${SCHEDULERWALLETPASSWORD}
     networks:
       - iexec-net
     restart: unless-stopped
@@ -55,6 +62,8 @@ services:
       - SCHEDULER_DOMAIN=iexecscheduler
       - TMPDIR=${RESULTS_FOLDER}
       - SANDBOXENABLED=${WORKER_SANDBOX_ENABLED}
+      - WALLETPATH=${WORKERWALLETPATH}
+      - WALLETPASSWORD=${WORKERWALLETPASSWORD}
       - LOGGERLEVEL=${LOGGERLEVEL}
     ports:
       - 4321
@@ -64,6 +73,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${RESULTS_FOLDER}:${RESULTS_FOLDER}
+      - ${WORKERWALLETPATH}:/iexec/wallet/wallet.json  
     networks:
       - iexec-net
     restart: unless-stopped

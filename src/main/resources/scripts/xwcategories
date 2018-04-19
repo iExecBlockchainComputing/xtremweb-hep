@@ -25,7 +25,7 @@
 
 
 #  ******************************************************************
-#  File    : xwworks
+#  File    : xwvategories
 #  Date    : Mar 25th, 2018
 #  Author  : Oleg Lodygensky (lodygens -a-t- lal.in2p3.fr)
 # 
@@ -70,4 +70,4 @@ ROOTDIR=`pwd`/..
 cd $currentDir
 
 
-$ROOTDIR/bin/xtremweb.client "--xwget" "--xwgetenvelopes" $*
+$ROOTDIR/bin/xtremweb.client "--xwget" "--xwgetcategories" $*

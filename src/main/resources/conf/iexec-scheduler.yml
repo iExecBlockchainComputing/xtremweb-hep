@@ -1,0 +1,18 @@
+walletConfig:
+  path: "../wallet/UTC--2018-02-14T08-32-12.500000000Z--8bd535d49b095ef648cd85ea827867d358872809.json"
+  password: "whatever"
+commonConfiguration:
+  nodeConfig:
+    clientAddress: http://localhost:8545 #default
+    startBlock: 0
+  contractConfig:
+    rlcAddress: 0xCHANGE_IT
+    iexecHubAddress: 0xCHANGE_IT
+    workerPoolConfig:
+      address:  #leave blank will create a new workerpool (else plug scheduler to existing one)
+      name: "myWorkerPool"              #unchangeable after creation
+      subscriptionLockStakePolicy: 0    #unchangeable after creation
+      subscriptionMinimumStakePolicy: 10
+      subscriptionMinimumScorePolicy: 0
+      stakeRatioPolicy: 30
+      schedulerRewardRatioPolicy: 1

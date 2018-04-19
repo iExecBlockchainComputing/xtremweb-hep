@@ -663,7 +663,7 @@ public class StreamIO implements AutoCloseable {
 					}
 					if (written > maxlength) {
 						throw new XWCommException(new XMLRPCResult(XWReturnCode.DISK,
-								"readFileContent: file too long for the envelope"));
+								"readFileContent: file too long for the category"));
 					}
 				}
 				logger.finest("readFileContent : bytes read = " + written);

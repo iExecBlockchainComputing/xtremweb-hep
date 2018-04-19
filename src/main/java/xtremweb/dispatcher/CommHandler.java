@@ -403,8 +403,8 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			case GETWORKBYEXTERNALID:
 				result = get((XMLRPCCommandGetWorkByExternalId)command);
 				break;
-			case GETENVELOPEBYID:
-				result = get((XMLRPCCommandGetEnvelopeById)command);
+			case GETCATEGORYBYID:
+				result = get((XMLRPCCommandGetCategoryById)command);
 				break;
 			case GETAPPBYNAME:
 				result = get((XMLRPCCommandGetAppByName)command);
@@ -419,7 +419,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			case SEND:
 			case SENDAPP:
 			case SENDDATA:
-			case SENDENVELOPE:
+			case SENDCATEGORY:
 			case SENDGROUP:
 			case SENDSESSION:
 //			case SENDTRACE:
@@ -490,8 +490,8 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			case GETWORKS:
 				result = getWorks(command);
 				break;
-			case GETENVELOPES:
-				result = getEnvelopes(command);
+			case GETCATEGORIES:
+				result = getCategories(command);
 				break;
 			case BROADCASTWORK: {
 				broadcast(command);
@@ -964,9 +964,9 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 * This retrieves a work given its external id
 	 * @since 13.1.0
 	 */
-	protected XMLable get(final XMLRPCCommandGetEnvelopeById command)
+	protected XMLable get(final XMLRPCCommandGetCategoryById command)
 			throws IOException, InvalidKeyException, AccessControlException {
-		final DBCommandGetEnvelopeById dbc = new DBCommandGetEnvelopeById(DBInterface.getInstance());
+		final DBCommandGetCategoryById dbc = new DBCommandGetCategoryById(DBInterface.getInstance());
 		return dbc.exec(command);
 	}
     /**
@@ -1277,15 +1277,15 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	}
 
 	/**
-	 * This retrieves all works from server
+	 * This retrieves all categories from server
 	 *
 	 * @return a vector of UIDs
 	 * @since 13.0.0
 	 */
-	public XMLable getEnvelopes(final XMLRPCCommand command)
+	public XMLable getCategories(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		final DBCommandGetEnvelopes dbc = new DBCommandGetEnvelopes(DBInterface.getInstance());
+		final DBCommandGetCategories dbc = new DBCommandGetCategories(DBInterface.getInstance());
 		return dbc.exec(command);
 	}
 

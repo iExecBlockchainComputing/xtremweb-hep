@@ -35,7 +35,7 @@ import java.security.InvalidKeyException;
  * @since 13.0.0
  */
 
-public final class DBCommandGetEnvelopeById extends DBCommand implements CommCallback {
+public final class DBCommandGetCategoryById extends DBCommand implements CommCallback {
 
 	private DBInterface dbInterface;
 	/**
@@ -46,14 +46,13 @@ public final class DBCommandGetEnvelopeById extends DBCommand implements CommCal
 	 * @see xtremweb.database.SQLRequest#setDbName(String)
 	 * @see xtremweb.database.SQLRequest#setHsqldb(boolean)
 	 */
-	public DBCommandGetEnvelopeById(final DBInterface dbi) throws IOException {
+	public DBCommandGetCategoryById(final DBInterface dbi) throws IOException {
 		super();
 		dbInterface = dbi;
 	}
 
 	/**
-	 * This is called by client to disconnect from server This deletes the
-	 * client sessions
+	 * This is called by client
 	 *
 	 * @exception IOException
 	 *                is thrown general error
@@ -65,9 +64,9 @@ public final class DBCommandGetEnvelopeById extends DBCommand implements CommCal
 	public XMLable exec(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		mileStone.println("<exec>");
-		final XMLable ret = dbInterface.getEnvelopeById(command);
-		mileStone.println("</exec>");
+		mileStone.println("<dbcommandgetcategorybyid>");
+		final XMLable ret = dbInterface.getCategoryById(command);
+		mileStone.println("</dbcommandgetcategorybyid>");
 		return ret;
 	}
 }

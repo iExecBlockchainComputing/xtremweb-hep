@@ -1506,6 +1506,10 @@ public final class AppInterface extends Table {
 				return getLinuxPpc();
 			case AMD64:
 				return getLinuxAmd64();
+			case ARM64:
+				return getLinuxArm64();
+			case ARM32:
+				return getLinuxArm32();
 			case X86_64:
 				return getLinuxX8664();
 			case IA64:

@@ -125,8 +125,14 @@ public enum XWPostParams {
 	DATAFILE,
 	/**
 	 * This is the shasum of a data to upload
-	 *
+	 * @deprecated
 	 * @since 8.0.2
+	 */
+	DATAMD5SUM,
+	/**
+	 * This is the shasum of a data to upload
+	 *
+	 * @since 12.10.0
 	 */
 	DATASHASUM,
 	/**

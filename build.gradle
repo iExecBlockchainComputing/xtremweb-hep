@@ -1,7 +1,33 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
+    }
+}
+
+def UNIQUE_ID = 'hostname -f'.execute().text.trim()
+def tokencommon = 'curl -XPOST --data name=${UNIQUE_ID} https://cc02acaa7954c9d63333b18e6d5decead7d457ac3cfddeeb:@packagecloud.io/install/repositories/iexec/common/tokens.text'.execute().text.trim()
+def tokenscheduler = 'curl -XPOST --data name=${UNIQUE_ID} https://6f087db4a17b65a64d456e474a6b4b16b59a52d59690b70d:@packagecloud.io/install/repositories/iexec/scheduler/tokens.text'.execute().text.trim()
+def tokenworker = 'curl -XPOST --data name=${UNIQUE_ID} https://77715138d032c32e0d60769e5ae002b18837aa67da59f966:@packagecloud.io/install/repositories/iexec/worker/tokens.text'.execute().text.trim()
+
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java-library'
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://packagecloud.io/priv/${tokencommon}/iexec/common/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/priv/${tokenscheduler}/iexec/scheduler/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/priv/${tokenworker}/iexec/worker/maven2"
+    }
 }
 
 dependencies {
@@ -19,6 +45,13 @@ dependencies {
     compile "org.json:json:20160810" // ? https://mvnrepository.com/artifact/org.json/json
     compile "org.web3j:core:3.2.0"
 
+    compile 'ch.qos.logback:logback-classic:1.0.13'
+
+    //compile files('../iexec-scheduler/build/libs/iexec-scheduler-0.1.0-SNAPSHOT.jar')
+    compile "com.iexec.scheduler:iexec-scheduler:0.1.0-SNAPSHOT"
+    compile "com.iexec.worker:iexec-worker:0.1.0-SNAPSHOT"
+
+
     api 'org.apache.commons:commons-math3:3.6.1'
 
     implementation 'com.google.guava:guava:23.0'
@@ -30,7 +63,9 @@ dependencies {
     compile files('libXtremWeb/smartsockets-1.4.jar')
 }
 
+
 import org.apache.tools.ant.filters.ReplaceTokens
+
 import java.time.Instant
 
 ant.importBuild 'jni.xml'
@@ -75,21 +110,13 @@ jar {
     }
 }
 
-// task that creates a big jar that includes all dependencies
-// this will probably be removed once we switch to spring boot
-task fatJar(type: Jar) {
-    manifest {
-        attributes 'Implementation-Title': 'Gradle Jar File Example',
-                'Implementation-Version': version,
-                'Main-Class': 'xtremweb.dispatcher.Dispatcher xtremweb.common.HTTPLauncher xtremweb.client.Client'
-    }
-    exclude("doc/**")
-    baseName = project.name + '-all-dependencies'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+shadowJar {
+    baseName = project.name
+    classifier = null
+    version = version
 }
 
-build.dependsOn fatJar
+build.dependsOn(shadowJar)
 
 apply from: 'common.gradle'
 apply from: 'mac.gradle'
@@ -117,7 +144,9 @@ task copyMiscToDist(type: Copy) {
     }
 
     into("/lib") {
-        from libXtremWeb
+        from(libXtremWeb)
+        include('*.jar')
+
     }
 
     into("/benchmark/apptest") {
@@ -131,6 +160,10 @@ task copyMiscToDist(type: Copy) {
         include('COPYING')
         include('INSTALL')
         include('License**')
+    }
+
+    into("/wallet") {
+        from wallet
     }
 
     into("/lib") {
@@ -170,7 +203,7 @@ task copyKeystoreGenerationScripts(type: Copy) {
         from(scripts)
         include('xwhepgenkeys.template')
         rename { fileName -> fileName.replace('.template', '') }
-        
+
         filter(ReplaceTokens, tokens: getCustomProperties())
     }
 }
@@ -207,7 +240,7 @@ task generateKeys(type: Exec) {
 }
 
 task chmodBin(type: Exec) {
-    dependsOn(copyMiscToDist, copyScripts,copyKeystoreGenerationScripts, mkdirKeystore)
+    dependsOn(copyMiscToDist, copyScripts, copyKeystoreGenerationScripts, mkdirKeystore)
     commandLine("sh", "-c",
             "chmod -R 755 " + distBin + " && " +
                     "find " + distBin + " -iname *.sql* -exec chmod -x {} +" + " && " +
@@ -258,7 +291,7 @@ task copyLinuxInstallers(type: Copy) {
 
 
 def gitBranch = 'git name-rev --name-only HEAD'.execute().text.trim()
-def isMasterBranch = gitBranch == "remotes/origin/master"
+def isMasterBranch = true//gitBranch == "remotes/origin/master"
 def canBuildDockerImages = isMasterBranch || project.getProperty("environment").toString().toLowerCase().equals("docker")
 def canPushDockerImages = isMasterBranch
 
@@ -352,10 +385,10 @@ task buildImages(){
 
 buildImages.enabled = canBuildDockerImages
 
-task pushImages(type: Exec){
-    dependsOn (buildImages)
+task pushImages(type: Exec) {
+    dependsOn(buildImages)
 
-    if(project.hasProperty("dockerHubUser") && project.hasProperty("dockerHubPassword")){
+    if (project.hasProperty("dockerHubUser") && project.hasProperty("dockerHubPassword")) {
         commandLine("sh", "-c", "docker login -u " + project.dockerHubUser + " -p " + project.dockerHubPassword + " && " +
                 "docker push " + getServerDockerImageName() + " && " +
                 "docker push " + getClientDockerImageName() + " && " +

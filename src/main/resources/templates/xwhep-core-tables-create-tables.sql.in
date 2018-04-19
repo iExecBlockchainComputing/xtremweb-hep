@@ -264,7 +264,7 @@ insert into statuses (statusId, statusName, statusObjects, statusComment, status
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (11, 'AVAILABLE',     'datas',               'The data is available and can be downloaded on demand',                             null);
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (12, 'UNAVAILABLE',   'datas',               'The data is not available and can not be downloaded on demand',                     null);
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (13, 'REPLICATING',   'works',               'The object is being replicated',                                                    null);
-insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (14, 'FAILED',        'works',               'The job does not fill its envelope requirements',                                   null);
+insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (14, 'FAILED',        'works',               'The job does not fill its category requirements',                                   null);
 
 -- ---------------------------------------------------------------------------
 -- Data for table "dataTypes"
@@ -804,19 +804,19 @@ create table if not exists  groups_history  like  groups;
 show warnings;
 
 -- ---------------------------------------------------------------------------
--- Table "envs" :
--- This table contains "envelopes" that each work must belong to
--- An envelope defines maximum usage of CPU, bandwith, wall clocktime
+-- Table "categories" :
+-- This table contains "categories" that each work must belong to
+-- A category defines maximum usage of CPU, bandwith, wall clocktime
 -- Since 13.0.0
 -- ---------------------------------------------------------------------------
-create table if not exists  envs  (
-  envId              int unsigned   not null  auto_increment     comment 'EnvID referenced by smart contracts',
+create table if not exists  categories (
+  categoryId         bigint         not null  unique             comment 'catID referenced by smart contracts',
   uid                char(36)       not null  primary key        comment 'Primary key',
   ownerUID           char(36)       not null                     comment 'User UID',
-  accessRights       int(4)                   default 0x755      comment 'Please note that an envelope is always public',
+  accessRights       int(4)                   default 0x755      comment 'Please note that a category is always public',
   errorMsg           varchar(254)                                comment 'Error message',
   mtime              timestamp                                   comment 'Timestamp of last update',
-  name               varchar(254)   not null  default 'NONE'     comment 'Envelope name is a free text',
+  name               varchar(254)   not null  default 'NONE'     comment 'Category name is a free text',
   maxWallClockTime   int(10)        not null  default 300        comment 'Max amount of seconds a job can be computed; default 5mn',
   maxFreeMassStorage bigint         not null  default 5368709120 comment 'Max mass storage usage in bytes; default 5Gb',
   maxFileSize        bigint         not null  default 104857600  comment 'Max file length in bytes; default 100Mb',
@@ -825,16 +825,16 @@ create table if not exists  envs  (
 
 
   index  name     (name),
-  index  envId    (envId),
+  index  idx_categoryId    (categoryId),
   index  ownerUID (ownerUID),
   foreign key (owneruid) references users(uid)
   )
 engine  = @DBENGINE@,
-comment = 'envs = envelopes defining resources usage limit';
+comment = 'categories = categories defining resources usage limits';
 
 show warnings;
 
-create table if not exists  envs_history  like  envs;
+create table if not exists  categories_history  like  categories;
 
 show warnings;
 
@@ -847,7 +847,8 @@ show warnings;
 create table if not exists  works  (
   uid                 char(36)          not null  primary key      comment 'Primary key',
   appUID              char(36)          not null                   comment 'Application UID',
-  envId               int unsigned      not null  default 1        comment 'envId. See common/Envs.java',
+  categoryId          bigint                      default 0        comment 'categoryId. See common/CategoryInterface.java',
+  marketOrderId       int unsigned                default 0        comment 'blockchain market order id',
   statusId            tinyint unsigned  not null  default 255      comment 'Status Id. See common/XWStatus.java',
   status              varchar(36)       not null  default 'NONE'   comment 'Status. see common/XWStatus.java',
   sessionUID          char(36)                                     comment 'Optionnal. session UID',
@@ -908,10 +909,9 @@ create table if not exists  works  (
   index  groupUID            (groupUID),
   index  expectedhostUID     (expectedhostUID),
   index  ownerUID            (ownerUID),
-  index  envId               (envId),
+  index  idx_categoryId          (categoryId),
   index  sgId                (sgId),
-  index  completedDate       (completedDate),
-  foreign key (envId) references envs(envId)
+  index  completedDate       (completedDate)
 
   )
 engine  = @DBENGINE@,
@@ -994,12 +994,6 @@ insert into users (uid,login,password,fname,lname,email,rights,owneruid,accessri
                "@DBADMINEMAIL@","VWORKER_USER","@ADMINUID@","1792",
                (select userRightId from userRights where userRightName = 'VWORKER_USER'));
 
--- ---------------------------------------------------------------------------
--- Data for table "envs"
--- ---------------------------------------------------------------------------
-
-insert into envs (uid, owneruid, accessrights, errormsg, name, envid)
-        values ("@ENVUID@", "@ADMINUID@", "1877", '', 'DefaultEnv', 0);
 
 -- If your dispatcher complains about handshake, try this :
 -- set password for xtremweb@localhost = old_password('xwpassword');

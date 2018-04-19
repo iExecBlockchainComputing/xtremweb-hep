@@ -69,6 +69,7 @@ import xtremweb.security.XWAccessRights;
  * This class describes a generic client to XtremWeb. It is designed to submit,
  * delete jobs as to get job status and results. <br />
  * <br />
+ * <br />
  * Examples can be found in CommandLineParser.
  *
  * @see xtremweb.common.CommandLineParser
@@ -1720,8 +1721,8 @@ public final class Client {
 	}
 
 	/**
-	 * This retrieves, stores and displays applications installed in XtremWeb
-	 * server. <blockquote> Command line parameters : --xwgetapps </blockquote>
+	 * This retrieves, stores and displays categories installed in XtremWeb
+	 * server
 	 *
 	 * @param display
 	 *            is true to display applications
@@ -1735,23 +1736,19 @@ public final class Client {
 	 * @throws InvalidKeyException
 	 * @since 13.0.0
 	 */
-	private Collection<XMLValue> getEnvelopes(final boolean display)
+	private Collection<XMLValue> getCategories(final boolean display)
 			throws URISyntaxException, IOException, InstantiationException, InvalidKeyException, AccessControlException,
 			ClassNotFoundException, SAXException, XWCommException {
 
 		final URI uri = commClient().newURI();
-		final XMLRPCCommandGetEnvelopes cmd = new XMLRPCCommandGetEnvelopes(uri, config.getUser());
+		final XMLRPCCommandGetCategories cmd = new XMLRPCCommandGetCategories(uri, config.getUser());
 		final XMLVector xmluids = (XMLVector) sendCommand(cmd, false);
 		final Collection<XMLValue> uids = xmluids.getXmlValues();
 		get(uids, display);
 		return uids;
 	}
 	/**
-	 * This inserts/updates an application in server.<br>
-	 * This does not read from cache because we need the exact last app
-	 * definition in order to correctly update it if it exists. <blockquote>
-	 * Command line parameters : --xwsendapp appName cpuType osName binFileName
-	 * </blockquote> The user must have the right to do so
+	 * This inserts/updates a category in server.
 	 *
 	 * @throws IOException
 	 * @throws ParseException
@@ -1764,38 +1761,38 @@ public final class Client {
 	 * @throws NoSuchAlgorithmException
 	 * @since 13.0.0
 	 */
-	private void sendEnvelope() throws IOException, ParseException, InvalidKeyException, AccessControlException,
+	private void sendCategory() throws IOException, ParseException, InvalidKeyException, AccessControlException,
 			URISyntaxException, InstantiationException, ClassNotFoundException, SAXException, NoSuchAlgorithmException {
 
-		final List envelopeParams = (List) args.commandParams();
+		final List categoryParams = (List) args.commandParams();
 
-		EnvelopeInterface env;
+		CategoryInterface theCategory;
 		final File xmlFile = (File) args.getOption(CommandLineOptions.XML);
 
 		if (xmlFile != null) {
 			final FileInputStream fis = new FileInputStream(xmlFile);
-			env = (EnvelopeInterface) Table.newInterface(fis);
-			if (env.getEnvId() <= 0) {
-				throw new IOException("envelope id can not be zero");
+			theCategory = (CategoryInterface) Table.newInterface(fis);
+			if (theCategory.getCategoryId() <= 0) {
+				throw new IOException("category id can not be zero");
 			}
-			if (env.getUID() == null) {
-				env.setUID(new UID());
+			if (theCategory.getUID() == null) {
+				theCategory.setUID(new UID());
 			}
 		} else {
-            if (envelopeParams == null) {
+            if (categoryParams == null) {
                 throw new ParseException("no param provided", 0);
             }
-            env = new EnvelopeInterface(new UID());
-            env.setName((String) envelopeParams.get(0));
-            env.setMaxCpuSpeed(Integer.valueOf((String)envelopeParams.get(1)));
-            env.setMaxWallClockTime(Integer.valueOf((String)envelopeParams.get(2)));
-            env.setMaxMemory(Long.valueOf((String)envelopeParams.get(3)));
-			env.setMaxFreeMassStorage(Long.valueOf((String)envelopeParams.get(4)));
-			env.setMaxFileSize(Long.valueOf((String)envelopeParams.get(5)));
+            theCategory = new CategoryInterface(new UID());
+            theCategory.setName((String) categoryParams.get(0));
+            theCategory.setMaxCpuSpeed(Integer.valueOf((String)categoryParams.get(1)));
+            theCategory.setMaxWallClockTime(Integer.valueOf((String)categoryParams.get(2)));
+            theCategory.setMaxMemory(Long.valueOf((String)categoryParams.get(3)));
+			theCategory.setMaxFreeMassStorage(Long.valueOf((String)categoryParams.get(4)));
+			theCategory.setMaxFileSize(Long.valueOf((String)categoryParams.get(5)));
 
         }
-		commClient().send(env);
-		println(commClient().newURI(env.getUID()));
+		commClient().send(theCategory);
+		println(commClient().newURI(theCategory.getUID()));
 	}
 	/**
 	 * This retrieves, stores and displays groups installed in XtremWeb server.
@@ -3339,11 +3336,11 @@ public final class Client {
 			case SENDDATA:
 				sendData();
 				break;
-			case GETENVELOPES:
-				getEnvelopes(true);
+			case GETCATEGORIES:
+				getCategories(true);
 				break;
-			case SENDENVELOPE:
-				sendEnvelope();
+			case SENDCATEGORY:
+				sendCategory();
 				break;
 			case GETGROUPS:
 				getGroups(true);

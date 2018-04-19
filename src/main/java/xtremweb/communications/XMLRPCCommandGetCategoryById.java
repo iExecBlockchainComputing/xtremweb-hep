@@ -28,24 +28,22 @@ import xtremweb.common.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.rmi.RemoteException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 
 /**
+ * This class defines the XMLRPCCommand to retrieve an category given its id.
+ * Created: Mar 23rd, 2018
+ *
  * @author <a href="mailto:lodygens /a|t\ lal.in2p3.fr>Oleg Lodygensky</a>
  * @since 13.0.0
  */
-
-/**
- * This class defines the XMLRPCCommand to send application definition
- */
-public class XMLRPCCommandSendEnvelope extends XMLRPCCommandSend  {
+public class XMLRPCCommandGetCategoryById extends XMLRPCCommand {
 
 	/**
 	 * This is the RPC id
 	 */
-	public static final IdRpc IDRPC = IdRpc.SENDENVELOPE;
+	public static final IdRpc IDRPC = IdRpc.GETCATEGORYBYID;
 	/**
 	 * This is the XML tag
 	 */
@@ -54,7 +52,7 @@ public class XMLRPCCommandSendEnvelope extends XMLRPCCommandSend  {
 	/**
 	 * This constructs a new command
 	 */
-	public XMLRPCCommandSendEnvelope() throws IOException {
+	protected XMLRPCCommandGetCategoryById() throws IOException {
 		super(null, IDRPC);
 	}
 
@@ -62,28 +60,24 @@ public class XMLRPCCommandSendEnvelope extends XMLRPCCommandSend  {
 	 * This constructs a new command
 	 *
 	 * @param uri
-	 *            contains the URI to connect to
-	 * @param p
-	 *            defines the object to send
+	 *            contains the URI to connect to; its path must contains the
+	 *            login of the user to retrieve
 	 */
-	public XMLRPCCommandSendEnvelope(final URI uri, final Table p) throws IOException {
+	protected XMLRPCCommandGetCategoryById(final URI uri) throws IOException {
 		super(uri, IDRPC);
-		setParameter(p);
 	}
 
 	/**
 	 * This constructs a new command
 	 *
 	 * @param uri
-	 *            contains the URI to connect to
+	 *            contains the URI to connect to; its path must contains the
+	 *            login of the user to retrieve
 	 * @param u
 	 *            defines the user who executes this command
-	 * @param p
-	 *            defines the object to send
 	 */
-	public XMLRPCCommandSendEnvelope(final URI uri, final UserInterface u, final Table p) throws IOException {
-
-		this(uri, p);
+	public XMLRPCCommandGetCategoryById(final URI uri, final UserInterface u) throws IOException {
+		this(uri);
 		setUser(u);
 	}
 
@@ -93,10 +87,12 @@ public class XMLRPCCommandSendEnvelope extends XMLRPCCommandSend  {
 	 *
 	 * @param input
 	 *            is the input stream
+	 * @throws IOException
+	 *             on XML error
 	 * @throws InvalidKeyException
 	 * @see XMLReader#read(InputStream)
 	 */
-	public XMLRPCCommandSendEnvelope(final InputStream input) throws IOException, SAXException, InvalidKeyException {
+	public XMLRPCCommandGetCategoryById(final InputStream input) throws IOException, SAXException, InvalidKeyException {
 		this();
 		final XMLReader reader = new XMLReader(this);
 		reader.read(input);
@@ -107,33 +103,46 @@ public class XMLRPCCommandSendEnvelope extends XMLRPCCommandSend  {
 	 *
 	 * @param comm
 	 *            is the communication channel
-	 * @return always null
+	 * @return always null since this expect no answer
 	 * @throws AccessControlException
 	 * @throws InvalidKeyException
-	 * @exception RemoteException
-	 *                is thrown on comm error
 	 */
 	@Override
 	public XMLable exec(final CommClient comm)
-			throws IOException, ClassNotFoundException, SAXException, InvalidKeyException, AccessControlException {
-		comm.send(this);
+			throws IOException, SAXException, InvalidKeyException, AccessControlException {
+		return comm.get(this);
+	}
+
+	/**
+	 * This retrieves this command user login
+	 *
+	 * @return the login of the user
+	 */
+	public String getId() {
+		try {
+			final URI uri = getURI();
+			return uri.getPath().substring(1, uri.getPath().length());
+		} catch (final Exception e) {
+			getLogger().exception(e);
+		}
 		return null;
 	}
 
 	/**
 	 * This is for testing only. The first argument must be a valid client
 	 * configuration file. Without a second argument, this dumps an
-	 * XMLRPCCommandSend object. If the second argument is an XML file
-	 * containing a description of an XMLRPCCommandSend this creates an object
-	 * from XML description and dumps it. <br />
-	 * Usage : java -cp xtremweb.jar xtremweb.communications.XMLRPCCommandSend
-	 * aConfigFile [anXMLDescriptionFile]
+	 * XMLRPCCommandGetCategoryById object. If the second argument is an XML file
+	 * containing a description of an XMLRPCCommandGetCategoryById this creates
+	 * an object from XML description and dumps it. <br />
+	 * Usage : java -cp xtremweb.jar
+	 * xtremweb.communications.XMLRPCCommandGetCategoryById aConfigFile
+	 * [anXMLDescriptionFile]
 	 */
 	public static void main(final String[] argv) {
 		try {
 			final XWConfigurator config = new XWConfigurator(argv[0], false);
-			final XMLRPCCommandSend cmd = new XMLRPCCommandSendEnvelope(new URI(config.getCurrentDispatcher(), new UID()),
-					config.getUser());
+			final XMLRPCCommandGetCategoryById cmd = new XMLRPCCommandGetCategoryById(
+					new URI(config.getCurrentDispatcher(), new UID()), config.getUser());
 			cmd.test(argv);
 		} catch (final Exception e) {
 			e.printStackTrace();

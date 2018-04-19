@@ -125,7 +125,7 @@ public enum StatusEnum {
 	REPLICATING,
 	/**
 	 * This denotes an user error
-     * e.g. : the work does not comply to its envelope parameters
+     * e.g. : the work does not comply to its category parameters
 	 * @since 13.0.0
 	 */
 	FAILED;

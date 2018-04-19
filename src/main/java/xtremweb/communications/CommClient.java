@@ -587,7 +587,7 @@ public abstract class CommClient implements ClientAPI {
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
-			return newEnvelopeInterface(input);
+			return newCategoryInterface(input);
 		} catch (final SAXException e) {
 		}
 		try {
@@ -637,9 +637,9 @@ public abstract class CommClient implements ClientAPI {
 	 * This creates an object from channel
 	 * @since 13.0.0
 	 */
-	protected EnvelopeInterface newEnvelopeInterface(final InputStream input)
+	protected CategoryInterface newCategoryInterface(final InputStream input)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException {
-		final EnvelopeInterface itf = new EnvelopeInterface();
+		final CategoryInterface itf = new CategoryInterface();
 		return newTableInterface(itf, input);
 	}
 
@@ -989,10 +989,10 @@ public abstract class CommClient implements ClientAPI {
 	 *
 	 * @param command
 	 *            is the GET command to send to server
-	 * @see #get(XMLRPCCommandGetEnvelopeById, boolean)
+	 * @see #get(XMLRPCCommandGetCategoryById, boolean)
 	 * @since 13.0.0
 	 */
-	public Table get(final XMLRPCCommandGetEnvelopeById command)
+	public Table get(final XMLRPCCommandGetCategoryById command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException {
 		return get(command, true);
 	}
@@ -1009,7 +1009,7 @@ public abstract class CommClient implements ClientAPI {
 	 * @return an object definition
 	 * @since 13.0.0
 	 */
-	public Table get(final XMLRPCCommandGetEnvelopeById command, final boolean bypass)
+	public Table get(final XMLRPCCommandGetCategoryById command, final boolean bypass)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException {
 		if (!bypass) {
 			final Table object = cache.get(command.getURI());
@@ -1915,28 +1915,28 @@ public abstract class CommClient implements ClientAPI {
 	}
 
 	/**
-	 * This retrieves all envelopes from server
+	 * This retrieves all categories from server
 	 *
 	 * @return a vector of UIDs
 	 * @since 13.0.0
 	 */
 	@Override
-	public XMLVector getEnvelopes()
+	public XMLVector getCategories()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException {
 
 		final URI uri = newURI();
-		final XMLRPCCommandGetEnvelopes cmd = new XMLRPCCommandGetEnvelopes(uri, config.getUser());
-		return getEnvelopes(cmd);
+		final XMLRPCCommandGetCategories cmd = new XMLRPCCommandGetCategories(uri, config.getUser());
+		return getCategories(cmd);
 	}
 
 	/**
-	 * This retrieves all envelopes from server
+	 * This retrieves all categories from server
 	 *
 	 * @return a vector of UIDs
 	 * @since 13.0.0
 	 */
 	@Override
-	public XMLVector getEnvelopes(final XMLRPCCommandGetEnvelopes command)
+	public XMLVector getCategories(final XMLRPCCommandGetCategories command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException {
 
 		XMLVector xmlv = null;

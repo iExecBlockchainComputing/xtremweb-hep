@@ -33,30 +33,30 @@ import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 
 /**
- * This class describes a row of the envs SQL table.
- * Please note that an envelope is always public
+ * This class describes a row of the categories SQL table.
+ * Please note that an category is always public
  * @author <a href="mailto:lodygens /at\ .in2p3.fr>Oleg Lodygensky</a>
  * @version %I%, %G%
  * @since 13.0.0
  */
-public final class EnvelopeInterface extends Table {
+public final class CategoryInterface extends Table {
 
 	/**
 	 * This is the database table name This was stored in
 	 * xtremweb.dispatcher.App
 	 *
 	 */
-	private static final String ENVTABLENAME = "envs";
+	private static final String CATEGORYTABLENAME = "categories";
 
 	/**
-	 * This the application name length as defined in DB
+	 * This the category name length as defined in DB
 	 */
-	private static final int ENVNAMELENGTH = 100;
+	private static final int CATEGORYNAMELENGTH = 100;
 
 	/**
 	 * This is the XML tag
 	 */
-	public static final String THISTAG = "envelope";
+	public static final String THISTAG = "category";
 
 	/**
 	 * This enumerates this interface columns. The base enumerations are defined
@@ -83,18 +83,18 @@ public final class EnvelopeInterface extends Table {
         /**
          * This is the column index of the ID which must be unic in DB
          */
-        ENVID {
+        CATEGORYID {
             /**
              * This creates an object from String representation for this column
              * value This cleans the parameter to ensure SQL compliance
              *
              * @param v
              *            the String representation
-             * @return a Boolean representing the column value
+             * @return a Long representing the column value
              */
             @Override
-            public Integer fromString(final String v) {
-                return Integer.valueOf(v);
+            public Long fromString(final String v) {
+                return Long.valueOf(v);
             }
         },
         /**
@@ -262,14 +262,14 @@ public final class EnvelopeInterface extends Table {
 	/**
 	 * This is the default constructor. Access rights are set to public
 	 */
-	public EnvelopeInterface() {
+	public CategoryInterface() {
 
-		super(THISTAG, ENVTABLENAME);
+		super(THISTAG, CATEGORYTABLENAME);
 		setAttributeLength(ENUMSIZE);
 		setAccessRights(XWAccessRights.DEFAULT);
 		setShortIndexes(new int[] { TableColumns.UID.getOrdinal(),
 				Columns.NAME.getOrdinal(),
-				Columns.ENVID.getOrdinal() });
+				Columns.CATEGORYID.getOrdinal() });
 		setMaxCpuSpeed(XWTools.DEFAULTCPUSPEED);
 		setMaxFileSize(XWTools.MAXFILESIZE);
 		setMaxFreeMassStorage(XWTools.MAXDISKSIZE);
@@ -283,7 +283,7 @@ public final class EnvelopeInterface extends Table {
 	 * @param uid
 	 *            is this new object UID
 	 */
-	public EnvelopeInterface(final UID uid) throws IOException {
+	public CategoryInterface(final UID uid) throws IOException {
 		this();
 		setUID(uid);
 	}
@@ -292,7 +292,7 @@ public final class EnvelopeInterface extends Table {
 	 * This creates a new object that will be retrieved with a complex SQL
 	 * request
 	 */
-	public EnvelopeInterface(final SQLRequest r) {
+	public CategoryInterface(final SQLRequest r) {
 		this();
 		setRequest(r);
 	}
@@ -305,7 +305,7 @@ public final class EnvelopeInterface extends Table {
 	 * @exception IOException on refill error
 	 * @see #fill(ResultSet)
 	 */
-	public EnvelopeInterface(final ResultSet rs) throws IOException {
+	public CategoryInterface(final ResultSet rs) throws IOException {
 		this();
 		fill(rs);
 	}
@@ -315,7 +315,7 @@ public final class EnvelopeInterface extends Table {
 	 * @param input
 	 *            is a String containing an XML representation
 	 */
-	public EnvelopeInterface(final String input) throws IOException, SAXException {
+	public CategoryInterface(final String input) throws IOException, SAXException {
 		this(StreamIO.stream(input));
 	}
 	/**
@@ -323,9 +323,9 @@ public final class EnvelopeInterface extends Table {
 	 *
 	 * @param f
 	 *            is the XML file
-	 * @see #EnvelopeInterface(InputStream)
+	 * @see #CategoryInterface(InputStream)
 	 */
-	public EnvelopeInterface(final File f) throws IOException, SAXException {
+	public CategoryInterface(final File f) throws IOException, SAXException {
 		this(new FileInputStream(f));
 	}
 	/**
@@ -338,7 +338,7 @@ public final class EnvelopeInterface extends Table {
 	 *             on XML error
 	 * @see XMLReader#read(InputStream)
 	 */
-	public EnvelopeInterface(final InputStream input) throws IOException, SAXException {
+	public CategoryInterface(final InputStream input) throws IOException, SAXException {
 		this();
 		try (final XMLReader reader = new XMLReader(this)) {
 			reader.read(input);
@@ -356,7 +356,7 @@ public final class EnvelopeInterface extends Table {
 	 * @throws IOException
 	 *             on XML error
 	 */
-	public EnvelopeInterface(final Attributes attrs) {
+	public CategoryInterface(final Attributes attrs) {
 		this();
 		super.fromXml(attrs);
 	}
@@ -376,7 +376,7 @@ public final class EnvelopeInterface extends Table {
             setOwner((UID) TableColumns.OWNERUID.fromResultSet(rs));
             setAccessRights(XWAccessRights.DEFAULT);
 			setName((String) Columns.NAME.fromResultSet(rs));
-            setEnvId((Integer) Columns.ENVID.fromResultSet(rs));
+            setCategoryId((Long) Columns.CATEGORYID.fromResultSet(rs));
 			setMaxMemory((Long) Columns.MAXMEMORY.fromResultSet(rs));
 			setMaxCpuSpeed((Float) Columns.MAXCPUSPEED.fromResultSet(rs));
 			setMaxFreeMassStorage((Long) Columns.MAXFREEMASSSTORAGE.fromResultSet(rs));
@@ -417,7 +417,7 @@ public final class EnvelopeInterface extends Table {
 	 */
 	@Override
 	public void updateInterface(final Table appitf) throws IOException {
-		final EnvelopeInterface itf = (EnvelopeInterface) appitf;
+		final CategoryInterface itf = (CategoryInterface) appitf;
 		if (itf.getName() != null) {
 			setName(itf.getName());
 		}
@@ -427,13 +427,13 @@ public final class EnvelopeInterface extends Table {
 		setMaxFreeMassStorage(itf.getMaxFreeMassStorage());
 		setMaxFileSize(itf.getMaxFileSize());
 		setMaxWallClockTime(itf.getMaxWallClockTime());
-		setEnvId(itf.getEnvId());
+		setCategoryId(itf.getCategoryId());
 	}
 
 	/**
-	 * This retrieves the max RAM needed for this envelope
+	 * This retrieves the max RAM needed for this category
 	 *
-	 * @return the max RAM needed for this envelope
+	 * @return the max RAM needed for this category
 	 * @exception IOException if value not defined
 	 */
 	public long getMaxMemory() throws IOException {
@@ -441,11 +441,11 @@ public final class EnvelopeInterface extends Table {
 		if (ret != null) {
 			return ret.longValue();
 		}
-		throw new IOException("" + getEnvId() + " : no max memory");
+		throw new IOException("" + getCategoryId() + " : no max memory");
 	}
 
 	/**
-	 * This retrieves the max CPU speed for this envelope
+	 * This retrieves the max CPU speed for this category
 	 *
 	 * @return the max CPU speed
 	 * @exception IOException if value not defined
@@ -455,11 +455,11 @@ public final class EnvelopeInterface extends Table {
 		if (ret != null) {
 			return ret.floatValue();
 		}
-		throw new IOException("" + getEnvId() + " : no max cpu speed");
+		throw new IOException("" + getCategoryId() + " : no max cpu speed");
 	}
 
 	/**
-	 * This retrieves the maximum amount of disk for this envelope
+	 * This retrieves the maximum amount of disk for this category
 	 *
 	 * @return the max disk space, in bytes
 	 * @exception IOException if value not defined
@@ -469,10 +469,10 @@ public final class EnvelopeInterface extends Table {
 		if (ret != null) {
 			return ret.longValue();
 		}
-		throw new IOException("" + getEnvId() + " : no max free max storage");
+		throw new IOException("" + getCategoryId() + " : no max free max storage");
 	}
 	/**
-	 * This retrieves the max file size for this envelope
+	 * This retrieves the max file size for this category
 	 *
 	 * @return the max file size, in bytes
 	 * @exception IOException if value not defined
@@ -482,11 +482,11 @@ public final class EnvelopeInterface extends Table {
 		if (ret != null) {
 			return ret.longValue();
 		}
-		throw new IOException("" + getEnvId() + " : no max file size");
+		throw new IOException("" + getCategoryId() + " : no max file size");
 	}
 
 	/**
-	 * This retrieves the maximum wall clock time for this envelope
+	 * This retrieves the maximum wall clock time for this category
 	 *
 	 * @return the max wall clock time, in seconds
 	 * @exception IOException if value not defined
@@ -496,11 +496,11 @@ public final class EnvelopeInterface extends Table {
 		if (ret != null) {
 			return ret.intValue();
 		}
-		throw new IOException("" + getEnvId() + " : no max wall clock time");
+		throw new IOException("" + getCategoryId() + " : no max wall clock time");
 	}
 
     /**
-     * This gets this envelope name
+     * This gets this category name
      *
      * @return the name, or null if not set
      */
@@ -512,16 +512,16 @@ public final class EnvelopeInterface extends Table {
         return null;
     }
     /**
-     * This gets this envelope name
+     * This gets this category id
      *
      * @return the name, or -1 if not set
      */
-    public int getEnvId() {
-    	final Integer ret = (Integer) getValue(Columns.ENVID);
+    public long getCategoryId() {
+    	final Long ret = (Long) getValue(Columns.CATEGORYID);
     	if (ret != null) {
     		return ret.intValue();
     	}
-        return -1;
+        return -1L;
     }
 	/**
 	 * This sets parameter value; this is called from
@@ -545,7 +545,7 @@ public final class EnvelopeInterface extends Table {
 	}
 
 	/**
-	 * This sets the maximum amount of RAM for this envelope
+	 * This sets the maximum amount of RAM for this category
 	 *
 	 * @param v is the max amount of RAM in bytes
 	 * @return true if value has changed, false otherwise
@@ -559,7 +559,7 @@ public final class EnvelopeInterface extends Table {
 	}
 
 	/**
-	 * This sets the max CPU speed for this envelope
+	 * This sets the max CPU speed for this category
 	 *
 	 * @param v is the max CPU speed in percentage
 	 * @return true if value has changed, false otherwise
@@ -570,7 +570,7 @@ public final class EnvelopeInterface extends Table {
 	}
 
 	/**
-	 * This sets the max disk space for this envelope
+	 * This sets the max disk space for this category
 	 *
 	 * @param v is the max amount of disk space in bytes
 	 * @return true if value has changed, false otherwise
@@ -583,7 +583,7 @@ public final class EnvelopeInterface extends Table {
 		return false;
 	}
 	/**
-	 * This sets the max file size for this envelope
+	 * This sets the max file size for this category
 	 *
 	 * @param v is the max file size, in bytes
 	 * @return true if value has changed, false otherwise
@@ -609,38 +609,38 @@ public final class EnvelopeInterface extends Table {
         return false;
     }
     /**
-     * This sets the max disk space for this envelope
+     * This sets the max disk space for this category
      *
      * @param v is the max amount of disk space
      * @return true if value has changed, false otherwise
      */
-    public boolean setEnvId(final int v) {
+    public boolean setCategoryId(final long v) {
         try {
-            return setValue(Columns.ENVID, Integer.valueOf(v < 0 ? 0 : v));
+            return setValue(Columns.CATEGORYID, Long.valueOf(v < 0L ? 0L : v));
         } catch (final Exception e) {
         }
         return false;
     }
 	/**
-	 * This set this envelope name; name is eventually truncated to ENVNAMELENGTH
+	 * This set this category name; name is eventually truncated to CATEGORYNAMELENGTH
 	 * @return true if value has changed, false otherwise
-	 * @see #ENVNAMELENGTH
+	 * @see #CATEGORYNAMELENGTH
 	 */
 	public boolean setName(final String v) {
 		String value = v;
-		if ((value != null) && (value.length() > ENVNAMELENGTH)) {
-			value = value.substring(0, ENVNAMELENGTH - 1);
+		if ((value != null) && (value.length() > CATEGORYNAMELENGTH)) {
+			value = value.substring(0, CATEGORYNAMELENGTH - 1);
 			getLogger().warn("Name too long; truncated to " + value);
 		}
 		return setValue(Columns.NAME, value == null ? null : value);
 	}
 
 	/**
-	 * This is for testing only Without any argument, this dumps a EnvelopeInterface
+	 * This is for testing only Without any argument, this dumps a CategoryInterface
 	 * object. If the first argument is an XML file containing a description of
-	 * a EnvelopeInterface, this creates a EnvelopeInterface from XML description and
+	 * a CategoryInterface, this creates a CategoryInterface from XML description and
 	 * dumps it. <br />
-	 * Usage : java -cp xtremweb.jar xtremweb.common.EnvelopeInterface [xmlFile]
+	 * Usage : java -cp xtremweb.jar xtremweb.common.CategoryInterface [xmlFile]
 	 */
 	public static void main(final String[] argv) {
 		try {
@@ -649,7 +649,7 @@ public final class EnvelopeInterface extends Table {
 				logLevel = LoggerLevel.valueOf(System.getProperty(XWPropertyDefs.LOGGERLEVEL.toString()));
 			} catch (final Exception e) {
 			}
-			final EnvelopeInterface itf = new EnvelopeInterface();
+			final CategoryInterface itf = new CategoryInterface();
 			itf.setUID(UID.getMyUid());
 			if (argv.length > 0) {
 				try {
@@ -665,7 +665,7 @@ public final class EnvelopeInterface extends Table {
 		} catch (final Exception e) {
 			final Logger logger = new Logger();
 			logger.exception(
-					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.EnvelopeInterface [anXMLDescriptionFile]",
+					"Usage : java -cp " + XWTools.JARFILENAME + " xtremweb.common.CategoryInterface [anXMLDescriptionFile]",
 					e);
 		}
 	}

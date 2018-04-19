@@ -656,10 +656,10 @@ public enum IdRpc {
 		}
 	},
 	/**
-	 * This sends an envelope to server
+	 * This sends a category to server
 	 * @since 13.0.0
 	 */
-	SENDENVELOPE {
+	SENDCATEGORY {
 		@Override
 		public XMLRPCCommandSend newCommand(final URI uri, final UserInterface client, final Table obj)
 				throws IOException {
@@ -674,7 +674,7 @@ public enum IdRpc {
 
 		@Override
 		public String helpRestApi() {
-			return "/" + this.toString() + "?" + XWPostParams.XMLDESC + "=an xml description : sends an envelope";
+			return "/" + this.toString() + "?" + XWPostParams.XMLDESC + "=an xml description : sends a category";
 		}
 	},
 	/**
@@ -760,45 +760,45 @@ public enum IdRpc {
         }
     },
     /**
-     * This retrieves all envelopes UID from server
+     * This retrieves all categories UID from server
      * @since 13.0.0
      */
-    GETENVELOPES {
+    GETCATEGORIES {
         @Override
-        public XMLRPCCommandGetEnvelopes newCommand(final URI uri, final UserInterface client, final Table obj)
+        public XMLRPCCommandGetCategories newCommand(final URI uri, final UserInterface client, final Table obj)
                 throws IOException {
-            return new XMLRPCCommandGetEnvelopes(uri, client);
+            return new XMLRPCCommandGetCategories(uri, client);
         }
 
         @Override
         public String helpClient() {
-            return this.toString() + " : retrieves all envelopes";
+            return this.toString() + " : retrieves all categories";
         }
 
         @Override
         public String helpRestApi() {
-            return "/" + this.toString() + ": retrieves all envelopes";
+            return "/" + this.toString() + ": retrieves all categories";
         }
     },
     /**
-     * This retrieves an envelope by its ID
+     * This retrieves a category by its ID
      * @since 13.1.0
      */
-    GETENVELOPEBYID {
+    GETCATEGORYBYID {
         @Override
-        public XMLRPCCommandGetEnvelopeById newCommand(final URI uri, final UserInterface client, final Table obj)
+        public XMLRPCCommandGetCategoryById newCommand(final URI uri, final UserInterface client, final Table obj)
                 throws IOException {
-            return new XMLRPCCommandGetEnvelopeById(uri, client);
+            return new XMLRPCCommandGetCategoryById(uri, client);
         }
 
         @Override
         public String helpClient() {
-            return this.toString() + " anInteger [...] : retrieves envelopes given their id";
+            return this.toString() + " anInteger [...] : retrieves categories given their id";
         }
 
         @Override
         public String helpRestApi() {
-            return this.toString() + "/anInteger";
+            return this.toString() + "/anInteger : retrieves a category by its ID";
         }
     },
 	/**

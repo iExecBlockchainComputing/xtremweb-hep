@@ -33,17 +33,17 @@ import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 
 /**
- * This class defines the XMLRPCCommand to retrieve envelopes UID
+ * This class defines the XMLRPCCommand to retrieve categories UID
  *
  * @author <a href="mailto:lodygens /a|t\ lal.in2p3.fr>Oleg Lodygensky</a>
  * @since 13.0.0
  */
-public class XMLRPCCommandGetEnvelopes extends XMLRPCCommand {
+public class XMLRPCCommandGetCategories extends XMLRPCCommand {
 
 	/**
 	 * This is the RPC id
 	 */
-	public static final IdRpc IDRPC = IdRpc.GETENVELOPES;
+	public static final IdRpc IDRPC = IdRpc.GETCATEGORIES;
 	/**
 	 * This is the XML tag
 	 */
@@ -52,7 +52,7 @@ public class XMLRPCCommandGetEnvelopes extends XMLRPCCommand {
 	/**
 	 * This constructs a new command
 	 */
-	protected XMLRPCCommandGetEnvelopes() throws IOException {
+	protected XMLRPCCommandGetCategories() throws IOException {
 		super(null, IDRPC);
 	}
 
@@ -64,7 +64,7 @@ public class XMLRPCCommandGetEnvelopes extends XMLRPCCommand {
 	 * @param u
 	 *            define the user who executes this command
 	 */
-	public XMLRPCCommandGetEnvelopes(final URI uri, final UserInterface u) throws IOException {
+	public XMLRPCCommandGetCategories(final URI uri, final UserInterface u) throws IOException {
 		super(uri, IDRPC);
 		setUser(u);
 	}
@@ -78,7 +78,7 @@ public class XMLRPCCommandGetEnvelopes extends XMLRPCCommand {
 	 * @throws InvalidKeyException
 	 * @see XMLReader#read(InputStream)
 	 */
-	public XMLRPCCommandGetEnvelopes(final InputStream input) throws IOException, SAXException, InvalidKeyException {
+	public XMLRPCCommandGetCategories(final InputStream input) throws IOException, SAXException, InvalidKeyException {
 		this();
 		final XMLReader reader = new XMLReader(this);
 		reader.read(input);
@@ -96,7 +96,7 @@ public class XMLRPCCommandGetEnvelopes extends XMLRPCCommand {
 	@Override
 	public XMLable exec(final CommClient comm)
 			throws IOException, SAXException, InvalidKeyException, AccessControlException {
-		return comm.getEnvelopes(this);
+		return comm.getCategories(this);
 	}
 
 	/**
@@ -140,7 +140,7 @@ public class XMLRPCCommandGetEnvelopes extends XMLRPCCommand {
 	public static void main(final String[] argv) {
 		try {
 			final XWConfigurator config = new XWConfigurator(argv[0], false);
-			final XMLRPCCommandGetEnvelopes cmd = new XMLRPCCommandGetEnvelopes(
+			final XMLRPCCommandGetCategories cmd = new XMLRPCCommandGetCategories(
 					new URI(config.getCurrentDispatcher(), new UID()), config.getUser());
 			cmd.test(argv);
 		} catch (final Exception e) {

@@ -305,7 +305,7 @@ public abstract class Table extends Type {
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
-			final Table ret = new EnvelopeInterface();
+			final Table ret = new CategoryInterface();
 			return readInterface(input, ret);
 		} catch (final SAXException e) {
 		}

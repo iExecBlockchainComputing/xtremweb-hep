@@ -40,6 +40,19 @@ public enum XWTag {
 			return new AppInterface(attrs);
 		}
 	},
+	CATEGORY {
+		/**
+		 * This creates a new interface
+		 *
+		 * @param attrs
+		 *            contains the attributes found from the XML description
+		 * @since 13.0.0
+		 */
+		@Override
+		public Table newInterface(final Attributes attrs) {
+			return new CategoryInterface(attrs);
+		}
+	},
 	DATA {
 		/**
 		 * This creates a new interface

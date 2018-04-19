@@ -79,5 +79,11 @@ source .bashrc
 
 cat /etc/hosts
 
+iexecWorkerYmlFile=/iexec/conf/iexec-worker.yml
+
+sed -i "s/path:.*/path: /iexec/wallet/wallet.json/g"    iexecWorkerYmlFile
+sed -i "s/password:.*/password: \"$WALLETPASSWORD\"/g"  iexecWorkerYmlFile
+
+
 # Start the worker
 /iexec/bin/xtremweb.worker console

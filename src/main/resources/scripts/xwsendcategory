@@ -26,7 +26,7 @@
 
 
 #  ******************************************************************
-#  File    : xwsendenvelope
+#  File    : xwsendcategory
 #  Date    : Mar 25th, 2018
 #  Author  : Oleg Lodygensky (lodygens -a-t- lal.in2p3.fr)
 # 
@@ -74,4 +74,4 @@ cd $currentDir
 
 
 # there must be two commands, even if they are the same
-$ROOTDIR/bin/xtremweb.client --xwsendenvelope --xwsendenvelope $*
+$ROOTDIR/bin/xtremweb.client --xwsendcategory --xwsendcategory $*

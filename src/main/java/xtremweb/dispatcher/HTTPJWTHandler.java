@@ -355,7 +355,7 @@ public abstract class HTTPJWTHandler extends HTTPHandler {
 	 */
 	final protected DecodedJWT getToken(final Cookie cookie)
 			throws IllegalArgumentException, UnsupportedEncodingException, JWTVerificationException {
-		return getToken(cookie.getValue());
+			return getToken(cookie.getValue());
 	}
 	/**
 	 * This verifies the JWT

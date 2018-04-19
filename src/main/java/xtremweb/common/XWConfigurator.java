@@ -73,6 +73,9 @@ import java.util.Vector;
 import javax.net.ssl.KeyManagerFactory;
 import javax.swing.JMenuItem;
 
+import com.iexec.common.ethereum.CommonConfiguration;
+import com.iexec.common.ethereum.IexecConfigurationService;
+import com.iexec.common.workerpool.WorkerPoolConfig;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
@@ -87,6 +90,8 @@ import xtremweb.security.PEMPrivateKey;
 import xtremweb.security.PEMPublicKey;
 import xtremweb.security.X509Proxy;
 import xtremweb.worker.Worker;
+
+import static xtremweb.common.XWPropertyDefs.BLOCKCHAINETHENABLED;
 
 public final class XWConfigurator extends Properties {
 
@@ -218,6 +223,10 @@ public final class XWConfigurator extends Properties {
 		return ++nbJobs;
 	}
 
+	/**
+	 * @since 13.0.0
+	 */
+	public boolean blockchainServices = false;
 	/**
 	 * This is the maximum jobs this worker will compute before dying This is
 	 * expecially usefull to deploy workers over Grids
@@ -2398,6 +2407,24 @@ public final class XWConfigurator extends Properties {
 		out.println("Sun RPC interposition port : " + getPort(Connection.SUNRPCPORT));
 		out.println("Sandbox path : " + getProperty(XWPropertyDefs.SANDBOXPATH));
 		out.println("Sandbox launch args : " + getProperty(XWPropertyDefs.SANDBOXSTARTARGS));
+
+		if ((getBoolean(BLOCKCHAINETHENABLED) == true)  &&
+				(blockchainServices) && (IexecConfigurationService.getInstance() != null) &&
+				(IexecConfigurationService.getInstance().getCommonConfiguration() != null)) {
+
+				CommonConfiguration commonConfiguration = IexecConfigurationService.getInstance().getCommonConfiguration();
+				out.println("Eth client addr     : " + commonConfiguration.getNodeConfig().getClientAddress());
+				out.println("iExec Hub  addr     : " + commonConfiguration.getContractConfig().getIexecHubAddress());
+				out.println("iExec RLC  addr     : " + commonConfiguration.getContractConfig().getRlcAddress());
+				WorkerPoolConfig workerPoolConfig = commonConfiguration.getContractConfig().getWorkerPoolConfig();
+				if (workerPoolConfig != null) {
+					out.println("iExec WorkerPool name : " + workerPoolConfig.getName());
+					out.println("iExec WorkerPool addr : " + workerPoolConfig.getAddress());
+				}
+		} else {
+			out.println("Blockchain service : disabled");
+		}
+
 		out.println("Host " + _host.toXml());
 	}
 

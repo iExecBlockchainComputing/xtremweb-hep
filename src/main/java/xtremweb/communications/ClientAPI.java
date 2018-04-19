@@ -187,13 +187,13 @@ interface ClientAPI {
 			throws InvalidKeyException, AccessControlException, IOException;
 
 	/**
-	 * This retrieves all envelopes from server, up to MAXDBREQUESTLIMIT
+	 * This retrieves all categories from server, up to MAXDBREQUESTLIMIT
 	 *
 	 * @return a Vector of UIDs
 	 * @since 13.0.0
 	 * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
-	XMLVector getEnvelopes()
+	XMLVector getCategories()
 			throws InvalidKeyException, AccessControlException, IOException, SAXException, URISyntaxException;
 
 	/**
@@ -203,7 +203,7 @@ interface ClientAPI {
 	 * @since 13.0.0
      * @see xtremweb.common.XWTools#MAXDBREQUESTLIMIT
 	 */
-	XMLVector getEnvelopes(XMLRPCCommandGetEnvelopes command)
+	XMLVector getCategories(XMLRPCCommandGetCategories command)
 			throws InvalidKeyException, AccessControlException, IOException, SAXException;
 
 	/**

@@ -115,9 +115,7 @@ public class XWUtilMacOSX extends XWUtilImpl {
 				if (l.indexOf(key) != -1) {
                     System.out.println("found " + key + " in " + l);
 					final int start = l.indexOf(':') + 1;
-                    System.out.println("start " + start);
 					if (start != -1) {
-                        System.out.println("return " + l.substring(start));
 						return l.substring(start).trim();
 					}
 				}

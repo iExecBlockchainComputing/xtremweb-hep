@@ -23,22 +23,22 @@
 
 package xtremweb.worker;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URL;
 import java.util.Properties;
 
 import javax.naming.ConfigurationException;
 
-import xtremweb.common.CommandLineOptions;
-import xtremweb.common.CommandLineParser;
-import xtremweb.common.Logger;
-import xtremweb.common.UID;
-import xtremweb.common.UserGroupInterface;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWTools;
+import com.iexec.common.ethereum.CommonConfiguration;
+import com.iexec.common.ethereum.ContractConfig;
+import com.iexec.common.ethereum.NodeConfig;
+import com.iexec.common.workerpool.WorkerPoolConfig;
+import com.iexec.worker.ethereum.CommonConfigurationGetter;
+import com.iexec.worker.ethereum.IexecWorkerLibrary;
+import xtremweb.common.*;
 import xtremweb.communications.HTTPServer;
+
+import static xtremweb.common.XWPropertyDefs.BLOCKCHAINETHENABLED;
 
 /**
  * This class describes the XtremWeb Worker. It has a single infinite loop,
@@ -133,6 +133,74 @@ public class Worker {
 				logger.fatal("can retreive config file misc/config.defaults");
 			}
 		}
+
+        if (config.getBoolean(BLOCKCHAINETHENABLED) == true) {
+
+            IexecWorkerLibrary.initialize(config.getConfigFile().getParentFile().getAbsolutePath() + "/iexec-worker.yml", new CommonConfigurationGetter() {
+                @Override
+                public CommonConfiguration getCommonConfiguration(String schedulerApiUrl) {
+                    try {
+
+                        final URL url = new URL(schedulerApiUrl + XWTools.IEXECETHCONFPATH);
+
+                        String iexecHubAddr = null;
+                        String ethNodeAddr = null;
+                        String rlcAddr = null;
+                        String workerPoolAddr = null;
+                        String workerPoolName = null;
+
+                        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
+
+                            logger.info("Retrieving blockchain config");
+                            String inputLine;
+                            while ((inputLine = in.readLine()) != null) {
+                                logger.info(inputLine);
+                                if (inputLine.indexOf(XWTools.IEXECHUBADDRTEXT) > 0) {
+                                    iexecHubAddr = inputLine.substring(inputLine.indexOf(XWTools.IEXECHUBADDRTEXT) + 1);
+                                }
+                                if (inputLine.indexOf(XWTools.IEXECRLCADDRTEXT) > 0) {
+                                    rlcAddr = inputLine.substring(inputLine.indexOf(XWTools.IEXECRLCADDRTEXT) + 1);
+                                }
+                                if (inputLine.indexOf(XWTools.IEXECWORKERPOOLADDRTEXT) > 0) {
+                                    workerPoolAddr = inputLine.substring(inputLine.indexOf(XWTools.IEXECWORKERPOOLADDRTEXT) + 1);
+                                }
+                                if (inputLine.indexOf(XWTools.IEXECWORKERPOOLNAMETEXT) > 0) {
+                                    workerPoolName = inputLine.substring(inputLine.indexOf(XWTools.IEXECWORKERPOOLNAMETEXT) + 1);
+                                }
+                                logger.debug("'" + inputLine + "'.indexOf(" + XWTools.ETHNODEADDRTEXT + ")" + " = "
+                                        + inputLine.indexOf(XWTools.ETHNODEADDRTEXT));
+                                if (inputLine.indexOf(XWTools.ETHNODEADDRTEXT) > 0) {
+                                    ethNodeAddr = inputLine.substring(inputLine.indexOf(XWTools.ETHNODEADDRTEXT) + 1);
+                                    logger.debug("ethNodeAddr = " + ethNodeAddr);
+                                }
+                            }
+                        }
+                        final CommonConfiguration conf = new CommonConfiguration();
+                        final WorkerPoolConfig workerPoolConf = new WorkerPoolConfig();
+                        workerPoolConf.setAddress(workerPoolAddr);
+                        workerPoolConf.setName(workerPoolName);
+
+                        final ContractConfig contractConf = new ContractConfig();
+                        contractConf.setIexecHubAddress(iexecHubAddr);
+                        contractConf.setRlcAddress(rlcAddr);
+
+                        final NodeConfig nodeConf = new NodeConfig();
+                        nodeConf.setClientAddress(ethNodeAddr);
+
+                        contractConf.setWorkerPoolConfig(workerPoolConf);
+                        conf.setContractConfig(contractConf);
+                        conf.setNodeConfig(nodeConf);
+                        return conf;
+
+                    } catch (final Exception e) {
+                        logger.exception("Can't get iExec config from " + schedulerApiUrl + XWTools.IEXECETHCONFPATH, e);
+                    }
+
+                    return null;
+                }
+            });
+            WorkerPocoWatcherImpl workerPocoWatcher = new WorkerPocoWatcherImpl();
+        }
 
 		config.dump(System.out, "XWHEP Worker started ");
 

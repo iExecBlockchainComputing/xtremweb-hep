@@ -113,6 +113,12 @@ DBPASS=@DBUSERPASSWORD@
 #JWTETHSECRET=
 
 #
+# Do we try to connect to Ethereum blockchain
+# @since 13.0.0
+#
+BLOCKCHAINETHENABLED=false
+
+#
 # All : ethereum wallet path
 # Property type : string
 # Since 12.2.7
@@ -430,7 +436,7 @@ USERCERTDIR=
 # You may want to check jLite by Oleg Sukhoroslov : http://code.google.com/p/jlite/
 # Note : please use full path; don't use ~ or any variable (e.g. $HOME)
 #        they are not correctly interpreted
-X509CERTDIR=@X509CERTDIR@
+#X509CERTDIR=@X509CERTDIR@
 
 # Next defines server keystore URI
 # When to use : before your server keys exprire

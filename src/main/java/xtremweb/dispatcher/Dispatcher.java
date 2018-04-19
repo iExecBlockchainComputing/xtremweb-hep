@@ -23,31 +23,32 @@
 
 package xtremweb.dispatcher;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Timer;
+import com.iexec.common.contracts.generated.IexecHub;
+import com.iexec.common.ethereum.CommonConfiguration;
+import com.iexec.common.ethereum.IexecConfigurationService;
+import com.iexec.common.ethereum.Web3jService;
+import com.iexec.scheduler.actuator.ActuatorService;
+import com.iexec.scheduler.ethereum.IexecSchedulerLibrary;
+import com.iexec.common.workerpool.WorkerPoolConfig;
 
-import org.eclipse.jetty.server.session.SessionHandler;
-
-import xtremweb.common.CommandLineOptions;
-import xtremweb.common.CommandLineParser;
-import xtremweb.common.Logger;
-import xtremweb.common.Version;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWReturnCode;
-import xtremweb.common.XWRole;
-import xtremweb.common.XWTools;
+import xtremweb.common.*;
 import xtremweb.communications.AccessLogger;
 import xtremweb.communications.HTTPServer;
 import xtremweb.communications.TCPServer;
 import xtremweb.security.PEMPublicKeyValidator;
 import xtremweb.security.X509ProxyValidator;
 
+import java.io.IOException;
+import java.util.*;
+
+import org.eclipse.jetty.server.session.SessionHandler;
+
+import static xtremweb.common.XWPropertyDefs.BLOCKCHAINETHENABLED;
+
 /**
  * Dispatcher Implementation
  * The Dispatcher is responsible for delivering task to servers
+ *
  * @author V. Neri, G. Fedak
  */
 
@@ -57,262 +58,288 @@ import xtremweb.security.X509ProxyValidator;
 
 public class Dispatcher {
 
-	private final Logger logger;
+    /**
+     * The TaskSet and TaskManager
+     */
+    private static TaskSet tset;
+    /**
+     * Database Interface
+     */
+    private static DBInterface db;
+    /**
+     * Scheduling policy
+     */
+    private static Scheduler scheduler;
+    /**
+     * This aims to validate an X509 certificate against certificate paths
+     *
+     * @since 7.0.0
+     */
+    private static X509ProxyValidator proxyValidator;
+    /**
+     * This aims to challenge client connections
+     *
+     * @since 7.5.0
+     */
+    private static PEMPublicKeyValidator certValidator;
+    /**
+     * Timer
+     */
+    private static Timer timer;
+    /**
+     * Config as read from config file
+     */
+    private static XWConfigurator config;
+    private final Logger logger;
+    /**
+     * This stores and tests the command line parameters
+     */
+    private CommandLineParser args;
 
-	/**
-	 * The TaskSet and TaskManager
-	 */
-	private static TaskSet tset;
+    /**
+     * This is the default constructor
+     */
+    public Dispatcher(final String a[]) {
+        final String[] argv = a.clone();
+        logger = new Logger(this);
+        try {
+            args = new CommandLineParser(argv);
+        } catch (final Exception e) {
+            logger.fatal("Command line error " + e);
+        }
 
-	/**
-	 * Database Interface
-	 */
-	private static DBInterface db;
+        XWRole.setDispatcher();
 
-	/** Scheduling policy */
-	private static Scheduler scheduler;
+        try {
+            setConfig((XWConfigurator) args.getOption(CommandLineOptions.CONFIG));
+        } catch (final Exception e) {
+            logger.fatal("can retreive config file");
+        }
+    }
 
-	/**
-	 * This aims to validate an X509 certificate against certificate paths
-	 *
-	 * @since 7.0.0
-	 */
-	private static X509ProxyValidator proxyValidator;
-	/**
-	 * This aims to challenge client connections
-	 *
-	 * @since 7.5.0
-	 */
-	private static PEMPublicKeyValidator certValidator;
+    /**
+     * Main function
+     */
+    public static void main(final String args[]) {
 
-	/** Timer */
-	private static Timer timer;
+        try {
+            new Dispatcher(args).go();
+        } catch (final Exception e) {
+            System.err.println(e.toString());
+        }
+    }
 
-	/**
-	 * This stores and tests the command line parameters
-	 */
-	private CommandLineParser args;
-	/**
-	 * Config as read from config file
-	 */
-	private static XWConfigurator config;
+    public static void shutdown() {
+        db.unlockWorks(XWTools.getLocalHostName());
+        System.exit(XWReturnCode.SUCCESS.ordinal());
+    }
 
-	/**
-	 * This is the default constructor
-	 */
-	public Dispatcher(final String a[]) {
-		final String[] argv = a.clone();
-		logger = new Logger(this);
-		try {
-			args = new CommandLineParser(argv);
-		} catch (final Exception e) {
-			logger.fatal("Command line error " + e);
-		}
+    /**
+     * @return the config
+     */
+    public static XWConfigurator getConfig() {
+        return config;
+    }
 
-		XWRole.setDispatcher();
+    /**
+     * @param config the config to set
+     */
+    public static void setConfig(final XWConfigurator config) {
+        Dispatcher.config = config;
+    }
 
-		try {
-			setConfig((XWConfigurator) args.getOption(CommandLineOptions.CONFIG));
-		} catch (final Exception e) {
-			logger.fatal("can retreive config file");
-		}
-	}
+    /**
+     * @return the scheduler
+     */
+    public static Scheduler getScheduler() {
+        return scheduler;
+    }
 
-	/**
-	 * Main function
-	 */
-	public static void main(final String args[]) {
+    /**
+     * @param scheduler the scheduler to set
+     */
+    public static void setScheduler(final Scheduler scheduler) {
+        Dispatcher.scheduler = scheduler;
+    }
 
-		try {
-			new Dispatcher(args).go();
-		} catch (final Exception e) {
-			System.err.println(e.toString());
-		}
-	}
+    /**
+     * @return the proxyValidator
+     */
+    public static X509ProxyValidator getProxyValidator() {
+        return proxyValidator;
+    }
 
-	/**
-	 * Main function
-	 */
-	public void go() throws Exception {
+    /**
+     * @param proxyValidator the proxyValidator to set
+     */
+    public static void setProxyValidator(final X509ProxyValidator proxyValidator) {
+        Dispatcher.proxyValidator = proxyValidator;
+    }
 
-		timer = new Timer();
+    /**
+     * Main function
+     */
+    public void go() throws Exception {
 
-		try {
-			db = new DBInterface(config);
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
+        timer = new Timer();
 
-		tset = new HashTaskSet();
-		try {
-			setScheduler(
-					(Scheduler) (Class.forName(config.getProperty(XWPropertyDefs.SCHEDULERCLASS)).newInstance()));
-		} catch (final Exception e) {
-			logger.exception(e);
-			logger.fatal(e.toString());
-		}
+        try {
+            db = new DBInterface(config);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		try {
-			setProxyValidator(new X509ProxyValidator());
-		} catch (final Exception e) {
-			setProxyValidator(null);
-			logger.exception("Can't create ProxyValidator", e);
-		}
+        tset = new HashTaskSet();
+        try {
+            setScheduler(
+                    (Scheduler) (Class.forName(config.getProperty(XWPropertyDefs.SCHEDULERCLASS)).newInstance()));
+        } catch (final Exception e) {
+            logger.exception(e);
+            logger.fatal(e.toString());
+        }
 
-		try {
-			getProxyValidator().setCACertificateEntries(config.getKeyStore());
-		} catch (final Exception e) {
-			logger.exception("Can't add CA certificates to keystore", e);
-		}
+        try {
+            setProxyValidator(new X509ProxyValidator());
+        } catch (final Exception e) {
+            setProxyValidator(null);
+            logger.exception("Can't create ProxyValidator", e);
+        }
 
-		try {
-			certValidator = new PEMPublicKeyValidator();
-		} catch (final Exception e) {
-			certValidator = null;
-			logger.exception("Can't create PEMPublicKeyValidator", e);
-		}
+        try {
+            getProxyValidator().setCACertificateEntries(config.getKeyStore());
+        } catch (final Exception e) {
+            logger.exception("Can't add CA certificates to keystore", e);
+        }
 
-		tset.start();
-		try {
-			while (!tset.isReady()) {
-				Thread.sleep(1000);
-				logger.info("still waiting task set...");
-			}
-		} catch (final Exception e) {
-			logger.error("exception while waiting task set...");
-		}
+        try {
+            certValidator = new PEMPublicKeyValidator();
+        } catch (final Exception e) {
+            certValidator = null;
+            logger.exception("Can't create PEMPublicKeyValidator", e);
+        }
 
-		try {
+        tset.start();
+        try {
+            while (!tset.isReady()) {
+                Thread.sleep(1000);
+                logger.info("still waiting task set...");
+            }
+        } catch (final Exception e) {
+            logger.error("exception while waiting task set...");
+        }
 
-			@SuppressWarnings("unused")
-			final AccessLogger accessLogger = new AccessLogger(config.getFile(XWPropertyDefs.HOMEDIR),
-					XWTools.getLocalHostName());
+        try {
 
-			final TCPServer tcpServer = new TCPServer();
-			tcpServer.initComm(config, new TCPHandler(config));
-			tcpServer.start();
+            @SuppressWarnings("unused") final AccessLogger accessLogger = new AccessLogger(config.getFile(XWPropertyDefs.HOMEDIR),
+                    XWTools.getLocalHostName());
 
-			logger.warn("UDP server not started");
+            final TCPServer tcpServer = new TCPServer();
+            tcpServer.initComm(config, new TCPHandler(config));
+            tcpServer.start();
 
-			if (config.http()) {
-				final HTTPServer httpServer = new HTTPServer();
-				// httpServer.initComm(config, new
-				// HTTPHandler(config));
+            logger.warn("UDP server not started");
 
-				// Handler needs HTTP session to handle openid call returns
-				final SessionHandler main_sessionHandler = new SessionHandler();
-				main_sessionHandler.setHandler(new HTTPHandler(config));
-				httpServer.initComm(config, main_sessionHandler);
-				httpServer.addHandler(HTTPHandler.PATH, main_sessionHandler);
+            if (config.http()) {
+                final HTTPServer httpServer = new HTTPServer();
+                // httpServer.initComm(config, new
+                // HTTPHandler(config));
 
-				// OpenId Handler needs HTTP session
-				// final SessionHandler opid_sessionHandler = new
-				// SessionHandler();
-				// final HTTPOpenIdHandler oh = new HTTPOpenIdHandler();
-				// HTTPOpenIdHandler.setCACertificateEntries(config.getKeyStore());
-				// opid_sessionHandler.setHandler(oh);
-				// httpServer.addHandler(HTTPOpenIdHandler.handlerPath,
-				// opid_sessionHandler);
+                // Handler needs HTTP session to handle openid call returns
+                final SessionHandler main_sessionHandler = new SessionHandler();
+                main_sessionHandler.setHandler(new HTTPHandler(config));
+                httpServer.initComm(config, main_sessionHandler);
+                httpServer.addHandler(HTTPHandler.PATH, main_sessionHandler);
 
-				// OAuth Handler needs HTTP session
-				final SessionHandler oauth_sessionHandler = new SessionHandler();
-				final HTTPOAuthHandler oah = new HTTPOAuthHandler();
-				oauth_sessionHandler.setHandler(oah);
-				httpServer.addHandler(HTTPOAuthHandler.handlerPath, oauth_sessionHandler);
+                // OpenId Handler needs HTTP session
+                // final SessionHandler opid_sessionHandler = new
+                // SessionHandler();
+                // final HTTPOpenIdHandler oh = new HTTPOpenIdHandler();
+                // HTTPOpenIdHandler.setCACertificateEntries(config.getKeyStore());
+                // opid_sessionHandler.setHandler(oh);
+                // httpServer.addHandler(HTTPOpenIdHandler.handlerPath,
+                // opid_sessionHandler);
 
-				if((config.getProperty(XWPropertyDefs.JWTETHSECRET) != null) &&
-						(config.getProperty(XWPropertyDefs.JWTETHISSUER) != null)) { 
-					// JWT Handler needs HTTP session
-					final SessionHandler jwt_sessionHandler = new SessionHandler();
-					final HTTPJWTEthereumAuthHandler jwth = new HTTPJWTEthereumAuthHandler();
-					jwt_sessionHandler.setHandler(jwth);
-					httpServer.addHandler(HTTPJWTEthereumAuthHandler.handlerPath, jwt_sessionHandler);
-				}
-				// StatsHandler does not need HTTP session
-				httpServer.addHandler(HTTPStatsHandler.PATH, new HTTPStatsHandler());
-				httpServer.start();
-			}
-		} catch (final Exception e) {
-			logger.exception(e);
-			logger.fatal("Dispatcher main(): " + e);
-		}
+                // OAuth Handler needs HTTP session
+                final SessionHandler oauth_sessionHandler = new SessionHandler();
+                final HTTPOAuthHandler oah = new HTTPOAuthHandler();
+                oauth_sessionHandler.setHandler(oah);
+                httpServer.addHandler(HTTPOAuthHandler.handlerPath, oauth_sessionHandler);
 
-		final Collection<String> services = XWTools.split(config.getProperty(XWPropertyDefs.SERVICES));
-		if (services != null) {
-			for (final Iterator<String> iter = services.iterator(); iter.hasNext();) {
-				try {
-					final String s = iter.next();
-					logger.debug(s);
-					db.insertService(s);
-				} catch (final Exception e) {
-					logger.warn("Unable to start service : " + e);
-				}
-				db.updateAppsPool();
-			}
-		}
+                if ((config.getProperty(XWPropertyDefs.JWTETHSECRET) != null) &&
+                        (config.getProperty(XWPropertyDefs.JWTETHISSUER) != null)) {
+                    // JWT Handler needs HTTP session
+                    final SessionHandler jwt_sessionHandler = new SessionHandler();
+                    final HTTPJWTEthereumAuthHandler jwth = new HTTPJWTEthereumAuthHandler();
+                    jwt_sessionHandler.setHandler(jwth);
+                    httpServer.addHandler(HTTPJWTEthereumAuthHandler.handlerPath, jwt_sessionHandler);
+                }
+                // StatsHandler does not need HTTP session
+                httpServer.addHandler(HTTPStatsHandler.PATH, new HTTPStatsHandler());
+                httpServer.start();
+            }
+        } catch (final Exception e) {
+            logger.exception(e);
+            logger.fatal("Dispatcher main(): " + e);
+        }
 
-		logger.info("XWHEP Dispatcher(" + Version.currentVersion + ") started [" + new Date() + "]");
-		logger.info("DB vendor  = " + config.getProperty(XWPropertyDefs.DBVENDOR));
-		logger.info("mileStone  = " + config.getProperty(XWPropertyDefs.MILESTONES));
-		logger.info("Time out   = " + config.getProperty(XWPropertyDefs.TIMEOUT));
-		logger.info("Disk opt'd = " + config.getProperty(XWPropertyDefs.OPTIMIZEDISK));
-		logger.info("Net  opt'd = " + config.getProperty(XWPropertyDefs.OPTIMIZENETWORK));
-		logger.info("NIO        = " + config.getProperty(XWPropertyDefs.JAVANIO));
-		config.dump(System.out, "XWHEP Dispatcher started ");
-	}
+        final Collection<String> services = XWTools.split(config.getProperty(XWPropertyDefs.SERVICES));
+        if (services != null) {
+            for (final Iterator<String> iter = services.iterator(); iter.hasNext(); ) {
+                try {
+                    final String s = iter.next();
+                    logger.debug(s);
+                    db.insertService(s);
+                } catch (final Exception e) {
+                    logger.warn("Unable to start service : " + e);
+                }
+                db.updateAppsPool();
+            }
+        }
 
-	public static void shutdown() {
-		db.unlockWorks(XWTools.getLocalHostName());
-		System.exit(XWReturnCode.SUCCESS.ordinal());
-	}
+        if (config.getBoolean(BLOCKCHAINETHENABLED) == true) {
+            try {
+                IexecSchedulerLibrary.initialize(config.getConfigFile().getParentFile().getAbsolutePath() + "/iexec-scheduler.yml");
+                boolean ethNodeRunning = Web3jService.getInstance().getWeb3j().web3ClientVersion().send().getWeb3ClientVersion() != null;
+                if (ethNodeRunning) {
+                    SchedulerPocoWatcherImpl schedulerPocoWatcher = new SchedulerPocoWatcherImpl();
+                } else {
+                    throw new IOException("Unable to connect to ETH node");
+                }
+                config.blockchainServices = true;
+            } catch (final Exception e) {
+                logger.exception("Can't access to blockchain services", e);
+            }
 
-	@Override
-	public void finalize() {
-		db.unlockWorks(XWTools.getLocalHostName());
-	}
+            final ActuatorService actuatorService = ActuatorService.getInstance();
+            final List<IexecHub.CreateCategoryEventResponse> categories =
+                    actuatorService != null ?
+                            actuatorService.getCategories() :
+                            null;
+            if (categories != null) {
+                for (final Iterator<IexecHub.CreateCategoryEventResponse> iter = categories.iterator(); iter.hasNext(); ) {
+                    try {
+                        final IexecHub.CreateCategoryEventResponse category = iter.next();
+                        logger.debug(category.catid + " " + category.name);
+                        db.insertCategory(category);
+                    } catch (final Exception e) {
+                        logger.warn("Unable to start service : " + e);
+                    }
+                }
+            }
+        }
 
-	/**
-	 * @return the config
-	 */
-	public static XWConfigurator getConfig() {
-		return config;
-	}
+        logger.info("XWHEP Dispatcher(" + Version.currentVersion + ") started [" + new Date() + "]");
+        logger.info("DB vendor       = " + config.getProperty(XWPropertyDefs.DBVENDOR));
+        logger.info("mileStone       = " + config.getProperty(XWPropertyDefs.MILESTONES));
+        logger.info("Time out        = " + config.getProperty(XWPropertyDefs.TIMEOUT));
+        logger.info("Disk opt'd      = " + config.getProperty(XWPropertyDefs.OPTIMIZEDISK));
+        logger.info("Net  opt'd      = " + config.getProperty(XWPropertyDefs.OPTIMIZENETWORK));
+        logger.info("NIO             = " + config.getProperty(XWPropertyDefs.JAVANIO));
+        config.dump(System.out, "XWHEP Dispatcher started ");
+    }
 
-	/**
-	 * @param config
-	 *            the config to set
-	 */
-	public static void setConfig(final XWConfigurator config) {
-		Dispatcher.config = config;
-	}
-
-	/**
-	 * @return the scheduler
-	 */
-	public static Scheduler getScheduler() {
-		return scheduler;
-	}
-
-	/**
-	 * @param scheduler
-	 *            the scheduler to set
-	 */
-	public static void setScheduler(final Scheduler scheduler) {
-		Dispatcher.scheduler = scheduler;
-	}
-
-	/**
-	 * @return the proxyValidator
-	 */
-	public static X509ProxyValidator getProxyValidator() {
-		return proxyValidator;
-	}
-
-	/**
-	 * @param proxyValidator
-	 *            the proxyValidator to set
-	 */
-	public static void setProxyValidator(final X509ProxyValidator proxyValidator) {
-		Dispatcher.proxyValidator = proxyValidator;
-	}
+    @Override
+    public void finalize() {
+        db.unlockWorks(XWTools.getLocalHostName());
+    }
 }

@@ -101,7 +101,16 @@ public enum XWPropertyDefs {
 	 */
 	ETHWALLETPASSWORD,
 	/**
-	 * Server : the facebook application ID for OAuth
+	 * Server, Worker : do we connect to Ethereum blockchain ?
+	 * <p>
+	 * Property type : boolean
+	 * </p>
+	 *
+	 * @since 13.0.0
+	 */
+	BLOCKCHAINETHENABLED,
+	/**
+	 * Server : the facebook application ID for
 	 * <p>
 	 * Property type : string
 	 * </p>

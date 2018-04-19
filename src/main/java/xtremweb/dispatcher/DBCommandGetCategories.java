@@ -24,7 +24,6 @@ package xtremweb.dispatcher;
 
 import xtremweb.common.*;
 import xtremweb.communications.XMLRPCCommand;
-import xtremweb.communications.XMLRPCCommandGetWorks;
 
 import java.io.IOException;
 import java.security.AccessControlException;
@@ -36,25 +35,17 @@ import java.util.Vector;
  * @since 13.0.0
  */
 
-public final class DBCommandGetEnvelopes extends DBCommand implements CommCallback {
+public final class DBCommandGetCategories extends DBCommand implements CommCallback {
 
 	private DBInterface dbInterface;
-	/**
-	 * This instantiates a DBConnPoolThread, update application pools and set
-	 * default SQLRequest attributes
-	 *
-	 * @see xtremweb.database.DBConnPoolThread
-	 * @see xtremweb.database.SQLRequest#setDbName(String)
-	 * @see xtremweb.database.SQLRequest#setHsqldb(boolean)
-	 */
-	public DBCommandGetEnvelopes(final DBInterface dbi) throws IOException {
+
+	public DBCommandGetCategories(final DBInterface dbi) throws IOException {
 		super();
 		dbInterface = dbi;
 	}
 
 	/**
-	 * This is called by client to disconnect from server This deletes the
-	 * client sessions
+	 * This is called by client
 	 *
 	 * @param command is the received command
 	 * @exception IOException
@@ -67,13 +58,13 @@ public final class DBCommandGetEnvelopes extends DBCommand implements CommCallba
 	public XMLable exec(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		mileStone.println("<getenvelopes>");
-		final Vector<UID> ret = (Vector<UID>) dbInterface.getAllEnvelopes(command);
+		mileStone.println("<dbcommandgetcategories>");
+		final Vector<UID> ret = (Vector<UID>) dbInterface.getAllCategories(command);
 		XMLVector v = null;
 		if (ret != null) {
 			v = new XMLVector(ret);
 		}
-		mileStone.println("</getenvelopes>");
+		mileStone.println("</dbcommandgetcategories>");
 
 		return v;
 	}

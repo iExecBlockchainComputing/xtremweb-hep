@@ -557,11 +557,7 @@ fi
 XW_CLASSES=""
 for i in $RESOURCES $ZIPS $JARS ; do
     baseFileName=$(basename $i)
-    if [ "X${baseFileName}" = "Xxtremweb.jar" ]; then
-        [ -z ${XW_CLASSES} ] && XW_CLASSES="${i}" || XW_CLASSES="${i}:${XW_CLASSES}"
-    else
-        [ -z ${XW_CLASSES} ] && XW_CLASSES="${i}" || XW_CLASSES="${XW_CLASSES}:${i}"
-    fi
+    [ -z ${XW_CLASSES} ] && XW_CLASSES="${i}" || XW_CLASSES="${i}:${XW_CLASSES}"
 done
 
 if [ "X$V_NICE" = "X" ]; then

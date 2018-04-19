@@ -35,12 +35,12 @@ import java.security.InvalidKeyException;
  * @since 13.0.0
  */
 
-public final class DBCommandSendEnvelope extends DBCommandSend implements CommCallback {
+public final class DBCommandSendCategory extends DBCommandSend implements CommCallback {
 
-	public DBCommandSendEnvelope() throws IOException {
+	public DBCommandSendCategory() throws IOException {
 		super();
 	}
-	public DBCommandSendEnvelope(final DBInterface dbi) throws IOException {
+	public DBCommandSendCategory(final DBInterface dbi) throws IOException {
 		super();
 		dbInterface = dbi;
 	}
@@ -48,9 +48,9 @@ public final class DBCommandSendEnvelope extends DBCommandSend implements CommCa
 	public XMLable exec(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		mileStone.println("<sendenvelope>");
-		dbInterface.addEnvelope(command);
-		mileStone.println("</sendenvelope>");
+		mileStone.println("<dbcommandsendcategory>");
+		dbInterface.addCategory(command);
+		mileStone.println("</dbcommandsendcategory>");
 		return null;
 	}
 }
