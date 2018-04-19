@@ -23,6 +23,7 @@
 
 package xtremweb.common;
 
+
 import java.util.Arrays;
 
 /**
@@ -42,34 +43,35 @@ public enum CPUEnum {
 
 	NONE, ALL, IX86, X86_64, IA64, PPC, SPARC, ALPHA, AMD64, ARM32, ARM64;
 
-	public static final CPUEnum LAST = ARM64;
-	public static final int SIZE = LAST.ordinal() + 1;
+	public static final int SIZE = CPUEnum.values().length;
 
-	public static CPUEnum fromInt(final int v) throws IllegalArgumentException {
-		if (0 <= v && v < SIZE) return CPUEnum.values()[v];
-		throw new IllegalArgumentException("unvalid XWCPUs value " + v);
+	// this should be uppercase
+	public static final String[] ARM_ARCH_ARRAY = {"ARM", "AARCH"};
+	public static final String[] IX86_ARCH_ARRAY = {"I86", "X86", "IX86", "I386", "X386", "IX386", "I486", "X486", "IX486",
+		"I586", "X586", "IX586", "I686", "X686", "IX686"};
+
+
+	public static CPUEnum fromInt(final int i) throws IllegalArgumentException {
+		if (0 <= i && i < SIZE) return CPUEnum.values()[i];
+		throw new IllegalArgumentException("unvalid XWCPUs value " + i);
 	}
 
 	/**
 	 * Get Hardware type If this architecture is not supported by XtremWeb, this
-	 * forces the program to immediately stop
+	 * forces the program to stop immediately
 	 *
-	 * @see #getCpu(String)
+	 * @return host's architecture type
 	 */
 	public static CPUEnum getCpu() {
 		try {
+			String archName = System.getProperty("os.arch").toUpperCase();
 
-			String archName = System.getProperty("os.arch").toLowerCase();
+			if (Arrays.asList(IX86_ARCH_ARRAY).contains(archName)) return IX86;
 
-			final String[] ixArchArray = {"i86", "x86", "ix86", "i386", "x386", "ix386", "i486", "x486", "ix486",
-					"i586", "x586", "ix586", "i686", "x686", "ix686"};
-			if (Arrays.asList(ixArchArray).contains(archName)) return IX86;
+			if (Arrays.stream(ARM_ARCH_ARRAY).parallel().anyMatch(archName::contains))
+				return valueOf("ARM" + System.getProperty("sun.arch.data.model")); // ARM32 or ARM64
 
-			final String[] armArchArray = {"arm", "aarch64" , "arm32", "arm64"};
-			if (Arrays.asList(armArchArray).contains(archName.toLowerCase()))
-				return valueOf(("ARM" + System.getProperty("sun.arch.data.model")).toUpperCase()); // ARM32 or ARM64
-
-			return valueOf(archName.toUpperCase());
+			return valueOf(archName);
 
 		} catch (final Exception e) {
 			XWTools.fatal(e.toString());
@@ -83,14 +85,15 @@ public enum CPUEnum {
 	 * @param archName
 	 *            the architecture name
 	 * @return architecture type
+	 * @exception IllegalArgumentException
+	 *                exception is thrown if archName is not supported by XtremWeb
 	 */
 	public static CPUEnum getCpu(final String archName) throws IllegalArgumentException {
-		try {
-			return valueOf(archName.toUpperCase());
-		} catch (final Exception e) {
-			XWTools.fatal(e.toString());
-		}
-		return null;
+
+		if (Arrays.asList(IX86_ARCH_ARRAY).contains(archName.toUpperCase()))
+			return IX86;
+
+		return valueOf(archName.toUpperCase());
 	}
 
 	/**

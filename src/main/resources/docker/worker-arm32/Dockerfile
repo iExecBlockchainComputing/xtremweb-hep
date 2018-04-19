@@ -1,6 +1,6 @@
 FROM resin/rpi-raspbian
-
 EXPOSE 4321 4322 4323 4324 4327 4328 443
+
 
 RUN [ "cross-build-start" ]
 
@@ -24,15 +24,11 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 # install docker
 RUN curl -sSL https://get.docker.com | sh
 
-# RUN curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-# RUN echo "deb [arch=armhf] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | \
-#    sudo tee /etc/apt/sources.list.d/docker.list
-# RUN apt-get update && apt-get install -y docker-ce
-
 # Add the script that will set up the configuration in the container
 COPY docker/worker/start_worker.sh /iexec/start_worker.sh
 
-RUN mkdir /iexec/certificate && chmod +x /iexec/start_worker.sh
+RUN mkdir /iexec/certificate && \
+    chmod +x /iexec/start_worker.sh
 
 RUN [ "cross-build-end" ]
 
