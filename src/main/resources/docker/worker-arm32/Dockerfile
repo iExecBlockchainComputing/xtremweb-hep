@@ -37,6 +37,8 @@ COPY bin/xtremweb.worker /iexec/bin/
 COPY bin/xtremweb /iexec/bin/
 COPY bin/xtremwebconf.sh /iexec/bin/
 COPY lib /iexec/lib/
+COPY bin/xwstartdocker.sh /iexec/bin
+COPY bin/xwstopdocker.sh /iexec/bin
 
 
 ENTRYPOINT [ "/iexec/start_worker.sh" ]
