@@ -36,7 +36,7 @@ create table if not exists  categories  (
 
 
   index  name     (name),
-  index  categoryId    (categoryId),
+  index  idx_categoryId    (categoryId),
   index  ownerUID (ownerUID)
   )
 engine  = InnoDB,
