@@ -151,7 +151,6 @@ public class MatchingScheduler extends SimpleScheduler {
 				// the same work several times.
 				// Then we can update all others
 				//
-				db.putToCache(theWork);
 				DBConnPoolThread.getInstance().update(theWork, null, false);
 
 				rows.add(host);

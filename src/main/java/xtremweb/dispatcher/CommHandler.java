@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import java.util.Date;
@@ -652,7 +653,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 * @return a Description of the Work the server has to complete
 	 */
 	protected synchronized WorkInterface workRequest(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 		final HostInterface _host = command.getHost();
 		mileStone(command, "<workRequest host=" + (_host != null ? _host.getName() : "null") + " />");
 		if(_host != null) {
@@ -689,7 +690,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 *         stop computing it
 	 */
 	public Hashtable workAlive(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		final HostInterface _host = command.getHost();
 		if (_host == null) {
@@ -774,7 +775,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 	 * @return a hashtable containing new worker parameters.
 	 */
 	public Hashtable workAlive(final XMLRPCCommand command, final Hashtable rmiParams)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException , URISyntaxException {
 
 		HostInterface _host = command.getHost();
 		mileStone(command, "<workAlive host=" + (_host != null ? _host.getName() : "null") + ">");

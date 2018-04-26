@@ -36,7 +36,6 @@ import java.util.Vector;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import xtremweb.database.DBConnPoolThread;
 import xtremweb.database.SQLRequest;
 import xtremweb.security.XWAccessRights;
 
@@ -917,36 +916,6 @@ public abstract class Type extends XMLable {
 			return getRequest().fromTableNames();
 		}
 		return aliasedTableName();
-	}
-
-	/**
-	 * This reads from DB
-	 *
-	 * @see xtremweb.common.Type#criteria()
-	 * @exception IOException
-	 *                is thrown on error
-	 */
-	public void select() throws IOException {
-		try {
-			DBConnPoolThread.getInstance().select(this);
-		} catch (final Exception e) {
-			getLogger().exception(e);
-			throw new IOException(e.toString());
-		}
-	}
-
-	/**
-	 * This inserts this object in DB and re-reads it immediately so that we
-	 * have the correct primary key (which is auto-increment)
-	 *
-	 * @see #select()
-	 * @see xtremweb.common.Type#valuesToString()
-	 * @see #tagName
-	 * @exception IOException
-	 *                is thrown on error
-	 */
-	public void insert() throws IOException {
-		DBConnPoolThread.getInstance().insert(this);
 	}
 
 	/**

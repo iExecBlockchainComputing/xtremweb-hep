@@ -215,10 +215,10 @@ public class XWTools {
 	 */
 	public static final long TWOGIGABYTES = 2 * ONEGIGABYTES;
 	/**
-	 * This defines the default wall cloacktime to 3600s (1h)
+	 * This defines the default wall cloacktime to 900s (15mn)
 	 * @since 13.0.0
 	 */
-	public static final int DEFAULTWALLCLOCKTIME = 3600;
+	public static final int DEFAULTWALLCLOCKTIME = 900;
 	/**
 	 * This defines the default CPU speed in percentage
 	 * @href https://docs.docker.com/engine/reference/run/#cpu-period-constraint
@@ -237,7 +237,7 @@ public class XWTools {
 	 */
 	public static final long MAXDISKSIZE = 30 * ONEGIGABYTES;
 	/**
-	 * This defines the maximum size of work RAM space (1Gb) 
+	 * This defines the maximum size of work RAM space (1Gb)
 	 *
 	 * @since 9.1.0
 	 */
@@ -912,7 +912,7 @@ public class XWTools {
 
 	/**
 	 * This extracts a JSon value from an URL
-	 * 
+	 *
 	 * @param u
 	 *            is the URL to retrieve JSon content
 	 * @param key
@@ -932,7 +932,7 @@ public class XWTools {
 
 	/**
 	 * This extracts a JSon value from an URL
-	 * 
+	 *
 	 * @param s
 	 *            contains the JSon representation
 	 * @param key
@@ -1005,12 +1005,12 @@ public class XWTools {
 //	    	for (int i=0;i<mdbytes.length;i++) {
 //	    	  hexString.append(Integer.toHexString(0xFF & mdbytes[i]));
 //	    	}
-//	
+//
 //	    	return hexString.toString();
-//        } 
+//        }
 //    }
 
-    public static String sha256CheckSum(final File data) throws NoSuchAlgorithmException, IOException 
+    public static String sha256CheckSum(final File data) throws NoSuchAlgorithmException, IOException
     {
         final MessageDigest md = MessageDigest.getInstance("SHA-256");
         try (final FileInputStream fis = new FileInputStream(data)) {
@@ -1024,7 +1024,7 @@ public class XWTools {
 	        final byte[] digest = md.digest();
 
 	        return String.format( "%064x", new BigInteger( 1, digest ) );
-        } 
+        }
     }
 
 //    public static String sha256(final String data) throws NoSuchAlgorithmException

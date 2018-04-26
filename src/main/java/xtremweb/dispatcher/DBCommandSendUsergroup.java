@@ -23,6 +23,7 @@
 package xtremweb.dispatcher;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import xtremweb.common.CommCallback;
@@ -47,8 +48,12 @@ public final class DBCommandSendUsergroup extends DBCommandSend implements CommC
 	public XMLable exec(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
 
-		mileStone.println("<sendusergroup>");
-		dbInterface.addUserGroup(command);
+		try {
+			mileStone.println("<sendusergroup>");
+			dbInterface.addUserGroup(command);
+		} catch(URISyntaxException e) {
+			mileStone.println("<error msg=\"" + e.getMessage() + "\" />");
+		}
 		mileStone.println("</sendusergroup>");
 		return null;
 	}

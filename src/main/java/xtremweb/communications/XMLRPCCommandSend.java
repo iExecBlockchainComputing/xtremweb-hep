@@ -84,9 +84,6 @@ public abstract class XMLRPCCommandSend extends XMLRPCCommand {
 		if(obj instanceof WorkInterface) {
 			return new XMLRPCCommandSendWork(uri, obj);
 		}
-		if(obj instanceof CategoryInterface) {
-			return new XMLRPCCommandSendCategory(uri, obj);
-		}
 		throw new IOException("unkown ovject type");
 	}
 

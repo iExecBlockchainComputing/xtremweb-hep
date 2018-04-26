@@ -27,6 +27,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 import java.util.Date;
@@ -419,7 +420,6 @@ public abstract class Table extends Type {
 	 * @exception IOException
 	 *                is thrown on error
 	 */
-	@Override
 	public void select() throws IOException {
 		try {
 			DBConnPoolThread.getInstance().select(this);
@@ -439,8 +439,7 @@ public abstract class Table extends Type {
 	 * @exception IOException
 	 *                is thrown on error
 	 */
-	@Override
-	public void insert() throws IOException {
+	public void insert() throws IOException, URISyntaxException {
 		DBConnPoolThread.getInstance().insert(this);
 	}
 

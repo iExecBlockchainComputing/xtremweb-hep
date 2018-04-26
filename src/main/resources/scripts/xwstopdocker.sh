@@ -146,14 +146,15 @@ else
   [ -z "$XWJOBUID" ] && fatal "XWJOBUID is not set"
 fi
 
-
 IMAGENAME="xwimg_${XWJOBUID}"
 CONTAINERNAME="xwcontainer_${XWJOBUID}"
  
-
-# clean everything
-docker stop ${CONTAINERNAME} &&docker rm ${CONTAINERNAME} && docker rmi ${IMAGENAME}
-
+# clean all: if the docker container still exists, it will be stop and removed as well as the image
+if [ "$(docker ps -q -a -f name=${CONTAINERNAME})" ] ; then
+  docker stop ${CONTAINERNAME} && docker rm ${CONTAINERNAME} && docker rmi ${IMAGENAME}
+else 
+  docker rmi ${IMAGENAME}
+fi
 
 exit 0
 ###########################################################

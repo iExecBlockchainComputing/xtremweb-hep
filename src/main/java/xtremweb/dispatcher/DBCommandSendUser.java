@@ -49,7 +49,6 @@ public final class DBCommandSendUser extends DBCommandSend implements CommCallba
 
 		mileStone.println("<senduser>");
 		dbInterface.addUser(command);
-
 		mileStone.println("</senduser>");
 		return null;
 	}

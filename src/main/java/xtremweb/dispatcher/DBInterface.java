@@ -96,61 +96,17 @@ public final class DBInterface {
 	 * This is the database connection
 	 */
 	private final DBConnPoolThread dbConnPool;
-
-	/**
-	 * This is a cache to reduce MySQL accesses
-	 *
-	 * @since 7.4.0
-	 */
-	private final Cache cache;
-	/**
-	 * This is this local host name; this is used to create URI to store objects
-	 * in local cache
-	 */
-	private final String localHostName = XWTools.getLocalHostName();
-
-	/**
-	 * This creates a new URI for the provided UID
-	 *
-	 * @since 7.4.0
-	 * @return a new URI, if UID is not null, null otherwise
-	 */
-	private URI newURI(final UID uid) throws URISyntaxException {
-		if (uid == null) {
-			return null;
-		}
-		return new URI(localHostName, uid);
-	}
-
-	/**
-	 * This caches an object interface
-	 *
-	 * @since 7.4.0
-	 */
-	protected void putToCache(final Table itf) {
-
-		if (itf == null) {
-			return;
-		}
-
-		try {
-			final UID uid = itf.getUID();
-			final URI uri = newURI(uid);
-			cache.add(itf, uri);
-		} catch (final Exception e) {
-			logger.exception("can't put to cache", e);
-		}
-	}
-
+// {
+//		dbConnPool.getInstance().putToCache(itf);
+//	}
 	/**
 	 * This inserts an object to both DB and cache
 	 *
 	 * @throws IOException
 	 * @since 9.0.0
 	 */
-	private <T extends Table> void insert(final T row) throws IOException {
-		row.insert();
-		putToCache(row);
+	private <T extends Table> void insert(final T row) throws IOException, URISyntaxException {
+		DBConnPoolThread.getInstance().insert(row);
 	}
 
 	/**
@@ -159,7 +115,7 @@ public final class DBInterface {
 	 * @since 7.4.0
 	 */
 	private Table getFromCache(final URI uri) {
-		return cache.get(uri);
+		return dbConnPool.getInstance().getFromCache(uri);
 	}
 
 	/**
@@ -168,18 +124,7 @@ public final class DBInterface {
 	 * @since 8.2.0
 	 */
 	private <T extends Table> T getFromCache(final URI uri, final T row) {
-		final Table itf = getFromCache(uri);
-		if (itf == null) {
-			return null;
-		}
-		//
-		// we must check interface type because the cache contains all object
-		// types
-		//
-		if (itf.getClass().toString().compareTo(row.getClass().toString()) != 0) {
-			return null;
-		}
-		return (T) itf;
+		return dbConnPool.getInstance().getFromCache(uri, row);
 	}
 
 	/**
@@ -188,19 +133,7 @@ public final class DBInterface {
 	 * @since 7.4.0
 	 */
 	private <T extends Table> T getFromCache(final UID uid, final T row) {
-		if (uid == null) {
-			return null;
-		}
-		try {
-			final URI uri = newURI(uid);
-			if (uri == null) {
-				return null;
-			}
-			return getFromCache(uri, row);
-		} catch (final Exception e) {
-			logger.exception("can't retrieve from cache", e);
-			return null;
-		}
+        return dbConnPool.getInstance().getFromCache(uid, row);
 	}
 
 	/**
@@ -236,34 +169,7 @@ public final class DBInterface {
 	 */
 	private <T extends Table> T getFromCache(final UserInterface u, final UID uid, final T row)
 			throws IOException, AccessControlException {
-
-		if (uid == null) {
-			return null;
-		}
-		try {
-			final URI uri = newURI(uid);
-			return getFromCache(u, uri, row);
-		} catch (final URISyntaxException e) {
-			logger.exception(e);
-			return null;
-		}
-	}
-
-	/**
-	 * This retrieves an object from cache
-	 *
-	 * @since 7.4.0
-	 */
-	private <T extends Table> T getFromCache(final UserInterface u, final URI uri, final T row)
-			throws IOException, AccessControlException {
-		if (uri == null) {
-			return null;
-		}
-		final Table itf = getFromCache(u, uri);
-		if (itf == null) {
-			return null;
-		}
-		return getFromCache(uri, row);
+        return dbConnPool.getInstance().getFromCache(u, uid, row);
 	}
 
 	/**
@@ -285,12 +191,7 @@ public final class DBInterface {
 	 * @since 7.4.0
 	 */
 	private void removeFromCache(final UID uid) {
-		try {
-			final URI uri = newURI(uid);
-			removeFromCache(uri);
-		} catch (final Exception e) {
-			logger.exception("can't remove from cache", e);
-		}
+        dbConnPool.getInstance().removeFromCache(uid);
 	}
 
 	/**
@@ -299,10 +200,7 @@ public final class DBInterface {
 	 * @since 7.4.0
 	 */
 	private void removeFromCache(final URI uri) throws IOException {
-		if (uri == null) {
-			return;
-		}
-		cache.remove(uri);
+		dbConnPool.getInstance().removeFromCache(uri);
 	}
 
 	/**
@@ -320,7 +218,6 @@ public final class DBInterface {
 		config = c;
 		dbConnPool = new DBConnPoolThread(config);
 		dbConnPool.start();
-		cache = new Cache(config);
 
 		emailSender = new EmailSender();
 
@@ -486,12 +383,7 @@ public final class DBInterface {
      * @since 13.0.0
      */
     protected <T extends Table> T object(final T t, final UID uid) throws IOException {
-        T ret = getFromCache(uid, t);
-        if (ret != null) {
-            return ret;
-        }
-        ret = select(t, uid);
-        return ret;
+		return DBConnPoolThread.getInstance().object(t, uid);
     }
     /**
      * This creates a new readable object to retrieve from DB
@@ -695,11 +587,7 @@ public final class DBInterface {
 	 *                update
 	 */
 	synchronized protected <T extends Table> void update(final T row) throws IOException, AccessControlException {
-		if (row == null) {
-			return;
-		}
-		putToCache(row);
-		row.update();
+		DBConnPoolThread.getInstance().update(row);
 	}
 
 	/**
@@ -717,12 +605,6 @@ public final class DBInterface {
 	 */
 	synchronized protected <T extends Table> void update(final Collection<T> rows)
 			throws IOException, AccessControlException {
-		if (rows == null) {
-			return;
-		}
-		for (final Iterator<T> rowit = rows.iterator(); rowit.hasNext();) {
-			putToCache(rowit.next());
-		}
 		DBConnPoolThread.getInstance().update(rows);
 	}
 
@@ -756,9 +638,7 @@ public final class DBInterface {
 			}
 			throw new AccessControlException("update() : " + theClient.getLogin() + " can't update " + row.toXml());
 		}
-		row.update();
-		putToCache(row);
-		// sendMail(owner, row, theClient.getLogin() + " has updated");
+		DBConnPoolThread.getInstance().update(row);
 	}
 
 	/**
@@ -2968,7 +2848,8 @@ public final class DBInterface {
 	 *                is thrown if client does not have enough rights
 	 */
 	public void addData(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws	IOException, InvalidKeyException, AccessControlException,
+					URISyntaxException {
 
 		final DataInterface data = (DataInterface) command.getParameter();
 		if (data == null) {
@@ -3361,7 +3242,8 @@ public final class DBInterface {
 	 *                is thrown if client does not have enough rights
 	 */
 	public boolean addUserGroup(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException,
+					URISyntaxException {
 
 		final UserInterface theClient = checkClient(command, UserRightEnum.INSERTUSERGROUP);
 		final UserGroupInterface groupitf = (UserGroupInterface) command.getParameter();
@@ -3407,7 +3289,7 @@ public final class DBInterface {
      *                is thrown if client does not have enough rights
      */
     public void insertService(final String classname)
-            throws ClassNotFoundException, IOException, InvalidKeyException, AccessControlException {
+            throws ClassNotFoundException, IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
         final UserInterface admin = user(SQLRequest.MAINTABLEALIAS + "." + UserInterface.Columns.LOGIN.toString() + "='"
                 + config.getProperty(XWPropertyDefs.ADMINLOGIN) + "'");
@@ -3446,7 +3328,7 @@ public final class DBInterface {
      *                is thrown if client does not have enough rights
      */
     public void insertCategory(final IexecHub.CreateCategoryEventResponse category)
-            throws ClassNotFoundException, IOException, InvalidKeyException, AccessControlException {
+            throws ClassNotFoundException, IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
         final UserInterface admin = user(SQLRequest.MAINTABLEALIAS + "." + UserInterface.Columns.LOGIN.toString() + "='"
                 + config.getProperty(XWPropertyDefs.ADMINLOGIN) + "'");
@@ -3463,11 +3345,7 @@ public final class DBInterface {
         catItf.setMaxFileSize(XWTools.MAXFILESIZE);
         catItf.setMaxFreeMassStorage(XWTools.MAXDISKSIZE);
         catItf.setMaxMemory(XWTools.MAXRAMSIZE);
-        XMLRPCCommandSendCategory cmd = new XMLRPCCommandSendCategory();
-        cmd.setUser(admin);
-        cmd.setParameter(catItf);
-
-        addCategory(cmd);
+        addCategory(admin, catItf);
     }
 
 	/**
@@ -3492,7 +3370,7 @@ public final class DBInterface {
 	 *                is thrown if client does not have enough rights
 	 */
 	public void addApp(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		final UserInterface theClient = checkClient(command, UserRightEnum.INSERTAPP);
 		final AppInterface appitf = (AppInterface) command.getParameter();
@@ -3522,7 +3400,7 @@ public final class DBInterface {
 	 *                is thrown if client does not have enough rights
 	 */
 	private void addApp(final UserInterface theClient, AppInterface appitf)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		if (appitf == null) {
 			throw new IOException("addApplication : appitf is null");
@@ -4523,7 +4401,7 @@ public final class DBInterface {
 	 *                is thrown if client does not have enough rights
 	 */
 	protected boolean addSession(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		final UserInterface theClient = checkClient(command, UserRightEnum.INSERTSESSION);
 		final SessionInterface sessionitf = (SessionInterface) command.getParameter();
@@ -4559,7 +4437,7 @@ public final class DBInterface {
 	 *                is thrown if client does not have enough rights
 	 */
 	protected boolean addGroup(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		final UserInterface theClient = checkClient(command, UserRightEnum.INSERTGROUP);
 		final GroupInterface groupitf = (GroupInterface) command.getParameter();
@@ -4838,7 +4716,7 @@ public final class DBInterface {
 	 *                client is a worker that tries to insert a new work...)
 	 */
 	protected WorkInterface addWork(final XMLRPCCommand command)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 		final UserInterface mandatingClient = checkClient(command, UserRightEnum.INSERTJOB);
 		final UserInterface mandatedClient = command.isMandated() ? checkMandatedClient(command) : null;
 		final WorkInterface receivedJob = (WorkInterface) command.getParameter();
@@ -5258,7 +5136,8 @@ public final class DBInterface {
     /**
      * This adds/updates an category
      *
-     * @param command is the command to execute
+     * @param u is the requestor
+	 * @param catItf is the category
      * @return true on success; false on DB error or group already exists
      * @exception IOException
      *                is thrown on DB access or I/O error
@@ -5269,29 +5148,28 @@ public final class DBInterface {
      *                is thrown if client does not have enough rights
      * @since 13.0.0
      */
-    protected boolean addCategory(final XMLRPCCommand command)
-            throws IOException, InvalidKeyException, AccessControlException {
+    protected boolean addCategory(final UserInterface u, final CategoryInterface catItf)
+            throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
-        final UserInterface theClient = checkClient(command, UserRightEnum.INSERTCATEGORY);
-        final CategoryInterface catitf = (CategoryInterface) command.getParameter();
-        final CategoryInterface category = category(theClient, catitf.getCategoryId());
+        final UserInterface theClient = checkClient(u, UserRightEnum.INSERTCATEGORY);
+        final CategoryInterface category = category(theClient, catItf.getCategoryId());
         if (category != null) {
-            category.updateInterface(catitf);
+            category.updateInterface(catItf);
             update(theClient, UserRightEnum.INSERTCATEGORY, category);
             return true;
         }
 
-        if (catitf.getUID() == null) {
+        if (catItf.getUID() == null) {
             final UID uid = new UID();
-            catitf.setUID(uid);
+			catItf.setUID(uid);
         }
-        if (catitf.getOwner() == null) {
-            catitf.setOwner(theClient.getUID());
+        if (catItf.getOwner() == null) {
+			catItf.setOwner(theClient.getUID());
         }
-        insert(catitf);
+        insert(catItf);
 
         // read from DB, in case some values are null (and set to default by insert db)
-        putToCache(category(theClient, "maintable.uid='" + catitf.getUID() + "'"));
+        DBConnPoolThread.getInstance().putToCache(category(theClient, "maintable.uid='" + catItf.getUID() + "'"));
 
         return true;
     }
@@ -5323,7 +5201,7 @@ public final class DBInterface {
 	 * @return host(found or created)
 	 */
 	public HostInterface hostRegister(final UserInterface user, final HostInterface _host)
-			throws IOException, InvalidKeyException, AccessControlException {
+			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		final String hostName = _host.getName();
 		final Date lastAlive = new Date(System.currentTimeMillis());

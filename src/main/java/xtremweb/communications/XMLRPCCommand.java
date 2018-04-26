@@ -882,18 +882,6 @@ public abstract class XMLRPCCommand extends XMLable {
 		try {
 			input.reset();
 			input.mark(XWTools.BUFFEREND);
-			return new XMLRPCCommandSendCategory(input);
-		} catch (final SAXException e) {
-			if (e instanceof XMLEndParseException) {
-				return ret;
-			}
-		} catch (final InvalidKeyException e) {
-			logger.exception(e);
-		}
-		logger.finest("not a command sendcategory");
-		try {
-			input.reset();
-			input.mark(XWTools.BUFFEREND);
 			return new XMLRPCCommandGetHubAddr(input);
 		} catch (final SAXException e) {
 			if (e instanceof XMLEndParseException) {

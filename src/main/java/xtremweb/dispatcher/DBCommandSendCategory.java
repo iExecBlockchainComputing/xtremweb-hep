@@ -22,11 +22,13 @@
 
 package xtremweb.dispatcher;
 
+import xtremweb.common.CategoryInterface;
 import xtremweb.common.CommCallback;
 import xtremweb.common.XMLable;
 import xtremweb.communications.XMLRPCCommand;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
 
@@ -47,9 +49,12 @@ public final class DBCommandSendCategory extends DBCommandSend implements CommCa
 
 	public XMLable exec(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException {
-
-		mileStone.println("<dbcommandsendcategory>");
-		dbInterface.addCategory(command);
+		try {
+			mileStone.println("<dbcommandsendcategory>");
+			dbInterface.addCategory(command.getUser(), (CategoryInterface) command.getParam());
+		} catch (URISyntaxException e) {
+			mileStone.println("<error msg =\"" + e.getMessage() + "\" />");
+		}
 		mileStone.println("</dbcommandsendcategory>");
 		return null;
 	}
