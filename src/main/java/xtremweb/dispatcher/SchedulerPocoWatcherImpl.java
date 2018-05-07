@@ -53,4 +53,18 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
     public void onReveal(WorkerPool.RevealEventResponse revealEventResponse) {
         //actuatorService.finalizeWork(revealEventResponse.woid,"aStdout", "aStderr", "anUri");
     }
+    @Override
+    public void onWorkOrderClaimed(WorkerPool.WorkOrderClaimedEventResponse workOrderClaimedEventResponse) {
+
+    }
+
+    @Override
+    public void onReopenEvent(WorkerPool.ReopenEventResponse reopenEventResponse) {
+
+    }
+
+    @Override
+    public void onWorkerEvictionEvent(WorkerPool.WorkerEvictionEventResponse workerEvictionEventResponse) {
+
+    }
 }
