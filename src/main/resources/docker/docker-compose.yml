@@ -45,6 +45,7 @@ services:
       - JWTETHSECRET=${JWTETHSECRET}
       - DELEGATEDREGISTRATION=${DELEGATEDREGISTRATION}
       - MAXFILESIZE=${MAXFILESIZE}
+      - BLOCKCHAINETHENABLED=${BLOCKCHAINETHENABLED}
       - ETHNODE=${ETHNODE}
       - RLCCONTRACT=${RLCCONTRACT}
       - IEXECHUBCONTRACT=${IEXECHUBCONTRACT}
@@ -65,6 +66,7 @@ services:
       - WALLETPATH=${WORKERWALLETPATH}
       - WALLETPASSWORD=${WORKERWALLETPASSWORD}
       - LOGGERLEVEL=${LOGGERLEVEL}
+      - BLOCKCHAINETHENABLED=${BLOCKCHAINETHENABLED}
     ports:
       - 4321
       - 4322
@@ -73,11 +75,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${RESULTS_FOLDER}:${RESULTS_FOLDER}
-      - ${WORKERWALLETPATH}:/iexec/wallet/wallet.json  
+      - ${WORKERWALLETPATH}:/iexec/wallet/wallet.json
     networks:
       - iexec-net
     restart: unless-stopped
-  
+
   db:
     image: mysql:5.7
     container_name: mysql
@@ -119,4 +121,3 @@ services:
     networks:
       - iexec-net
     restart: unless-stopped
-

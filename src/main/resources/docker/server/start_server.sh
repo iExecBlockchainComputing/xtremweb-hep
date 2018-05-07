@@ -29,6 +29,7 @@ replace_predefined_var_in_conf WORKERLOGIN
 replace_predefined_var_in_conf WORKERPASSWORD
 replace_predefined_var_in_conf WORKERUID
 replace_predefined_var_in_conf LOGGERLEVEL
+replace_predefined_var_in_conf BLOCKCHAINETHENABLED
 
 
 iexecSchedulerYmlFile=/iexec/conf/iexec-scheduler.yml
