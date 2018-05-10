@@ -32,10 +32,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -62,6 +59,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import xtremweb.communications.URI;
 
 
 /**
@@ -992,30 +990,26 @@ public class XWTools {
 		return store;
 	}
 
-//    public static String sha256CheckSum(final File data) throws NoSuchAlgorithmException, FileNotFoundException, IOException
-//    {
-//        final MessageDigest md = MessageDigest.getInstance("SHA-256");
-//        try (final FileInputStream fis = new FileInputStream(data)) {
-//
-//        	final byte[] dataBytes = new byte[1024];
-//
-//        	int nread = 0;
-//	        while ((nread = fis.read(dataBytes)) != -1) {
-//	          md.update(dataBytes, 0, nread);
-//	        };
-//	        final byte[] mdbytes = md.digest();
-//
-//	       //convert the byte to hex format method 2
-//	        final StringBuffer hexString = new StringBuffer();
-//	    	for (int i=0;i<mdbytes.length;i++) {
-//	    	  hexString.append(Integer.toHexString(0xFF & mdbytes[i]));
-//	    	}
-//	
-//	    	return hexString.toString();
-//        } 
-//    }
+	/**
+	 * This is this local host name; this is used to create URI to store objects
+	 * in local cache
+	 */
+	public static final String localHostName = getLocalHostName();
 
-    public static String sha256CheckSum(final File data) throws NoSuchAlgorithmException, IOException 
+	/**
+	 * This creates a new URI for the provided UID
+	 *
+	 * @since 13.0.4
+	 * @return a new URI, if UID is not null, null otherwise
+	 */
+	public static URI newURI(final UID uid) throws URISyntaxException {
+		if (uid == null) {
+			return null;
+		}
+		return new URI(localHostName, uid);
+	}
+
+	public static String sha256CheckSum(final File data) throws NoSuchAlgorithmException, IOException
     {
         final MessageDigest md = MessageDigest.getInstance("SHA-256");
         try (final FileInputStream fis = new FileInputStream(data)) {
@@ -1032,21 +1026,6 @@ public class XWTools {
         } 
     }
 
-//    public static String sha256(final String data) throws NoSuchAlgorithmException
-//    {
-//    	final MessageDigest md = MessageDigest.getInstance("SHA-256");
-//        md.update(data.getBytes());
-//
-//        byte byteData[] = md.digest();
-//
-//        final StringBuffer hexString = new StringBuffer();
-//    	for (int i=0;i<byteData.length;i++) {
-//    		String hex=Integer.toHexString(0xff & byteData[i]);
-//   	     	if(hex.length()==1) hexString.append('0');
-//   	     	hexString.append(hex);
-//    	}
-//    	return hexString.toString();
-//    }
     public static String sha256(final String data) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance( "SHA-256" );
         // Change this to UTF-16 if needed

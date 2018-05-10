@@ -381,7 +381,7 @@ COMMHANDLERS=attic:xtremweb.communications.HTTPClient
 #
 # Default is null
 #
-#SHAREDAPPS=VirtualBox
+SHAREDAPPS=docker
 
 #
 # sharedpackages is a String determining local packages

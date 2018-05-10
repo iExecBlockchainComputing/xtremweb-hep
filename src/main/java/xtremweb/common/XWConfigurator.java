@@ -2436,6 +2436,7 @@ public final class XWConfigurator extends Properties {
 			if (workerPoolConfig != null) {
 				out.println("iExec WorkerPool name : " + workerPoolConfig.getName());
 				out.println("iExec WorkerPool addr : " + workerPoolConfig.getAddress());
+				_host.setWorkerPoolAddr(workerPoolConfig.getAddress());
 			}
 		} else {
 		    disableBlockchain();

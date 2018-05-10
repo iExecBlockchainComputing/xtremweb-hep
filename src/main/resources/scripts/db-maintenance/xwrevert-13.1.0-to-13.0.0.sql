@@ -45,6 +45,7 @@ ALTER TABLE  works CHANGE COLUMN totalr        totalr       int(3) default 0    
 ALTER TABLE  hosts DROP   COLUMN ethwalletaddr;
 ALTER TABLE  hosts DROP   COLUMN marketorderUID;
 ALTER TABLE  hosts DROP   COLUMN hascontributed;
+ALTER TABLE  hosts DROP   COLUMN workerpooladdr;
 
 ALTER TABLE  apps  DROP   COLUMN price;
 

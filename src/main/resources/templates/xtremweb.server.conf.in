@@ -99,7 +99,7 @@ DBPASS=@DBUSERPASSWORD@
 # Default : false
 # since 8.2.0
 #
-#DELEGATEDREGISTRATION=false
+DELEGATEDREGISTRATION=true
 
 #
 # Server : the JWT issuer

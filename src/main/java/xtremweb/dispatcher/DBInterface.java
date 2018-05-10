@@ -1180,12 +1180,20 @@ public final class DBInterface {
     }
     /**
      * This retrieves a market order lacking computing resources, bypassing access rights
+	 * @param workerPoolAddr is the address of the worker pool
      * @since 13.1.0
      */
-    protected MarketOrderInterface marketOrderUnsatisfied() throws IOException {
+    protected MarketOrderInterface marketOrderUnsatisfied(final String workerPoolAddr) throws IOException {
+
+        if(workerPoolAddr == null) {
+            return null;
+        }
+
         return selectOne(new MarketOrderInterface(),
                 SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.NBWORKERS + "<"
-                        + MarketOrderInterface .Columns.EXPECTEDWORKERS );
+                        + MarketOrderInterface .Columns.EXPECTEDWORKERS
+						+ " AND " + MarketOrderInterface .Columns.WORKERPOOLADDR + "='"
+						+ workerPoolAddr + "'");
     }
     /**
      * This retrieves a market order by its id, bypassing access rights
@@ -1439,6 +1447,18 @@ public final class DBInterface {
     protected HostInterface host(final UID uid) throws IOException {
         return object(new HostInterface(), uid);
     }
+    /**
+     * This retrieves hosts that participate to the given market order, bypassing access rights
+     *
+     * @param marketOrder is the market order we want to retrieve participating hosts
+     * @return a collection of host interfaces
+     * @since 13.1.0
+     */
+    protected Collection<HostInterface> hosts(final MarketOrderInterface marketOrder) throws IOException {
+        return selectAll(new HostInterface(), HostInterface.Columns.MARKETORDERUID + "='"
+                + marketOrder.getUID() + "'");
+    }
+//    protected <T extends Table> Collection<T> selectAll(final T row, final String conditions) throws IOException
     /**
      * This retrieves a host, bypassing access rights
      *
@@ -3743,7 +3763,7 @@ public final class DBInterface {
 
 			return;
 		}
-
+    
 		try {
 			if (appitf.getUID() == null) {
 				appitf.setUID(new UID());
@@ -4708,8 +4728,8 @@ public final class DBInterface {
         final UserInterface theClient = checkClient(command, UserRightEnum.LISTJOB);
         final UID uid = command.getURI().getUID();
         final MarketOrderInterface marketOrder = marketOrder(command);
-        return marketOrdersUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERIDX
-                + "='" + marketOrder.getMarketOrderIdx() + "'");
+        return marketOrdersUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERUID
+                + "='" + marketOrder.getUID() + "'");
     }
     /**
      * This retrieves jobs for a market order
@@ -4735,8 +4755,8 @@ public final class DBInterface {
         final UserInterface theClient = checkClient(client, UserRightEnum.LISTJOB);
         final MarketOrderInterface marketOrder = marketOrder(client, uid);
 
-        return marketOrdersUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERIDX
-                + "='" + marketOrder.getMarketOrderIdx() + "'");
+        return marketOrdersUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERUID
+                + "='" + marketOrder.getUID() + "'");
     }
 
 	/**
@@ -5152,10 +5172,10 @@ public final class DBInterface {
             receivedJob.setCategoryId(0);
         }
 
-        final Long receivedJobMarketOrderIdx = receivedJob.getMarketOrderIdx();
-        final MarketOrderInterface receivedJobMarketOrder = marketOrderByIdx(receivedJob.getMarketOrderIdx());
+        final UID receivedJobMarketOrderUid = receivedJob.getMarketOrderUid();
+        final MarketOrderInterface receivedJobMarketOrder = marketOrder(receivedJob.getMarketOrderUid());
         if(receivedJobMarketOrder == null) {
-            throw new IOException("invalid job market order : " + receivedJobMarketOrderIdx);
+            throw new IOException("invalid job market order : " + receivedJobMarketOrderUid);
         }
 
         final WorkInterface theWork = work(mandatingClient, jobUID);
@@ -5211,8 +5231,6 @@ public final class DBInterface {
 				logger.debug(realClient.getLogin() + " is updating " + theWork.getUID() + " status = "
 						+ receivedJob.getStatus());
 
-				System.out.println("DBInterface#addWork theWork = " + theWork.toXml());
-
 				switch (theWork.getStatus()) {
 				case RESULTREQUEST:
 					theWork.setResultRequest();
@@ -5264,32 +5282,6 @@ public final class DBInterface {
                     if(theTask != null) {
                         theTask.setContributed();
                     }
-/*
-				    marketOrder.getTrust();
-                    final Collection<WorkInterface> works = marketOrderWorks(marketOrder);
-                    final long expectedWorkers = marketOrder.getExpectedWorkers();
-                    final long trust = marketOrder.getTrust();
-                    final long expectedContributions = (expectedWorkers * trust / 100);
-                    long totalContributions = 0L;
-                    for(final WorkInterface work : works ) {
-                        if(work.hasContributed()) {
-                            totalContributions++;
-                        }
-                    }
-                    if (totalContributions >= expectedContributions) {
-                        for(final WorkInterface contributingWork : works ) {
-
-                            contributingWork.setRevealing();
-                            rows.add(contributingWork);
-
-                            final TaskInterface contributingTask = task(contributingWork);
-                            if(contributingTask != null) {
-                                contributingTask.setRevealing();
-                                rows.add(contributingTask);
-                            }
-                        }
-                    }
-*/
                     break;
 				case COMPLETED:
 
@@ -5778,28 +5770,39 @@ public final class DBInterface {
 				if (host.wantToContribute()) {
 
                     try {
-                        MarketOrderInterface marketOrder = marketOrderUnsatisfied();
+                        final MarketOrderInterface marketOrder = marketOrderUnsatisfied(host.getWorkerPoolAddr());
                         if(marketOrder == null) {
                             logger.info("hostRegister() - " + workerWalletAddr +" : no unsatisfied market order");
-                        }
-                        marketOrder = marketOrder();
-                        if(marketOrder == null) {
-                            logger.info("hostRegister() - " + workerWalletAddr +" : no market order");
                         } else {
-                            logger.debug("hostRegister() - " + workerWalletAddr +" joins market order "
-                                    + marketOrder.getUID());
-                            marketOrder.addWorker(host);
-                            marketOrder.update();
-                        }
-                        if((marketOrder != null) && (marketOrder.canStart())) {
-                            final ActuatorService actuatorService = ActuatorService.getInstance();
-                            final BigInteger marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
-                                    BigInteger.valueOf(marketOrder.getTrust()),
-                                    BigInteger.valueOf(marketOrder.getPrice()),
-                                    BigInteger.valueOf(marketOrder.getVolume()));
-                            marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
-                            marketOrder.update();
-                        }
+							if(marketOrder.getWorkerPoolAddr().compareTo(host.getWorkerPoolAddr()) != 0) {
+								logger.error("hostRegister() : worker pool mismatch : "
+										+ marketOrder.getWorkerPoolAddr() + " != "
+										+ host.getWorkerPoolAddr());
+							}
+							else {
+
+								logger.debug("hostRegister() - " + workerWalletAddr +" joins market order "
+										+ marketOrder.getUID());
+								marketOrder.addWorker(host);
+
+                                // following host.update() is not really necessary but helps comprehension
+                                // since createMarketOrder is long to execute on the blockchain
+                                // and update(host) below will not waste any time to write to DB
+                                // since it would have already been written here
+								host.update();
+								marketOrder.update();
+
+								if(marketOrder.canStart()) {
+									final ActuatorService actuatorService = ActuatorService.getInstance();
+									final BigInteger marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
+											BigInteger.valueOf(marketOrder.getTrust()),
+											BigInteger.valueOf(marketOrder.getPrice()),
+											BigInteger.valueOf(marketOrder.getVolume()));
+									marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
+									marketOrder.update();
+								}
+							}
+						}
                     } catch (final IOException e) {
                         logger.exception(e);
                     }

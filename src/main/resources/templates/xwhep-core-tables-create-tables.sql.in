@@ -500,6 +500,7 @@ create table if not exists  hosts  (
   ethwalletaddr        varchar(254)                             comment 'worker eth wallet address; optional',
   marketorderUID       char(36)                                 comment 'Optional, UID of the market order',
   hascontributed       char(5)                 default 'false'  comment 'This flag tells whether this host ahs already contributed to its current market order',
+  workerpooladdr       varchar(254)                             comment 'workerpool addr this host is registered to',
 
   index  idx_ethwalletaddr  (ethwalletaddr),
   index  osId         (osId),
@@ -866,7 +867,7 @@ create table if not exists  marketorders (
   marketOrderIdx       bigint                                      comment 'market order index',
   categoryId           bigint         not null                     comment 'catID reference',
   expectedWorkers      bigint         not null                     comment 'how many workers to safely reach the trust',
-  nbWorkers            bigint                                      comment 'how many workers alredy booked',
+  nbWorkers            bigint         not null  default 0          comment 'how many workers alredy booked',
   trust                bigint         not null  default 70         comment 'expected trust',
   price                bigint         not null  default 0          comment 'this is the cost or the price, depending on direction; this is named value in smart contract',
   volume               bigint                   default 0          comment 'how many such orders the scheduler can propose',
@@ -960,7 +961,7 @@ create table if not exists  works  (
   marketorderUID      char(36)                                     comment 'Optional, UID of the market order',
   h2r                 char(36)                                     comment 'this is the contribution proposal, if this work belongs a market order',
   h2rps               char(36)                                     comment 'this is the contribution proof, if this work belongs a market order',
-  workOrderId         char(36)                                     comment 'this is the blockchain work order id',
+  workOrderId         varchar(254)                                 comment 'this is the blockchain work order id',
 
   index  works_status_active (status, active),
   index  appUID              (appUID),

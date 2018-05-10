@@ -512,7 +512,7 @@ public class DBConnPoolThread extends Thread {
 
 			if (pool == true) {
 				logger.finest("updateFifo.add(" + query + ")");
-				updateFifo.put(newURI(row.getUID()), query);
+				updateFifo.put(XWTools.newURI(row.getUID()), query);
 			} else {
 				executeQuery(query, row);
 			}
@@ -681,7 +681,7 @@ public class DBConnPoolThread extends Thread {
 				+ row.getColumns() + (") ") + " VALUES (" + criteria + ")";
 
 		// executeQuery(query, row);
-		updateFifo.put(newURI(row.getUID()), query);
+		updateFifo.put(XWTools.newURI(row.getUID()), query);
         putToCache(row);
 		notify();
 	}
@@ -757,24 +757,6 @@ public class DBConnPoolThread extends Thread {
 	}
 
 	/**
-	 * This is this local host name; this is used to create URI to store objects
-	 * in local cache
-	 */
-	private final String localHostName = XWTools.getLocalHostName();
-
-	/**
-	 * This creates a new URI for the provided UID
-	 *
-	 * @since 13.0.4
-	 * @return a new URI, if UID is not null, null otherwise
-	 */
-	public URI newURI(final UID uid) throws URISyntaxException {
-		if (uid == null) {
-			return null;
-		}
-		return new URI(localHostName, uid);
-	}
-	/**
 	 * This caches an object interface
 	 *
 	 * @since 13.0.4
@@ -787,7 +769,7 @@ public class DBConnPoolThread extends Thread {
 
 		try {
 			final UID uid = itf.getUID();
-			final URI uri = newURI(uid);
+			final URI uri = XWTools.newURI(uid);
 			cache.add(itf, uri);
 		} catch (final Exception e) {
 			logger.exception("can't put to cache", e);
@@ -804,7 +786,7 @@ public class DBConnPoolThread extends Thread {
 			return null;
 		}
 		try {
-			final URI uri = newURI(uid);
+			final URI uri = XWTools.newURI(uid);
 			if (uri == null) {
 				return null;
 			}
@@ -845,7 +827,7 @@ public class DBConnPoolThread extends Thread {
 			return null;
 		}
 		try {
-			final URI uri = newURI(uid);
+			final URI uri = XWTools.newURI(uid);
 			return getFromCache(u, uri, row);
 		} catch (final URISyntaxException e) {
 			logger.exception(e);
@@ -968,7 +950,7 @@ public class DBConnPoolThread extends Thread {
 	 */
 	public void removeFromCache(final UID uid) {
 		try {
-			final URI uri = newURI(uid);
+			final URI uri = XWTools.newURI(uid);
 			removeFromCache(uri);
 		} catch (final Exception e) {
 			logger.exception("can't remove from cache", e);

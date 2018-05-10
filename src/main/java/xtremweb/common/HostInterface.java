@@ -69,16 +69,26 @@ public final class HostInterface extends Table {
 	 */
 	public enum Columns implements XWBaseColumn {
 
-        /**
-         * This is the worker pool addr
-         * @since 13.1.0
-         */
-            ETHWALLETADDR {
-            @Override
-            public String fromString(final String v) {
-                return v;
-            }
-        },
+		/**
+		 * This is the worker wallet addr
+		 * @since 13.1.0
+		 */
+		ETHWALLETADDR {
+			@Override
+			public String fromString(final String v) {
+				return v;
+			}
+		},
+		/**
+		 * This is the worker pool addr this host belongs to
+		 * @since 13.1.0
+		 */
+		WORKERPOOLADDR {
+			@Override
+			public String fromString(final String v) {
+				return v;
+			}
+		},
         /**
          * This is the market order for this worker
          * @since 13.1.0
@@ -647,6 +657,8 @@ public final class HostInterface extends Table {
 		setJavaVersion(XWPropertyDefs.JAVAVERSION.defaultValue());
 		setJavaDataModel(Integer.parseInt(XWPropertyDefs.JAVADATAMODEL.defaultValue()));
 		setShortIndexes(new int[] { TableColumns.UID.getOrdinal(), Columns.NAME.getOrdinal() });
+		setContribution(false);
+		setDirty(true);
 	}
 
 	/**
@@ -681,10 +693,14 @@ public final class HostInterface extends Table {
 				setNbConnections((Integer) Columns.NBCONNECTIONS.fromResultSet(rs));
 			} catch (final Exception e) {
 			}
-            try {
-                setEthWalletAddr((String) Columns.ETHWALLETADDR.fromResultSet(rs));
-            } catch (final Exception e) {
-            }
+			try {
+				setEthWalletAddr((String) Columns.ETHWALLETADDR.fromResultSet(rs));
+			} catch (final Exception e) {
+			}
+			try {
+				setWorkerPoolAddr((String) Columns.WORKERPOOLADDR.fromResultSet(rs));
+			} catch (final Exception e) {
+			}
             try {
                 setMarketOrderUid((UID) Columns.MARKETORDERUID.fromResultSet(rs));
             } catch (final Exception e) {
@@ -971,7 +987,8 @@ public final class HostInterface extends Table {
 		if (itf.getOwner() != null) {
 			setOwner(itf.getOwner());
 		}
-        setEthWalletAddr(itf.getEthWalletAddr());
+		setEthWalletAddr(itf.getEthWalletAddr());
+		setWorkerPoolAddr(itf.getWorkerPoolAddr());
         setMarketOrderUid(itf.getMarketOrderUid());
         setContribution(itf.hasContributed());
 		setAvgExecTime(itf.getAvgExecTime());
@@ -1085,19 +1102,32 @@ public final class HostInterface extends Table {
 		setUploadBandwidth(0);
 		return 0;
 	}
-    /**
-     * This retrieves the worker eth wallet addr
-     *
-     * @return this attribute, or null if not set
-     * @since 13.1.0
-     */
-    public String getEthWalletAddr() {
-        try {
-            return (String) getValue(Columns.ETHWALLETADDR);
-        } catch (final Exception e) {
-            return null;
-        }
-    }
+	/**
+	 * This retrieves the worker eth wallet addr
+	 *
+	 * @return this attribute, or null if not set
+	 * @since 13.1.0
+	 */
+	public String getEthWalletAddr() {
+		try {
+			return (String) getValue(Columns.ETHWALLETADDR);
+		} catch (final Exception e) {
+			return null;
+		}
+	}
+	/**
+	 * This retrieves the worker pool addr this host belongs to
+	 *
+	 * @return this attribute, or null if not set
+	 * @since 13.1.0
+	 */
+	public String getWorkerPoolAddr() {
+		try {
+			return (String) getValue(Columns.WORKERPOOLADDR);
+		} catch (final Exception e) {
+			return null;
+		}
+	}
     /**
      * This checks if this worker has already contributed to the current market order
      *
@@ -1127,12 +1157,12 @@ public final class HostInterface extends Table {
     /**
      * This checks if this worker wants to contribute to a market order
      *
-     * @return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null))
+     * @return (getMarketOrderUid() == null) && (getEthWalletAddr() != null)) && (getWorkerPoolAddr() != null)
      * @since 13.1.0
      */
     public boolean wantToContribute() {
         try {
-            return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null));
+            return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null));
         } catch (final Exception e) {
             return false;
         }
@@ -1140,12 +1170,12 @@ public final class HostInterface extends Table {
     /**
      * This checks if this worker can contribute to a market order
      *
-     * @return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null))
+     * @return (getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null)
      * @since 13.1.0
      */
     public boolean canContribute() {
         try {
-            return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null));
+            return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null));
         } catch (final Exception e) {
             return false;
         }
@@ -2318,15 +2348,24 @@ public final class HostInterface extends Table {
 		return setValue(Columns.ACCEPTBIN, Boolean.valueOf(v));
 	}
 
-    /**
-     * This sets the eth wallet address
-     * @param addr is the eth wallet address
-     * @return true if value has changed, false otherwise
-     * @since 13.1.0
-     */
-    public boolean setEthWalletAddr(final String addr)  {
-        return setValue(Columns.ETHWALLETADDR, addr);
-    }
+	/**
+	 * This sets the eth wallet address
+	 * @param addr is the eth wallet address
+	 * @return true if value has changed, false otherwise
+	 * @since 13.1.0
+	 */
+	public boolean setEthWalletAddr(final String addr)  {
+		return setValue(Columns.ETHWALLETADDR, addr);
+	}
+	/**
+	 * This sets the worker pool address this host belongs to
+	 * @param addr is the worker pool address
+	 * @return true if value has changed, false otherwise
+	 * @since 13.1.0
+	 */
+	public boolean setWorkerPoolAddr(final String addr)  {
+		return setValue(Columns.WORKERPOOLADDR, addr);
+	}
     /**
      * This leaves the current market order
      * @since 13.1.0

@@ -27,6 +27,7 @@ insert into statuses (statusId, statusName, statusObjects, statusComment, status
 ALTER TABLE  hosts ADD    COLUMN ethwalletaddr     varchar(254)                comment 'worker eth wallet address; optional';
 ALTER TABLE  hosts ADD    COLUMN marketorderUID    char(36)                    comment 'Optional, UID of the market order';
 ALTER TABLE  hosts ADD    COLUMN hascontributed    char(5)    default 'false'  comment 'This flag tells whether this host ahs already contributed to its current market order';
+ALTER TABLE  hosts ADD    COLUMN workerpooladdr    varchar(254)                comment 'workerpool addr this host is registered to';
 
 ALTER TABLE  apps  ADD    COLUMN price             bigint          default 0  comment 'price since 13.1.0',
 
@@ -40,7 +41,8 @@ ALTER TABLE  works ADD    COLUMN beneficiary       varchar(50)                co
 ALTER TABLE  works ADD    COLUMN marketorderUID    char(36)                   comment 'Optional, UID of the market order';
 ALTER TABLE  works ADD    COLUMN h2r               char(36)                   comment 'this is the contribution proposal, if this work belongs a market order';
 ALTER TABLE  works ADD    COLUMN h2rps             char(36)                   comment 'this is the contribution proof, if this work belongs a market order';
-ALTER TABLE  works ADD    COLUMN workOrderId       char(36)                   comment 'this is the blockchain work order id';
+ALTER TABLE  works ADD    COLUMN workOrderId       varchar(254)               comment 'this is the blockchain work order id';
+
 
 
 ALTER TABLE  works CHANGE COLUMN replications  replications bigint  default 0        comment 'Optionnal. Amount of expected replications. No replication, if <= 0';
@@ -63,7 +65,7 @@ create table if not exists  marketorders (
   marketOrderIdx       bigint                                      comment 'market order index',
   categoryId           bigint         not null                     comment 'catID reference',
   expectedWorkers      bigint         not null                     comment 'how many workers to safely reach the trust',
-  nbWorkers            bigint                                      comment 'how many workers alredy booked',
+  nbWorkers            bigint         not null  default 0          comment 'how many workers alredy booked',
   trust                bigint         not null  default 70         comment 'expected trust',
   price                bigint         not null  default 0          comment 'this is the cost or the price, depending on direction; this is named value in smart contract',
   volume               bigint                   default 0          comment 'how many such orders the scheduler can propose; this is calculated by the scheduler',

@@ -114,25 +114,11 @@ public class MatchingScheduler extends SimpleScheduler {
                     moreCriterias.append(SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.GROUPUID + "='" + uid + "'");
 				}
 			}
-/*
-			final UID hostMarketOrderUid = host.getMarketOrderUid();
-			if(hostMarketOrderUid != null) {
-                if(moreCriterias.length() > 0)
-                    moreCriterias.append(" AND ");
-                moreCriterias.append(SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERUID + "='" + hostMarketOrderUid + "'");
-            }
-*/
+
 			getLogger().debug("host      = " + host.toXml());
 			getLogger().debug("criterias = " + moreCriterias);
 			theWork = db.selectOne(workSelection, moreCriterias.toString());
 
-/*
-			if(theWork == null) {
-				final SQLRequestWorkRequestDataDriven dataDrivenWorkRequest = new SQLRequestWorkRequestDataDriven(host, user);
-				final WorkInterface dataDrivenWorkSelection = new WorkInterface(dataDrivenWorkRequest);
-				theWork = db.selectOne(dataDrivenWorkSelection, moreCriterias);
-			}
-*/
 			if (theWork != null) {
                 final Collection<Table> rows = new Vector<>();
                 final UID theAppUID = theWork.getApplication();

@@ -343,17 +343,6 @@ public class WorkInterface extends Table {
 		 * @since 13.1.0
 		 */
 		WORKORDERID,
-		/**
-		 * This is the column index of market order index; this is optional
-		 *
-		 * @since 13.1.0
-		 */
-		MARKETORDERIDX {
-			@Override
-            public Long fromString(final String v) {
-                return Long.valueOf(v);
-            }
-		},
         /**
          * This is the column index of the session UID, if any
          * @since 13.1.0
@@ -797,7 +786,6 @@ public class WorkInterface extends Table {
 		setTotalReplica(0L);
 		setReplicaSetSize(0L);
         setCategoryId(0L);
-        setMarketOrderIdx(0L);
         setMarketOrderUid(null);
         setH2r(null);
 		setH2rps(null);
@@ -1018,10 +1006,6 @@ public class WorkInterface extends Table {
 		} catch (final Exception e) {
 		}
         try {
-            setMarketOrderIdx((Long) Columns.MARKETORDERIDX.fromResultSet(rs));
-        } catch (final Exception e) {
-        }
-        try {
             setMarketOrderUid((UID) Columns.MARKETORDERUID.fromResultSet(rs));
         } catch (final Exception e) {
         }
@@ -1160,7 +1144,6 @@ public class WorkInterface extends Table {
 		setExpectedReplications(itf.getExpectedReplications());
 		setCategoryId(itf.getCategoryId());
 		setWorkOrderId(itf.getWorkOrderId());
-        setMarketOrderIdx(itf.getMarketOrderIdx());
         setMarketOrderUid(itf.getMarketOrderUid());
         setH2r(itf.getH2r());
         setH2rps(itf.getH2rps());
@@ -1861,14 +1844,6 @@ public class WorkInterface extends Table {
 	public final String getWorkOrderId() {
 		return (String)getValue(Columns.WORKORDERID);
 	}
-    /**
-     * This retrieves the market order index
-     * @since 13.1.0
-     * @return this attribute, or null if not set
-     */
-    public final Long getMarketOrderIdx() {
-        return (Long) getValue(Columns.MARKETORDERIDX);
-    }
     /**
      * This retrieves the market order UID
      * @since 13.1.0
@@ -2755,15 +2730,6 @@ public class WorkInterface extends Table {
 	public final boolean setWorkOrderId(final String woid) {
 		return setValue(Columns.WORKORDERID, woid);
 	}
-    /**
-     * This sets the market order index
-     * @param idx is the market order index
-     * @since 13.0.0
-     * @return true if value has changed, false otherwise
-     */
-    public final boolean setMarketOrderIdx(final Long idx) {
-        return setValue(Columns.MARKETORDERIDX, idx);
-    }
     /**
      * This sets the market order UID
      * @param uid is the market order uid
