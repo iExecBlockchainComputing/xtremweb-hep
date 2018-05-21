@@ -2,7 +2,6 @@ FROM ubuntu:16.04
 EXPOSE 4321 4322 4323 4324 4327 4328 443
 
 ADD conf/xtremweb.worker.conf /iexec/conf/
-ADD conf/iexec-worker.yml /iexec/conf/
 RUN mkdir -p /iexec/bin
 RUN mkdir -p /iexec/certificate
 ADD bin/xtremweb.worker /iexec/bin
@@ -20,7 +19,7 @@ WORKDIR /iexec
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -y openjdk-8-jre zip unzip wget
 
-RUN apt-get install -y curl openssl apt-transport-https ca-certificates software-properties-common 
+RUN apt-get install -y curl openssl apt-transport-https ca-certificates software-properties-common
 
 # install docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
