@@ -2,17 +2,22 @@ package xtremweb.dispatcher;
 
 import com.iexec.common.contracts.generated.WorkerPool;
 import com.iexec.common.ethereum.IexecConfigurationService;
+import com.iexec.common.ethereum.Utils;
 import com.iexec.common.ethereum.Web3jService;
 import com.iexec.common.model.AppModel;
 import com.iexec.common.model.ModelService;
 import com.iexec.common.model.WorkOrderModel;
 import com.iexec.scheduler.actuator.ActuatorService;
+import com.iexec.scheduler.database.Contribution;
 import com.iexec.scheduler.database.ContributionService;
 import com.iexec.scheduler.iexechub.IexecHubService;
 import com.iexec.scheduler.iexechub.IexecHubWatcher;
 import com.iexec.scheduler.workerpool.WorkerPoolService;
 import com.iexec.scheduler.workerpool.WorkerPoolWatcher;
+import org.json.JSONException;
+import org.web3j.utils.Numeric;
 import xtremweb.common.*;
+import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommandSendApp;
 import xtremweb.communications.XMLRPCCommandSendWork;
 import xtremweb.database.SQLRequest;
@@ -60,25 +65,55 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
      * This retrieves a market order still starving computing resources,
      * and registers the worker as volunteer; if no such market order, this returns.
      * Finally, the market order is created on the blockchain if it has enough volunteers.
+     *
+     * If it is found that, for a given market order, a wallet has been presented by two or more different workers,
+     * all these workers using the same wallet are banned
+     *
      * @param workerWalletAddr is the worker wallet address
      */
     @Override
     public void onSubscription(String workerWalletAddr) {
         try {
-            final HostInterface host = DBInterface.getInstance().host(workerWalletAddr);
-            if(host == null) {
+            final HostInterface theHost = DBInterface.getInstance().host(new EthereumWallet(workerWalletAddr));
+            if(theHost == null) {
                 logger.warn("onSubscription(" + workerWalletAddr +") : host not found");
                 return;
             }
-            logger.debug("onSubscription(" + workerWalletAddr + ") : " + host.toXml());
-            final MarketOrderInterface marketOrder = DBInterface.getInstance().marketOrderUnsatisfied(host.getWorkerPoolAddr());
+            logger.debug("onSubscription(" + workerWalletAddr + ") : " + theHost.toXml());
+            final MarketOrderInterface marketOrder = DBInterface.getInstance().marketOrderUnsatisfied(theHost.getWorkerPoolAddr());
             if(marketOrder == null) {
                 logger.info("onSubscription(" + workerWalletAddr +") : no unsatisfied market order");
                 return;
             }
-            if (host.canContribute()) {
-                marketOrder.addWorker(host);
-                host.update();
+
+            final Collection<HostInterface> hosts = DBInterface.getInstance().hosts(new EthereumWallet(workerWalletAddr),
+                    marketOrder);
+            logger.debug("onSubscription(" + workerWalletAddr + ") : duplicated wallet " + (hosts == null ? 0 : hosts.size()));
+
+            if (hosts != null) {
+                boolean error = false;
+                for (HostInterface host : hosts) {
+                    if(host.getUID().equals(theHost.getUID()))
+                        continue;
+                    error = true;
+                    logger.error("onSubscription(" + workerWalletAddr +") : more than one wallet owner " + host.getUID());
+                    host.leaveMarketOrder(marketOrder);
+                    host.setActive(false);
+                    host.update();
+                }
+                if(error) {
+                    logger.error("onSubscription(" + workerWalletAddr +") : more than one wallet owner " + theHost.getUID());
+                    theHost.leaveMarketOrder(marketOrder);
+                    theHost.setActive(false);
+                    theHost.update();
+                    return;
+                }
+            }
+
+            if (theHost.canContribute()) {
+                marketOrder.addWorker(theHost);
+                marketOrder.setWaiting();
+                theHost.update();
                 marketOrder.update();
             }
             if(marketOrder.canStart()) {
@@ -190,7 +225,7 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             if(appModel == null) {
                 return null;
             }
-            final AppInterface existingApp = getApp(appModel.getName());
+            final AppInterface existingApp = getApp(appModel.getId());
             if (existingApp != null) {
                 return existingApp;
             }
@@ -203,24 +238,26 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             }
 
             newApp.setOwner(appOwner.getUID());
-            newApp.setName(appModel.getName());
+            newApp.setName(appModel.getId());
             newApp.setPrice(appModel.getPrice().longValue());
-            newApp.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() & XWAccessRights.STICKYBIT_INT));
+            newApp.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | XWAccessRights.STICKYBIT_INT));
 
             final String appParams = appModel.getParams();
             if(appParams != null) {
+
                 try {
                     final String envvars = XWTools.jsonValueFromString(appModel.getParams(), "envvars");
                     newApp.setEnvVars(envvars);
-                } catch (final Exception e) {
-                    logger.warn("can't extract newApp envvars from " + appParams);
+                } catch (final JSONException e) {
+                    logger.warn(e.getMessage());
                 }
                 try {
                     final String appTypeStr = XWTools.jsonValueFromString(appModel.getParams(), "type");
                     final AppTypeEnum appType = AppTypeEnum.valueOf(appTypeStr);
                     newApp.setType(appType);
-                } catch (final Exception e) {
-                    logger.warn("can't extract newApp type from " + appParams);
+                } catch(final JSONException e) {
+                    logger.warn(e.getMessage());
+                    return null;
                 }
             }
 
@@ -276,35 +313,35 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
     /**
      * This creates a new WorkInterface in DB from the provided WorkOrderModel.
      * This new work has as many replica as expected by the market order
-     * @param model is the work order model
+     * @param workModel is the work order model
      * @return the market order of the provided work order model
      */
-    private MarketOrderInterface createWork(final String workOrderId, final WorkOrderModel model) {
+    private MarketOrderInterface createWork(final String workOrderId, final WorkOrderModel workModel) {
 
         if (administrator == null) {
             logger.error("createWork() : user administrator not defined");
             return null;
         }
 
-        logger.debug("createWork(" + model.getMarketorderIdx().longValue() + ")");
+        logger.debug("createWork(" + workModel.getMarketorderIdx().longValue() + ")");
 
-        final MarketOrderInterface marketOrder = getMarketOrder(model.getMarketorderIdx().longValue());
+        final MarketOrderInterface marketOrder = getMarketOrder(workModel.getMarketorderIdx().longValue());
         if(marketOrder == null) {
             logger.error("createWork() : can't retrieve market order : "
-                    + model.getMarketorderIdx().longValue());
+                    + workModel.getMarketorderIdx().longValue());
             return null;
         }
-        if(marketOrder.getWorkerPoolAddr().compareTo(model.getWorkerpool()) != 0) {
+        if(marketOrder.getWorkerPoolAddr().compareTo(workModel.getWorkerpool()) != 0) {
             logger.error("createWork() : worker pool mismatch : "
                     + marketOrder.getWorkerPoolAddr() + " != "
-                    + model.getWorkerpool());
+                    + workModel.getWorkerpool());
             return null;
         }
 
-        final AppModel appModel = ModelService.getInstance().getAppModel(model.getApp());
+        final AppModel appModel = ModelService.getInstance().getAppModel(workModel.getApp());
         if(appModel == null) {
-            logger.error("createWork() : can't retrieve app model "
-                    + model.getApp());
+            logger.error("createWork() : can't retrieve app workModel "
+                    + workModel.getApp());
             return null;
         }
         final AppInterface app = getApp(appModel);
@@ -313,9 +350,9 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             return null;
         }
 
-        final UserInterface requester = getUser(model.getRequester());
+        final UserInterface requester = getUser(workModel.getRequester());
         if (requester == null) {
-            logger.error("createWork() : unkown requester " + model.getRequester());
+            logger.error("createWork() : unkown requester " + workModel.getRequester());
             return null;
         }
 
@@ -325,20 +362,33 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             work.setMarketOrderUid(marketOrder.getUID());
             work.setOwner(requester.getUID());
             work.setApplication(app.getUID());
-            work.setDataset(model.getDataset());
-            work.setBeneficiary(model.getBeneficiary());
-            work.setWorkerPool(model.getWorkerpool());
-            work.setEmitCost(model.getEmitcost().longValue());
-            work.setCmdLine(model.getParams());
-            work.setCallback(model.getCallback());
-            work.setBeneficiary(model.getBeneficiary());
+            work.setDataset(workModel.getDataset());
+            work.setBeneficiary(workModel.getBeneficiary());
+            work.setWorkerPool(workModel.getWorkerpool());
+            work.setEmitCost(workModel.getEmitcost().longValue());
+
+            try {
+                final String cmdline = XWTools.jsonValueFromString(workModel.getParams(), "cmdline");
+                work.setCmdLine(cmdline);
+            } catch(final JSONException e) {
+                logger.warn(e.getMessage());
+            }
+            try {
+                final String dirinuri = XWTools.jsonValueFromString(workModel.getParams(), "dirinuri");
+                work.setDirin(new URI(dirinuri));
+            } catch(final JSONException e) {
+                logger.warn(e.getMessage());
+            }
+
+            work.setCallback(workModel.getCallback());
+            work.setBeneficiary(workModel.getBeneficiary());
             work.setExpectedReplications(marketOrder.getExpectedWorkers());
             work.setCategoryId(marketOrder.getCategoryId());
             work.setWorkOrderId(workOrderId);
             work.setStatus(StatusEnum.PENDING);
             work.setExpectedReplications(marketOrder.getExpectedWorkers());
             work.setReplicaSetSize(marketOrder.getNbWorkers());
-            work.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() & XWAccessRights.STICKYBIT_INT));
+            work.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | XWAccessRights.STICKYBIT_INT));
 
             final XMLRPCCommandSendWork cmd =
                     new XMLRPCCommandSendWork(XWTools.newURI(work.getUID()),
@@ -386,9 +436,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                     wallets.add(worker.getEthWalletAddr());
             }
 
+            contributionService.setCalledWorker(workOrderId, wallets);
+
+            marketOrder.setContributing();
+            marketOrder.update();
+
             actuatorService.allowWorkersToContribute(workOrderId,
                     wallets,
-                    "O");
+                    "0");
 
         } catch(final Exception e) {
             logger.exception(e);
@@ -409,8 +464,8 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
         if(theWork == null)
             return;
 
-        final String contribution = XWTools.byteArrayToHexString(contributeEventResponse.resultHash);
-        theWork.setH2r(contribution);
+        final String contributionStr = XWTools.byteArrayToHexString(contributeEventResponse.resultHash);
+        theWork.setH2h2r(contributionStr);
         logger.debug("onContributeEvent() : " + theWork.toXml());
 
         final MarketOrderInterface marketOrder = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
@@ -422,47 +477,76 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             return;
         }
 
-        marketOrder.getTrust();
+        try {
+            final TaskInterface theWorkTask = DBInterface.getInstance().task(theWork);
+            final HostInterface theHost = DBInterface.getInstance().host(theWorkTask.getHost());
+            Contribution contribution = new Contribution(contributeEventResponse.woid,
+                    theHost.getEthWalletAddr(),
+                    contributionStr.getBytes());
+
+            contributionService.addContribution(contribution);
+
+        } catch (final IOException e) {
+            logger.exception(e);
+        }
+
         final long expectedWorkers = marketOrder.getExpectedWorkers();
         final long trust = marketOrder.getTrust();
         final long expectedContributions = (expectedWorkers * trust / 100);
         long totalContributions = 0L;
         for(final WorkInterface work : works ) {
             if(work.hasContributed()
-                    && (work.getH2r().compareTo(contribution) == 0)) {
+                    && (work.getH2h2r().compareTo(contributionStr) == 0)) {
                 totalContributions++;
             }
         }
         if (totalContributions >= expectedContributions) {
+            logger.debug("onContributeEvent() : enough contributions");
             theWork.setRevealing();
             try {
                 theWork.update();
-            } catch(final IOException e) {
+            } catch (final IOException e) {
                 logger.exception(e);
             }
+            logger.debug("onContributeEvent() : work must be revealed " + theWork.toXml());
 
-            for(final WorkInterface contributingWork : works ) {
+            for (final WorkInterface contributingWork : works) {
 
+                logger.debug("onContributeEvent() : work must be revealed " + contributingWork.toXml());
                 try {
                     contributingWork.setRevealing();
                     contributingWork.update();
 
                     final TaskInterface contributingTask = DBInterface.getInstance().task(contributingWork);
-                    if(contributingTask != null) {
+                    if (contributingTask != null) {
                         contributingTask.setRevealing();
                         contributingTask.update();
                     }
-                } catch(final IOException e) {
+                } catch (final IOException e) {
                     logger.exception(e);
                 }
             }
-        }
 
-        //actuatorService.revealConsensus(contributeEventResponse.woid, Utils.hashResult("iExec the wanderer"));
+            marketOrder.setRevealing();
+            try {
+                marketOrder.update();
+            } catch(final IOException e) {
+                logger.exception(e);
+            }
+
+
+            actuatorService.revealConsensus(contributeEventResponse.woid, Numeric.toHexString(contributeEventResponse.resultHash));
+
+        } else {
+            logger.debug("onContributeEvent() : not enough contributions");
+        }
     }
 
     @Override
     public void onReveal(WorkerPool.RevealEventResponse revealEventResponse) {
+        final WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(revealEventResponse.woid);
+        final MarketOrderInterface marketOrder = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
+        marketOrder.setCompleted();
         //actuatorService.finalizeWork(revealEventResponse.woid,"aStdout", "aStderr", "anUri");
     }
 

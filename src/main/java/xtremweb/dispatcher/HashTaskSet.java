@@ -144,6 +144,7 @@ public class HashTaskSet extends TaskSet {
 					case RUNNING:
 					case DATAREQUEST:
 					case CONTRIBUTED:
+					case CONTRIBUTING:
 					case REVEALING:
 					case RESULTREQUEST:
 					theWork.setErrorMsg("rescheduled : worker lost");

@@ -49,6 +49,7 @@ ALTER TABLE  hosts DROP   COLUMN workerpooladdr;
 
 ALTER TABLE  apps  DROP   COLUMN price;
 
+ALTER TABLE  tasks DROP   COLUMN price;
 
 delete from statuses where statusId='15';
 delete from statuses where statusId='16';

@@ -70,7 +70,8 @@ public class SQLRequestWorkRequest extends SQLRequest {
 			+ " AND ((NOT (ISNULL(apps.%s) AND ISNULL(apps.JAVAURI)) AND apps.TYPE='DEPLOYABLE') OR apps.TYPE IN (%s) )"
 			+ " AND (ISNULL(apps.NEEDEDPACKAGES)             OR  (apps.NEEDEDPACKAGES='')   OR  (apps.NEEDEDPACKAGES IN (%s)))"
 			+ " AND (ISNULL(maintable.MARKETORDERUID)        OR  ((hosts.HASCONTRIBUTED='false') AND (maintable.MARKETORDERUID = hosts.MARKETORDERUID)))"
-			+ " AND (maintable.appuid=apps.uid)";
+			+ " AND hosts.available='true' and hosts.active='true'"
+            + " AND (maintable.appuid=apps.uid)";
 
 	/**
 	 * This is used if host.acceptBin == false. This retrieves job referring
@@ -85,7 +86,8 @@ public class SQLRequestWorkRequest extends SQLRequest {
 			+ " AND ( (ISNULL(maintable.MINMEMORY))            OR (maintable.MINMEMORY            <= %d))"
 			+ " AND ( (ISNULL(maintable.MINFREEMASSSTORAGE))   OR (maintable.MINFREEMASSSTORAGE   <= %d))"
 			+ " AND (apps.TYPE IN (%s))"
-			+ " AND (ISNULL(apps.NEEDEDPACKAGES)             OR  (apps.NEEDEDPACKAGES='')   OR  (apps.NEEDEDPACKAGES IN (%s)))";
+            + " AND hosts.available='true' and hosts.active='true'"
+            + " AND (ISNULL(apps.NEEDEDPACKAGES)             OR  (apps.NEEDEDPACKAGES='')   OR  (apps.NEEDEDPACKAGES IN (%s)))";
 
 	/**
 	 * This concatenates SQLRequestAccessible.CRITERIAS and

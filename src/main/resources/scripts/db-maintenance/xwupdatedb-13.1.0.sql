@@ -24,10 +24,10 @@ SET FOREIGN_KEY_CHECKS=0;
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (15, 'CONTRIBUTED',   'works',               'The job does not fill its category requirements',                                   null);
 insert into statuses (statusId, statusName, statusObjects, statusComment, statusDeprecated) values (16, 'REVEALING',     'works',               'The job does not fill its category requirements',                                   null);
 
-ALTER TABLE  hosts ADD    COLUMN ethwalletaddr     varchar(254)                comment 'worker eth wallet address; optional';
-ALTER TABLE  hosts ADD    COLUMN marketorderUID    char(36)                    comment 'Optional, UID of the market order';
-ALTER TABLE  hosts ADD    COLUMN hascontributed    char(5)    default 'false'  comment 'This flag tells whether this host ahs already contributed to its current market order';
-ALTER TABLE  hosts ADD    COLUMN workerpooladdr    varchar(254)                comment 'workerpool addr this host is registered to';
+ALTER TABLE  hosts ADD    COLUMN ethwalletaddr     varchar(254)                  comment 'worker eth wallet address; optional';
+ALTER TABLE  hosts ADD    COLUMN marketorderUID    char(36)                      comment 'Optional, UID of the market order';
+ALTER TABLE  hosts ADD    COLUMN hascontributed    char(5)      default 'false'  comment 'This flag tells whether this host ahs already contributed to its current market order';
+ALTER TABLE  hosts ADD    COLUMN workerpooladdr    varchar(254)                  comment 'workerpool addr this host is registered to';
 
 ALTER TABLE  apps  ADD    COLUMN price             bigint          default 0  comment 'price since 13.1.0',
 
@@ -39,8 +39,8 @@ ALTER TABLE  works ADD    COLUMN emitcost          bigint                     co
 ALTER TABLE  works ADD    COLUMN callback          varchar(50)                comment 'since 13.1.0',
 ALTER TABLE  works ADD    COLUMN beneficiary       varchar(50)                comment 'since 13.1.0',
 ALTER TABLE  works ADD    COLUMN marketorderUID    char(36)                   comment 'Optional, UID of the market order';
-ALTER TABLE  works ADD    COLUMN h2r               char(36)                   comment 'this is the contribution proposal, if this work belongs a market order';
-ALTER TABLE  works ADD    COLUMN h2rps             char(36)                   comment 'this is the contribution proof, if this work belongs a market order';
+ALTER TABLE  works ADD    COLUMN h2h2r             varchar(254)               comment 'this is the contribution proposal h(h(r)), if this work belongs a market order';
+ALTER TABLE  works ADD    COLUMN h2r               varchar(254)               comment 'this is the contribution proof h(r), if this work belongs a market order';
 ALTER TABLE  works ADD    COLUMN workOrderId       varchar(254)               comment 'this is the blockchain work order id';
 
 
@@ -49,6 +49,7 @@ ALTER TABLE  works CHANGE COLUMN replications  replications bigint  default 0   
 ALTER TABLE  works CHANGE COLUMN sizer         sizer        bigint  default 0        comment 'Optionnal. This is the size of the replica set';
 ALTER TABLE  works CHANGE COLUMN totalr        totalr       bigint  default 0        comment 'Optionnal. Current amount of replicas';
 
+ALTER TABLE  tasks CHANGE COLUMN price         bigint               default 0        comment 'since 13.1.0';
 
 -- ---------------------------------------------------------------------------
 -- Table "marketorders" :
@@ -72,6 +73,13 @@ create table if not exists  marketorders (
   remaining            bigint                   default 0          comment 'how many such orders left; this is calculated by the scheduler',
   workerpooladdr       varchar(254)   not null                     comment 'workerpool smart contract address',
   workerpoolowneraddr  varchar(254)   not null                     comment 'workerpool owner address',
+  statusId             tinyint unsigned  not null  default 255     comment 'Status Id. See common/XWStatus.java',
+  status               varchar(36)       not null  default 'NONE'  comment 'Status. see common/XWStatus.java',
+  arrivalDate          datetime                                    comment 'insertion date',
+  startDate            datetime                                    comment 'ready for computation date',
+  completedDate        datetime                                    comment 'completion date',
+  contributingDate     datetime                                    comment 'contributing date',
+  revealingDate        datetime                                    comment 'revealing date',
 
   index  idx_catgoryid         (categoryid),
   index  idx_workerpooladdr    (workerpooladdr),

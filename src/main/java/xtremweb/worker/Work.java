@@ -258,4 +258,12 @@ public final class Work extends WorkInterface {
 	public String getScratchDirName() throws IOException {
 		return scratchDir.getAbsolutePath();
 	}
+
+	private String hiddenh2r;
+	public void setHiddenH2r(final String h2r) {
+		hiddenh2r = h2r;
+	}
+	public String getHiddenH2r() {
+		return hiddenh2r;
+	}
 }

@@ -71,6 +71,17 @@ public final class TaskInterface extends xtremweb.common.Table {
 	 */
 	public enum Columns implements XWBaseColumn {
 		/**
+		 * This is the reward for the computing resource
+		 * This is typically used through Blockchain
+		 * @since 13.1.0
+		 */
+		PRICE {
+			@Override
+			public Long fromString(final String v) {
+				return Long.valueOf(v);
+			}
+		},
+		/**
 		 * This is the column index of the referenced work UID
 		 */
 		WORKUID {
@@ -174,7 +185,6 @@ public final class TaskInterface extends xtremweb.common.Table {
 		 * This is the index based on ordinal so that the first value is
 		 * TableColumns + 1
 		 *
-		 * @see xtremweb.common#TableColumns
 		 * @see Enum#ordinal()
 		 * @since 8.2.0
 		 */
@@ -344,7 +354,10 @@ public final class TaskInterface extends xtremweb.common.Table {
 		} catch (final Exception e) {
 			throw new IOException(e.toString());
 		}
-
+		try {
+			setPrice((Long) Columns.PRICE.fromResultSet(rs));
+		} catch (final Exception e) {
+		}
 		try {
 			setAliveCount((Integer) Columns.ALIVECOUNT.fromResultSet(rs));
 		} catch (final Exception e) {
@@ -483,6 +496,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 		setLastStartDate(itf.getLastStartDate());
 		setLastAlive(itf.getLastAlive());
 		setRemovalDate(itf.getRemovalDate());
+		setPrice(itf.getPrice());
 	}
 
 	/**
@@ -532,7 +546,19 @@ public final class TaskInterface extends xtremweb.common.Table {
 			return StatusEnum.NONE;
 		}
 	}
-
+	/**
+	 * This retrieves the price for this application
+	 *
+	 * @return the price
+	 * @since 13.1.0
+	 */
+	public Long getPrice() {
+		final Long ret = (Long) getValue(Columns.PRICE);
+		if (ret != null) {
+			return ret.longValue();
+		}
+		return 0L;
+	}
 	/**
 	 * This reterives the alive counter<br />
 	 * If this attr is not set, it os forced to 0
@@ -969,6 +995,20 @@ public final class TaskInterface extends xtremweb.common.Table {
 		incAliveCount();
 
 		return true;
+	}
+	/**
+	 * This sets the price
+	 *
+	 * @param v is the price
+	 * @return true if value has changed, false otherwise
+	 * @since 13.1.0
+	 */
+	public boolean setPrice(final long v) {
+		try {
+			return setValue(Columns.PRICE, Long.valueOf(v < 0L ? 0L : v));
+		} catch (final Exception e) {
+			return setValue(Columns.PRICE, 0L);
+		}
 	}
 
 	/**

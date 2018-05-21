@@ -335,28 +335,7 @@ public class ThreadAlive extends Thread {
 
 			while (li.hasNext()) {
 				final UID uid = (UID) li.next().getValue();
-				if (uid == null) {
-					continue;
-				}
-
-				Work theWork = CommManager.getInstance().getPoolWork().getSavingWork(uid);
-				if (theWork == null) {
-					final ThreadWork threadWork = ThreadLaunch.getInstance().getThreadByWorkUid(uid);
-					if (threadWork == null) {
-						logger.error("ThreadAlive() : can't retreive running work = " + uid);
-						continue;
-					}
-					try {
-						threadWork.zipResult();
-						theWork = threadWork.getCurrentWork();
-					} catch (final Exception e) {
-						logger.exception(e);
-						theWork = null;
-					}
-				}
-				if (theWork != null) {
-					CommManager.getInstance().sendResult(theWork);
-				}
+				CommManager.getInstance().sendResult(CommManager.getInstance().getPoolWork().getSavingWork(uid));
 			}
 		}
 
@@ -371,36 +350,27 @@ public class ThreadAlive extends Thread {
 			final Iterator<XMLValue> li = revealsExpected.iterator();
 
 			while (li.hasNext()) {
+
 				final UID uid = (UID) li.next().getValue();
-				if (uid == null) {
-					continue;
-				}
+				final Work theWork = CommManager.getInstance().getPoolWork().getSavingWork(uid);
 
-				Work theWork = CommManager.getInstance().getPoolWork().getSavingWork(uid);
-				if (theWork == null) {
-					if(theWork.getH2r() != null)
-						ActuatorService.getInstance().reveal(theWork.getWorkOrderId(), theWork.getH2r());
-					else
-						ActuatorService.getInstance().reveal(theWork.getWorkOrderId(), "i don't know");
-
-					final ThreadWork threadWork = ThreadLaunch.getInstance().getThreadByWorkUid(uid);
-					if (threadWork == null) {
-						logger.error("ThreadAlive() : can't retreive running work = " + uid);
-						continue;
-					}
-					try {
-						threadWork.zipResult();
-						theWork = threadWork.getCurrentWork();
-					} catch (final Exception e) {
-						logger.exception(e);
-						theWork = null;
-					}
-				}
 				if (theWork != null) {
-					theWork.setCompleted();
-					CommManager.getInstance().sendWork(theWork);
-					CommManager.getInstance().sendResult(theWork);
-				}
+
+                    theWork.setH2r(theWork.getHiddenH2r());
+
+                    if (theWork.getH2r() != null) {
+                        ActuatorService.getInstance().reveal(theWork.getWorkOrderId(), theWork.getH2r());
+						logger.debug("revealed " + theWork.getUID());
+					} else {
+                        theWork.setError("can't reveal : h2r is null");
+						logger.debug("can't reveal " + theWork.getUID());
+                    }
+
+                    theWork.setRevealing();
+                    CommManager.getInstance().getPoolWork().saveRevealedWork(theWork);
+                    CommManager.getInstance().sendWork(theWork);
+                    CommManager.getInstance().sendResult(theWork);
+                }
 			}
 		}
 

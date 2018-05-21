@@ -49,6 +49,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import com.iexec.common.ethereum.TransactionStatus;
 import com.iexec.worker.actuator.ActuatorService;
 import org.xml.sax.SAXException;
 
@@ -261,6 +262,12 @@ public final class CommManager extends Thread {
 	 * This inserts a send result event on event queue
 	 */
 	protected void sendResult(final Work w) {
+	    if (w == null) {
+	        logger.debug("sendResult : uid is null");
+            return;
+        }
+        logger.debug("CommManager#sendResult : " + w.toXml());
+
 		commQueue.sendResult(w);
 		resetTimeouts();
 		this.interrupt();
@@ -272,7 +279,13 @@ public final class CommManager extends Thread {
 	 * @since 8.3.0
 	 */
 	protected void sendWork(final Work w) {
-		commQueue.sendWork(w);
+        if (w == null) {
+            logger.debug("sendWork : uid is null");
+            return;
+        }
+
+        logger.debug("CommManager#sendWork : " + w.toXml());
+        commQueue.sendWork(w);
 		resetTimeouts();
 		this.interrupt();
 	}
@@ -370,16 +383,15 @@ public final class CommManager extends Thread {
 	 */
 	public CommClient commClient() throws UnknownHostException, IOException, ConnectException {
 
-		CommClient commClient = null;
+
 		try {
-			commClient = Worker.getConfig().defaultCommClient();
+            final CommClient commClient = Worker.getConfig().defaultCommClient();
+            CommClient.setConfig(Worker.getConfig());
+            commClient.setAutoClose(true);
+            return commClient;
 		} catch (final Exception e) {
 			throw new IOException(e.toString());
 		}
-		CommClient.setConfig(Worker.getConfig());
-		commClient.setAutoClose(true);
-
-		return commClient;
 	}
 
 	/**
@@ -391,20 +403,18 @@ public final class CommManager extends Thread {
 	 */
 	public CommClient commClient(final URI uri) throws UnknownHostException, ConnectException, IOException {
 
-		CommClient commClient = null;
 		try {
-			commClient = Worker.getConfig().getCommClient(uri);
+            final CommClient commClient = Worker.getConfig().getCommClient(uri);
+            commClient.setAutoClose(true);
+
+            logger.finest("commClient(" + uri + ")");
+
+            return commClient;
 		} catch (final Exception e) {
 			logger.exception(e);
 			throw new IOException(e.getMessage());
 		}
-
-		commClient.setAutoClose(true);
-
-		logger.finest("commClient(" + uri + ")");
-
-		return commClient;
-	}
+    }
 
 	/**
 	 * This connects to server to request a new work Since 7.2.0, this resets
@@ -721,17 +731,15 @@ public final class CommManager extends Thread {
 		}
 
 		boolean islocked = false;
-		CommClient commClient = null;
 		try {
-			commClient = commClient();
 			final DataInterface data = getData(uri);
 			if (data == null) {
 				throw new IOException("uploadData(" + uri.toString() + ") can't get data");
 			}
 			final long start = System.currentTimeMillis();
-			commClient.lock(uri);
+			commClient().lock(uri);
 			islocked = true;
-			final File fdata = commClient.getContentFile(uri);
+			final File fdata = commClient().getContentFile(uri);
             if (fdata == null) {
                 throw new IOException("uploadData(" + uri.toString() + ") can't get content file");
             }
@@ -745,9 +753,7 @@ public final class CommManager extends Thread {
 			final long fsize = fdata.length();
 
 			logger.debug("CommManager#uploadData " + fdata);
-			commClient = null;
-			commClient = commClient(uri);
-			commClient.uploadData(uri, fdata);
+			commClient(uri).uploadData(uri, fdata);
 
 			final long end = System.currentTimeMillis();
 			final float bandwidth = fsize / (end - start);
@@ -755,10 +761,9 @@ public final class CommManager extends Thread {
 			Worker.getConfig().getHost().setUploadBandwidth(bandwidth);
 			return bandwidth;
 		} finally {
-			if (islocked && (commClient != null)) {
-				commClient.unlock(uri);
+			if (islocked) {
+                commClient().unlock(uri);
 			}
-			commClient = null;
 		}
 	}
 
@@ -1229,15 +1234,22 @@ public final class CommManager extends Thread {
 			return;
 		}
 
+        mileStone.println("<uploadResults>");
+
         final DataInterface data = getData(resultURI, false);
+		final CommClient commClient = commClient(resultURI);
 		try {
-		    if(theWork.getMarketOrderUid() == null) {
-                final CommClient commClient = commClient(resultURI);
+		    if(theWork.canReveal()) {
+		        logger.debug("the work can reveal " + theWork.toXml());
                 final File content = commClient.getContentFile(resultURI);
                 logger.debug("CommManager#uploadResults " + content);
                 if (content.exists()) {
+					// we must send data now to reveal
+					// but we must not reveal now : set shasum to null
+					data.setSize(content.length());
+					data.setShasum(theWork.getHiddenH2r());
                     commClient.send(data);
-                    logger.debug("CommManager#uploadResults " + data.toXml());
+                    logger.debug("CommManager#uploadResults revealing " + data.toXml());
                     final float updloadBandwidth = uploadData(resultURI, theWork.getMaxFileSize());
                     theWork.setStatus(StatusEnum.COMPLETED);
                     theWork.setUploadBandwidth(updloadBandwidth);
@@ -1245,8 +1257,32 @@ public final class CommManager extends Thread {
 
                 message(false);
             } else {
-		        theWork.setContributed();
+                logger.debug("the work can not reveal " + theWork.toXml());
+                if(theWork.isContributing()) {
+
+                	// we must send data now to comply to xtremweb workflow
+                	// but we must not reveal now : set shasum to null
+                	data.setSize(0);
+                	data.setShasum(null);
+                	data.setStatus(StatusEnum.UNAVAILABLE);
+					commClient.send(data);
+					logger.debug("CommManager#uploadResults contributing " + data.toXml());
+
+                    if (theWork.getH2h2r() != null) {
+                        logger.debug("the work can contribute " + theWork.toXml());
+                        if(ActuatorService.getInstance().contribute(theWork.getWorkOrderId(), theWork.getH2h2r(), BigInteger.ZERO, "0", "0") == TransactionStatus.SUCCESS) {
+                            theWork.setContributed();
+                            Worker.getConfig().getHost().setContribution(true);
+                        } else {
+                            logger.error("contribute transaction error; will retry later");
+                        }
+
+                    } else {
+                        theWork.setError("can't contribute " + theWork.toXml());
+                    }
+                }
             }
+
         } catch (final XWCommException e) {
             logger.exception("CommManager#uploadResults", e);
             theWork.setFailed(e.getMessage());
@@ -1264,10 +1300,6 @@ public final class CommManager extends Thread {
             } catch (final Exception e) {
                 logger.exception(e);
             }
-            if(theWork.getH2r() != null)
- 	           ActuatorService.getInstance().contribute(theWork.getWorkOrderId(), theWork.getH2r(), BigInteger.ZERO, "0","0");
-			else
-				ActuatorService.getInstance().contribute(theWork.getWorkOrderId(), data.getShasum(), BigInteger.ZERO, "0","0");
 
             getPoolWork().saveWork(theWork);
 
@@ -1279,8 +1311,8 @@ public final class CommManager extends Thread {
                 System.exit(0);
             }
 
-            mileStone.println("results sent");
         }
+        mileStone.println("</uploadResults>");
 	}
 
 	/**

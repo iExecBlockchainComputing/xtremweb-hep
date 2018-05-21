@@ -166,7 +166,7 @@ public class StreamIO implements AutoCloseable {
 				output.close();
 			}
 		} catch (final IOException ioe) {
-			logger.exception(ioe);
+			logger.warn(ioe.getMessage());
 		}
 	}
 
@@ -565,7 +565,7 @@ public class StreamIO implements AutoCloseable {
 					final WritableByteChannel outChannel = Channels.newChannel(output);
 					written = inChannel.transferTo(0, length, outChannel);
 				}
-				logger.finest("writeFileContent : bytes written " + written);
+				logger.debug("writeFileContent : bytes written " + written);
 				if (written != length) {
 					throw new IOException("writeFileContent : byte count error " + written + "/" + length);
 				}
@@ -621,7 +621,7 @@ public class StreamIO implements AutoCloseable {
 					final ReadableByteChannel inChannel = Channels.newChannel(input);
 					written = outChannel.transferFrom(inChannel, 0, length);
 				}
-				logger.finest("readFile : bytes read " + written);
+				logger.debug("readFile : bytes read " + written);
 				if (written != length) {
 					throw new IOException("readFile : byte count error " + written + "/" + length);
 				}

@@ -23,22 +23,21 @@
 
 package xtremweb.worker;
 
-import java.io.*;
-import java.net.URL;
-import java.util.Properties;
-
-import javax.naming.ConfigurationException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iexec.common.ethereum.*;
-import com.iexec.common.workerpool.WorkerPoolConfig;
-import com.iexec.worker.actuator.ActuatorService;
+import com.iexec.common.ethereum.CommonConfiguration;
+import com.iexec.common.ethereum.WalletConfig;
 import com.iexec.worker.ethereum.CommonConfigurationGetter;
 import com.iexec.worker.ethereum.IexecWorkerLibrary;
 import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
 import xtremweb.common.*;
 import xtremweb.communications.HTTPServer;
+
+import javax.naming.ConfigurationException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Properties;
 
 import static xtremweb.common.XWPropertyDefs.BLOCKCHAINETHENABLED;
 
@@ -137,27 +136,31 @@ public class Worker {
 		}
 
         if (config.getBoolean(BLOCKCHAINETHENABLED) == true) {
+            String schedulerApiUrl = "https://" + config.getDispatcher() + ":"+ config.getHttpsPort();
 
-            IexecWorkerLibrary.initialize(config.getConfigFile().getParentFile().getAbsolutePath() + "/iexec-worker.yml", new CommonConfigurationGetter() {
-                @Override
-                public CommonConfiguration getCommonConfiguration(String schedulerApiUrl) {
-                    try {
+			WalletConfig walletConfig = new WalletConfig();
+			walletConfig.setPath(config.getWalletPath());
+			walletConfig.setPassword(config.getWalletPassword());
 
-                        final URL url = new URL(schedulerApiUrl + XWTools.IEXECETHCONFPATH);
+			CommonConfiguration commonConfiguration = null;
 
-						String message = IOUtils.toString(url.openStream());
-						ObjectMapper mapper = new ObjectMapper();
-						CommonConfiguration commonConfiguration = mapper.readValue(message, CommonConfiguration.class);
-                        return commonConfiguration;
+            try {
 
-                    } catch (final Exception e) {
-                        logger.exception("Can't get iExec config from " + schedulerApiUrl + XWTools.IEXECETHCONFPATH, e);
-                    }
+                final URL url = new URL(schedulerApiUrl + XWTools.IEXECETHCONFPATH);
 
-                    return null;
+                String message = IOUtils.toString(url.openStream());
+                ObjectMapper mapper = new ObjectMapper();
+                commonConfiguration = mapper.readValue(message, CommonConfiguration.class);
+
+                if (commonConfiguration != null){
+                    IexecWorkerLibrary.initialize(walletConfig, commonConfiguration);
+                    WorkerPocoWatcherImpl workerPocoWatcher = new WorkerPocoWatcherImpl();
                 }
-            });
-            WorkerPocoWatcherImpl workerPocoWatcher = new WorkerPocoWatcherImpl();
+
+            } catch (final Exception e) {
+                logger.exception("Can't get iExec config from " + schedulerApiUrl + XWTools.IEXECETHCONFPATH, e);
+            }
+
         }
 
 		config.dump(System.out, "XWHEP Worker started ");

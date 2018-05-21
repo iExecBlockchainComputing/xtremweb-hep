@@ -843,7 +843,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 							final URI resultURI = w.getResult();
 							final StatusEnum workStatus = w.getStatus();
 
-							debug(command, "resultURI = " + resultURI);
+							debug(command, "workAlive job = " + w.toXml());
 							if ((resultURI != null) && (resultURI.isXtremWeb())) {
 								final UID resultUID = resultURI.getUID();
 								final DataInterface workResult = DBInterface.getInstance().data(resultUID);
@@ -864,8 +864,8 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 								debug(command, "workAlive (" + _host.getName() + ") : worker can delete " + resultURI);
 								finishedTasks.add(workUID);
 								break;
-							case REVEALING:
-								debug(command, "workAlive (" + _host.getName() + ") : worker can reveal " + resultURI);
+                            case REVEALING:
+								debug(command, "workAlive (" + _host.getName() + ") : worker must reveal " + resultURI);
 								revealingTasks.add(workUID);
 								break;
 							}
@@ -1094,6 +1094,7 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			if (theData == null) {
 				throw new IOException("uploadData(" + uid + ") data not found");
 			}
+			logger.debug("uploadData " + theData.toXml());
 			dFile = theData.getPath();
 			readFile(dFile);
 		} catch (final InvalidKeyException e) {
@@ -1127,8 +1128,6 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 			if (dFile != null) {
 				ret = dFile.length();
 			}
-			theData = null;
-			dFile = null;
 			mileStone(command, "</uploadData>");
 		}
 		return ret;

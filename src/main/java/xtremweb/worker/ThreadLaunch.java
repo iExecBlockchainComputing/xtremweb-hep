@@ -127,9 +127,8 @@ public final class ThreadLaunch extends Thread {
 
 	public void wakeup() {
 		for (final Iterator<ThreadWork> it = threadWorkPool.iterator(); it.hasNext();) {
-			ThreadWork threadWork = it.next();
+			final ThreadWork threadWork = it.next();
 			threadWork.wakeup();
-			threadWork = null;
 		}
 	}
 

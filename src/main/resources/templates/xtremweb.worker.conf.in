@@ -118,7 +118,7 @@ BLOCKCHAINETHENABLED=true
 # Property type : string
 # Since 12.2.7
 #
-#ETHWALLETPATH=
+ETHWALLETPATH=../wallet/UTC--2018-02-14T11-15-48.411000000Z--70a1bebd73aef241154ea353d6c8c52d420d4f5b.json
 #
 #All : ethereum wallet password
 #
@@ -126,7 +126,7 @@ BLOCKCHAINETHENABLED=true
 #
 # Since 12.2.7
 #
-#ETHWALLETPASSWORD=
+ETHWALLETPASSWORD=whatever
 
 
 #

@@ -105,7 +105,7 @@ public final class AppInterface extends Table {
 			 */
 			@Override
 			public String fromString(final String v) {
-				return v.replaceAll("[\\n\\s\'\"]+", "_");
+				return v.replaceAll("[\\n\\s\'\"]+", "");
 			}
 		},
 		/**
@@ -1438,35 +1438,17 @@ public final class AppInterface extends Table {
 			setName(itf.getName());
 		}
 		setService(itf.isService());
-		if (itf.getAccessRights() != null) {
-			setAccessRights(itf.getAccessRights());
-		}
-		if (itf.getMinMemory() != 0) {
-			setMinMemory(itf.getMinMemory());
-		}
-		if (itf.getMinCpuSpeed() != 0) {
-			setMinCpuSpeed(itf.getMinCpuSpeed());
-		}
-        if (itf.getMinFreeMassStorage() != 0) {
-            setMinFreeMassStorage(itf.getMinFreeMassStorage());
-        }
-        if (itf.getPrice() != 0) {
-            setPrice(itf.getPrice());
-        }
+		setAccessRights(itf.getAccessRights());
+		setMinMemory(itf.getMinMemory());
+		setMinCpuSpeed(itf.getMinCpuSpeed());
+		setMinFreeMassStorage(itf.getMinFreeMassStorage());
+		setPrice(itf.getPrice());
 		setEnvVars(itf.getEnvVars());
 		setNeededPackages(itf.getNeededPackages());
-		if (itf.getType() != null) {
-			setType(itf.getType());
-		}
-		if (itf.getDefaultStdin() != null) {
-			setDefaultStdin(itf.getDefaultStdin());
-		}
-		if (itf.getBaseDirin() != null) {
-			setBaseDirin(itf.getBaseDirin());
-		}
-		if (itf.getDefaultDirin() != null) {
-			setDefaultDirin(itf.getDefaultDirin());
-		}
+		setType(itf.getType());
+		setDefaultStdin(itf.getDefaultStdin());
+		setBaseDirin(itf.getBaseDirin());
+		setDefaultDirin(itf.getDefaultDirin());
 	}
 
 	/**
@@ -2135,8 +2117,7 @@ public final class AppInterface extends Table {
         }
         return 0L;
     }
-
-	/**
+    /**
 	 * This gets an attribute
 	 *
 	 * @return this attribute, or null if not set

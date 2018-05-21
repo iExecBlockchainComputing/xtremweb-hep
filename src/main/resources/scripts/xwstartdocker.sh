@@ -187,10 +187,10 @@ SCRIPTNAME="$(basename "$0")"
 if [ "${SCRIPTNAME#*.sh}" ]; then
   SCRIPTNAME=xwstartdocker.sh
   VERBOSE=TRUE
-  TESTINGONLY=''                         # Worker, so debug is NOT possible
+  TESTINGONLY='FALSE'                         # Worker, so debug is NOT possible
 else
   VERBOSE=''
-  TESTINGONLY=TRUE                       # Local machine, so debug is possible
+  TESTINGONLY='FALSE'                         # Local machine, so debug is possible
 fi
 
 if [ "$TESTINGONLY" = "TRUE" ] ; then

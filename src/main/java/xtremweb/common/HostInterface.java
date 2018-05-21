@@ -980,13 +980,12 @@ public final class HostInterface extends Table {
 	 */
 	@Override
 	public void updateInterface(final Table hitf) throws IOException {
+
 		final HostInterface itf = (HostInterface) hitf;
-		if (itf.getAccessRights() != null) {
-			setAccessRights(itf.getAccessRights());
-		}
-		if (itf.getOwner() != null) {
-			setOwner(itf.getOwner());
-		}
+
+		setProject(getProject());
+		setAccessRights(itf.getAccessRights());
+		setOwner(itf.getOwner());
 		setEthWalletAddr(itf.getEthWalletAddr());
 		setWorkerPoolAddr(itf.getWorkerPoolAddr());
         setMarketOrderUid(itf.getMarketOrderUid());
@@ -1009,44 +1008,22 @@ public final class HostInterface extends Table {
 		setTotalSwap(itf.getTotalSwap());
 		setTotalTmp(itf.getTotalTmp());
 		setFreeTmp(itf.getFreeTmp());
-		if (itf.getName() != null) {
-			setName(itf.getName());
-		}
-		if (itf.getNatedIPAddr() != null) {
-			setNatedIPAddr(itf.getNatedIPAddr());
-		}
-		if (itf.getIPAddr() != null) {
-			setIPAddr(itf.getIPAddr());
-		}
-		if (itf.getHWAddr() != null) {
-			setHWAddr(itf.getHWAddr());
-		}
-		if (itf.getTimeZone() != null) {
-			setTimeZone(itf.getTimeZone());
-		}
-		if (itf.getOs() != null) {
-			setOs(itf.getOs());
-		}
-		if (itf.getOsVersion() != null) {
-			setOsVersion(itf.getOsVersion());
-		}
-		if (itf.getJavaVersion() != null) {
-			setJavaVersion(itf.getJavaVersion());
-		}
+		setName(itf.getName());
+		setIPAddr(itf.getIPAddr());
+		setNatedIPAddr(itf.getNatedIPAddr());
+		setHWAddr(itf.getHWAddr());
+		setTimeZone(itf.getTimeZone());
+		setOs(itf.getOs());
+		setOsVersion(itf.getOsVersion());
+		setJavaVersion(itf.getJavaVersion());
 		setJavaDataModel(itf.getJavaDataModel());
-		if (itf.getCpu() != null) {
-			setCpu(itf.getCpu());
-		}
+		setCpu(itf.getCpu());
 		setVersion(itf.getVersion());
 		setSharedApps(itf.getSharedApps());
 		setSharedDatas(itf.getSharedDatas());
 		setSharedPackages(itf.getSharedPackages());
-		if (itf.getCpuModel() != null) {
-			setCpuModel(itf.getCpuModel());
-		}
-		if (itf.getLastAlive() != null) {
-			setLastAlive(itf.getLastAlive());
-		}
+		setCpuModel(itf.getCpuModel());
+		setLastAlive(itf.getLastAlive());
 		setAvailable(itf.isAvailable());
 		setIncomingConnections(itf.incomingConnections());
 		setPilotJob(itf.isPilotJob());
@@ -1155,19 +1132,6 @@ public final class HostInterface extends Table {
         }
     }
     /**
-     * This checks if this worker wants to contribute to a market order
-     *
-     * @return (getMarketOrderUid() == null) && (getEthWalletAddr() != null)) && (getWorkerPoolAddr() != null)
-     * @since 13.1.0
-     */
-    public boolean wantToContribute() {
-        try {
-            return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null));
-        } catch (final Exception e) {
-            return false;
-        }
-    }
-    /**
      * This checks if this worker can contribute to a market order
      *
      * @return (getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null)
@@ -1175,7 +1139,10 @@ public final class HostInterface extends Table {
      */
     public boolean canContribute() {
         try {
-            return ((getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null));
+            return (!hasContributed() &&
+					(getMarketOrderUid() == null) &&
+					(getEthWalletAddr() != null)
+					&& (getWorkerPoolAddr() != null));
         } catch (final Exception e) {
             return false;
         }
@@ -2372,6 +2339,14 @@ public final class HostInterface extends Table {
      */
     public void leaveMarketOrder()  {
         setValue(Columns.MARKETORDERUID, null);
+    }
+    /**
+     * This leaves the current market order
+     * @since 13.1.0
+     */
+    public void leaveMarketOrder(final MarketOrderInterface marketOrder)  {
+        if(marketOrder != null)
+            marketOrder.removeWorker(this);
     }
     /**
      * This sets the market order uid

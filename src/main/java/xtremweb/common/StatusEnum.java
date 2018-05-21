@@ -130,14 +130,20 @@ public enum StatusEnum {
 	 */
 	FAILED,
 	/**
+	 * This denotes a work for which a contribution proposal has not been received yet
+	 * i.e.: the worker must send h(h(R))
+	 * @since 13.1.0
+	 */
+	CONTRIBUTING,
+	/**
 	 * This denotes a work for which a contribution proposal has been received
-	 * i.e.: the worker sent h(R)
+	 * i.e.: the worker sent h(h(R))
 	 * @since 13.1.0
 	 */
 	CONTRIBUTED,
 	/**
 	 * This denotes a work for which a contribution proof is expected
-	 * i.e.: the worker must send h(R+S)
+	 * i.e.: the worker must send h(R)
 	 * @since 13.1.0
 	 */
 	REVEALING;

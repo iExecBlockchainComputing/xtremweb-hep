@@ -111,14 +111,14 @@ DISPATCHERS=@XWSERVER@
 # Do we try to connect to Ethereum blockchain
 # @since 13.0.0
 #
-BLOCKCHAINETHENABLED=false
+BLOCKCHAINETHENABLED=true
 
 #
 # All : ethereum wallet path
 # Property type : string
 # Since 12.2.7
 #
-#ETHWALLETPATH=
+ETHWALLETPATH=../wallet/UTC--2018-02-14T11-15-48.411000000Z--70a1bebd73aef241154ea353d6c8c52d420d4f5b.json
 #
 #All : ethereum wallet password
 #
@@ -126,7 +126,7 @@ BLOCKCHAINETHENABLED=false
 #
 # Since 12.2.7
 #
-#ETHWALLETPASSWORD=
+ETHWALLETPASSWORD=whatever
 
 
 #
@@ -293,7 +293,7 @@ PASSWORD=@XWVWORKERPASSWORD@
 # This is in milliseconds
 # Default is 15000
 #
-#TIMEOUT=15000
+TIMEOUT=1000
 
 #
 # This is the socket timeout
@@ -381,7 +381,7 @@ COMMHANDLERS=attic:xtremweb.communications.HTTPClient
 #
 # Default is null
 #
-#SHAREDAPPS=VirtualBox
+SHAREDAPPS=docker
 
 #
 # sharedpackages is a String determining local packages
@@ -557,7 +557,7 @@ ACTIVATIONDATE=* 20-7
 # Note : please use full path; don't use ~ or any variable (e.g. $HOME)
 #        they are not correctly interpreted
 #
-# TMPDIR=/tmp
+TMPDIR=/tmp
 ####
 
 
@@ -677,7 +677,7 @@ SYSTEMTRAY=true
 #  INFO
 #  WARN
 #  ERROR
-LOGGERLEVEL=INFO
+LOGGERLEVEL=DEBUG
 
 
 #####

@@ -256,9 +256,13 @@ public final class DBInterface {
 			return;
 		}
 		try {
-			emailSender.send("XtremWeb-HEP@" + XWTools.getLocalHostName() + " : " + row.getUID(), theClient.getEMail(),
-					msg + "\n" + row.toString(false, true) + "\n\n" + "https://" + XWTools.getLocalHostName() + ":"
-							+ System.getProperty(XWPropertyDefs.HTTPSPORT.toString()) + "/get/" + row.getUID());
+			final String to = theClient.getEMail();
+			if ((to != null) || (to.length() > 1)) {
+				emailSender.send("XtremWeb-HEP@" + XWTools.getLocalHostName() + " : " + row.getUID(),
+						theClient.getEMail(),
+						msg + "\n" + row.toString(false, true) + "\n\n" + "https://" + XWTools.getLocalHostName() + ":"
+								+ System.getProperty(XWPropertyDefs.HTTPSPORT.toString()) + "/get/" + row.getUID());
+			}
 		} catch (MessagingException e) {
 			logger.exception(e);
 		}
@@ -826,6 +830,19 @@ public final class DBInterface {
         return readableObjectUID(new DataInterface(), u);
 	}
 
+    /**
+     * This retrieves a data; it first look in cache, then in DB. Access rights
+     * are bypassed
+     *
+     * @param uri
+     *            is the URI of the data to retrieve
+     * @since 5.8.0
+     */
+    protected DataInterface data(final URI uri) throws IOException, AccessControlException {
+        if(uri == null) return null;
+
+        return object(new DataInterface(), uri.getUID());
+    }
     /**
      * This retrieves a data; it first look in cache, then in DB. Access rights
      * are bypassed
@@ -1458,17 +1475,52 @@ public final class DBInterface {
         return selectAll(new HostInterface(), HostInterface.Columns.MARKETORDERUID + "='"
                 + marketOrder.getUID() + "'");
     }
-//    protected <T extends Table> Collection<T> selectAll(final T row, final String conditions) throws IOException
     /**
      * This retrieves a host, bypassing access rights
      *
-     * @param ethaddr
-     *            is the eth wallet of the host to retrieve
+     * @param wallet is the eth wallet of the host to retrieve
      * @since 13.1.0
      */
-    protected HostInterface host(final String ethaddr) throws IOException {
+    protected HostInterface host(final EthereumWallet wallet) throws IOException {
+        if ((wallet == null) || (wallet.getAddress() == null)) {
+            return null;
+        }
         return selectOne(new HostInterface(),
-                SQLRequest.MAINTABLEALIAS + "." + HostInterface.Columns.ETHWALLETADDR + "='" + ethaddr + "'");
+                SQLRequest.MAINTABLEALIAS + "." + HostInterface.Columns.ETHWALLETADDR + "='" + wallet.getAddress() + "'");
+    }
+    /**
+     * This retrieves a list of hosts, given its eth wallet, bypassing access rights
+     *
+     * @param wallet is the eth wallet of the hosts to retrieve
+     * @since 13.1.0
+     */
+    protected Collection<HostInterface> hosts(final EthereumWallet wallet) throws IOException {
+        if((wallet == null) || (wallet.getAddress() == null)) {
+            return null;
+        }
+        return selectAll(new HostInterface(),
+                SQLRequest.MAINTABLEALIAS + "." + HostInterface.Columns.ETHWALLETADDR + "='" + wallet.getAddress() + "'");
+    }
+    /**
+     * This retrieves a list of hosts, given its eth wallet, for the given market orderbypassing access rights
+     *
+     * @param wallet is the eth wallet of the hosts to retrieve
+     * @param marketOrder is the PoCo market order
+     * @since 13.1.0
+     */
+    protected Collection<HostInterface> hosts(final EthereumWallet wallet, final MarketOrderInterface marketOrder) throws IOException {
+        System.out.println("DBInterface#hosts() " + (wallet == null ? "null wallet" : wallet.getAddress()));
+        System.out.println("DBInterface#hosts() " + (marketOrder == null ? "null marketOrder" : marketOrder.getMarketOrderIdx()));
+        if((wallet == null)
+                || (wallet.getAddress() == null)
+                || (marketOrder == null)) {
+            return null;
+        }
+        return selectAll(new HostInterface(),
+                SQLRequest.MAINTABLEALIAS + "." + HostInterface.Columns.ETHWALLETADDR +
+                        "='" + wallet.getAddress() +
+                        "' AND " + SQLRequest.MAINTABLEALIAS + "." + HostInterface.Columns.MARKETORDERUID +
+                        "='" + marketOrder.getUID() + "'");
     }
     /**
 	 * This retrieves a host for the requesting user. Host access rights are
@@ -2508,7 +2560,6 @@ public final class DBInterface {
             return null;
         }
     }
-
 	/**
 	 * This retrieves readable works for the given user
 	 *
@@ -2699,7 +2750,6 @@ public final class DBInterface {
 			throws IOException, InvalidKeyException, AccessControlException {
 
 		if(!command.isMandated()) {
-			Thread.currentThread().dumpStack();
 			throw new AccessControlException ("not mandated");
 		}
 		return checkClient(command.getUser(), UserRightEnum.MANDATED_USER);
@@ -2775,7 +2825,6 @@ public final class DBInterface {
 
 		logger.debug("checkClient(" + client + ", " + actionLevel + ")");
 		if ((client == null) || (actionLevel == null)) {
-			Thread.currentThread().dumpStack();
 			throw new IOException("Can't check client");
 		}
 
@@ -3620,7 +3669,6 @@ public final class DBInterface {
 	 */
 	public void addApp(final XMLRPCCommand command)
 			throws IOException, InvalidKeyException, AccessControlException, URISyntaxException {
-
 		final UserInterface theClient = checkClient(command, UserRightEnum.INSERTAPP);
 		final AppInterface appitf = (AppInterface) command.getParameter();
 		addApp(theClient, appitf);
@@ -3763,7 +3811,7 @@ public final class DBInterface {
 
 			return;
 		}
-    
+
 		try {
 			if (appitf.getUID() == null) {
 				appitf.setUID(new UID());
@@ -4174,17 +4222,9 @@ public final class DBInterface {
 	 */
 	private boolean removeData(final UserInterface theClient, final URI uri)
 			throws IOException, InvalidKeyException, AccessControlException {
-		if (uri == null) {
-			return false;
-		}
-		try {
-			uri.getUID();
-		}
-		catch(final Exception e) {
-			return false;
-		}
-		final UID uid = uri.getUID();
-		return removeData(theClient, uid);
+	    if(uri == null)
+	        return false;
+		return removeData(theClient, uri.getUID());
 	}
 
 	/**
@@ -4911,13 +4951,15 @@ public final class DBInterface {
 
 				final TaskInterface theTask = thetaskEnum.nextElement();
 				final UID hostUID = theTask.getHost();
-				final HostInterface theHost = host(hostUID);
+                final HostInterface theHost = host(hostUID);
+                final MarketOrderInterface marketOrder = marketOrder(theHost.getMarketOrderUid());
 				if (delete(theClient, theTask)) {
 					if (theHost != null) {
 						switch (theWork.getStatus()) {
+                            case CONTRIBUTING:
                             case CONTRIBUTED:
                             case REVEALING:
-                                theHost.leaveMarketOrder();
+                                theHost.leaveMarketOrder(marketOrder);
     						case RESULTREQUEST:
                             case DATAREQUEST:
 		    				case RUNNING:
@@ -4948,6 +4990,7 @@ public final class DBInterface {
 		case RESULTREQUEST:
 		case DATAREQUEST:
         case CONTRIBUTED:
+        case CONTRIBUTING:
         case REVEALING:
 		case RUNNING:
 			theClient.decRunningJobs();
@@ -4955,7 +4998,8 @@ public final class DBInterface {
 				theApp.decRunningJobs();
 			}
 			if (theExpectedHost != null) {
-                theExpectedHost.leaveMarketOrder();
+                final MarketOrderInterface marketOrder = marketOrder(theExpectedHost.getMarketOrderUid());
+                theExpectedHost.leaveMarketOrder(marketOrder);
 				theExpectedHost.decRunningJobs();
 			}
 			break;
@@ -5173,222 +5217,268 @@ public final class DBInterface {
         }
 
         final UID receivedJobMarketOrderUid = receivedJob.getMarketOrderUid();
-        final MarketOrderInterface receivedJobMarketOrder = marketOrder(receivedJob.getMarketOrderUid());
-        if(receivedJobMarketOrder == null) {
+        final MarketOrderInterface marketOrder = marketOrder(receivedJobMarketOrderUid);
+        if((receivedJobMarketOrderUid != null) && (marketOrder == null)) {
             throw new IOException("invalid job market order : " + receivedJobMarketOrderUid);
         }
 
+
         final WorkInterface theWork = work(mandatingClient, jobUID);
 		if (theWork != null) {
-			if (theWork.canWrite(mandatingClient, appOwnerGroup) || clientRights.higherOrEquals(UserRightEnum.WORKER_USER)) {
 
-				final UID hostUID = (_host == null ? null : _host.getUID());
-				final HostInterface theHost = (hostUID == null ? null : host(hostUID));
-				TaskInterface theTask = null;
-				if (theHost != null) {
-					if (clientRights.isWorker()) {
-						if (theHost != null) {
-							theTask = task(theWork, theHost);
-						}
-					} else {
-						theTask = task(theWork);
-					}
-					if (theTask == null) {
-						throw new IOException(
-								mandatingClient.getLogin() + " work " + jobUID + " has no task run by " + _host.getUID());
-					}
-				}
+			if (!theWork.canWrite(mandatingClient, appOwnerGroup)
+                    && !clientRights.doesEqual(UserRightEnum.WORKER_USER)
+                    && !clientRights.doesEqual(UserRightEnum.VWORKER_USER)) {
+//		final int isStickyBit = appitf.getAccessRights().value() & XWAccessRights.STICKYBIT_INT;
+                    throw new AccessControlException("addWork() : " + mandatingClient.getLogin() + " can't update " + jobUID);
+            }
 
-				final UserInterface jobOwner = user(theWork.getOwner());
-				final UserInterface realClient = (mandatingClient.getRights().isWorker() ? jobOwner : mandatingClient);
-
-				useData(realClient, receivedJob.getResult());
-				removeData(realClient, theWork.getResult());
-				//theWork.setResult(job.getResult());
-
-				useData(realClient, receivedJob.getStdin());
-				removeData(realClient, theWork.getStdin());
-				//theWork.setStdin(job.getStdin());
-
-				useData(realClient, receivedJob.getDirin());
-				removeData(realClient, theWork.getDirin());
-				//theWork.setDirin(job.getDirin());
-				try {
-					useData(realClient, receivedJob.getUserProxy());
-				} catch (final AccessControlException e) {
-					logger.warn(e.getMessage());
-				}
-				try {
-					removeData(realClient, theWork.getUserProxy());
-				} catch (final AccessControlException e) {
-					logger.warn(e.getMessage());
-				}
-
-				theWork.updateInterface(receivedJob);
-
-				final Vector<Table> rows = new Vector<>();
-
-				logger.debug(realClient.getLogin() + " is updating " + theWork.getUID() + " status = "
-						+ receivedJob.getStatus());
-
-				switch (theWork.getStatus()) {
-				case RESULTREQUEST:
-					theWork.setResultRequest();
-					if (theTask != null) {
-						theTask.setResultRequest();
-					}
-					break;
-				case DATAREQUEST:
-					theWork.setDataRequest();
-					if (theTask != null) {
-						theTask.setDataRequest();
-					}
-					break;
-				case ABORTED:
-					theWork.setPending();
-					if (theTask != null) {
-						theTask.setPending();
-					}
-					theApp.decRunningJobs();
-					theApp.incPendingJobs();
-					jobOwner.decRunningJobs();
-					jobOwner.incPendingJobs();
-					if (theHost != null) {
-						theHost.decRunningJobs();
-						if (hostUID.equals(theWork.getExpectedHost())) {
-							theHost.incPendingJobs();
-						}
-					}
-					break;
-				case CONTRIBUTED:
-				    final MarketOrderInterface marketOrder = marketOrder(theWork.getMarketOrderUid());
-				    if(marketOrder == null) {
-				        final String msg = "work cannot be a contribution without market order";
-				        theWork.setError(msg);
-                        if(theTask != null) {
-                            theTask.setErrorMsg(msg);
-                        }
-						if (theHost != null) {
-							theHost.leaveMarketOrder();
-							theHost.incErrorJobs();
-							theHost.decRunningJobs();
-						}
-                        theApp.decRunningJobs();
-                        theApp.incErrorJobs();
-						jobOwner.incErrorJobs();
-						jobOwner.decRunningJobs();
-                        break;
+            final UID hostUID = (_host == null ? null : _host.getUID());
+            final HostInterface theHost = (hostUID == null ? null : host(hostUID));
+            TaskInterface theTask = null;
+            if (theHost != null) {
+                if (clientRights.isWorker()) {
+                    if (theHost != null) {
+                        theTask = task(theWork, theHost);
                     }
+                } else {
+                    theTask = task(theWork);
+                }
+                if (theTask == null) {
+                    throw new IOException(
+                            mandatingClient.getLogin() + " work " + jobUID + " has no task run by " + _host.getUID());
+                }
+            }
+
+            final UserInterface jobOwner = user(theWork.getOwner());
+            final UserInterface realClient = (mandatingClient.getRights().isWorker() ? jobOwner : mandatingClient);
+
+            final DataInterface theData = data(receivedJob.getResult());
+            logger.debug("data is " + ((theData == null) ? "null" : theData.toXml()));
+            useData(realClient, receivedJob.getResult());
+            final DataInterface theData2 = data(receivedJob.getResult());
+            logger.debug("data2 is " + ((theData == null) ? "null" : theData.toXml()));
+
+            removeData(realClient, theWork.getResult());
+
+            useData(realClient, receivedJob.getStdin());
+            removeData(realClient, theWork.getStdin());
+
+            useData(realClient, receivedJob.getDirin());
+            removeData(realClient, theWork.getDirin());
+            try {
+                useData(realClient, receivedJob.getUserProxy());
+            } catch (final AccessControlException e) {
+                logger.warn(e.getMessage());
+            }
+            try {
+                removeData(realClient, theWork.getUserProxy());
+            } catch (final AccessControlException e) {
+                logger.warn(e.getMessage());
+            }
+
+            // due to communication delays, it may happen that the scheduler
+            // has already marked this job as revealing
+            final boolean mustReveal = theWork.isRevealing();
+
+            theWork.updateInterface(receivedJob);
+
+            logger.debug(realClient.getLogin() + " is updating " + theWork.getUID() + " status = "
+                    + receivedJob.getStatus());
+
+            switch (theWork.getStatus()) {
+            case RESULTREQUEST:
+                theWork.setResultRequest();
+                if (theTask != null) {
+                    theTask.setResultRequest();
+                }
+                break;
+            case DATAREQUEST:
+                theWork.setDataRequest();
+                if (theTask != null) {
+                    theTask.setDataRequest();
+                }
+                break;
+            case ABORTED:
+                theWork.setPending();
+                if (theTask != null) {
+                    theTask.setPending();
+                }
+                theApp.decRunningJobs();
+                theApp.incPendingJobs();
+                jobOwner.decRunningJobs();
+                jobOwner.incPendingJobs();
+                if (theHost != null) {
+                    theHost.decRunningJobs();
+                    if (hostUID.equals(theWork.getExpectedHost())) {
+                        theHost.incPendingJobs();
+                    }
+                }
+                break;
+            case CONTRIBUTED:
+                if(marketOrder == null) {
+                    final String msg = "work cannot be a contribution without market order";
+                    theWork.setError(msg);
                     if(theTask != null) {
-                        theTask.setContributed();
+                        theTask.setErrorMsg(msg);
+                    }
+                    if (theHost != null) {
+                        theHost.incErrorJobs();
+                        theHost.decRunningJobs();
+                    }
+                    theApp.decRunningJobs();
+                    theApp.incErrorJobs();
+                    jobOwner.incErrorJobs();
+                    jobOwner.decRunningJobs();
+                    break;
+                }
+                if(theTask != null) {
+                    theTask.setContributed();
+                }
+                if (mustReveal) {
+                    theWork.setRevealing();
+                    theTask.setRevealing();
+                }
+                break;
+            case COMPLETED:
+
+                theApp.decRunningJobs();
+                jobOwner.decRunningJobs();
+                if (theHost != null) {
+                    theHost.decRunningJobs();
+                }
+                theWork.setResult(receivedJob.getResult());
+                theWork.setCompleted();
+                if (theTask != null) {
+                    final Date startdate = theTask.getLastStartDate();
+                    if (startdate != null) {
+                        final int exectime = (int) (System.currentTimeMillis() - startdate.getTime());
+                        if (theHost != null) {
+                            theHost.leaveMarketOrder(marketOrder);
+                            theHost.incAvgExecTime(exectime);
+                        }
+                        jobOwner.incUsedcputime(exectime);
+                        theApp.incAvgExecTime(exectime);
+                    }
+                    theTask.setCompleted();
+                }
+                final UID originalUid = theWork.getReplicatedUid();
+                if (originalUid != null) {
+                    synchronized (this) {
+                        final WorkInterface replicatedWork = work(originalUid);
+                        final long expectedReplications = replicatedWork.getExpectedReplications();
+                        final long currentReplications = replicatedWork.getTotalReplica();
+                        if ((currentReplications < expectedReplications) || (expectedReplications < 0)) {
+                            logger.debug(realClient.getLogin() + " " + originalUid
+                                    + " still has replications ; currently " + currentReplications + " ; expected "
+                                    + expectedReplications);
+                            final WorkInterface newWork = new WorkInterface(replicatedWork);
+                            newWork.setUID(new UID());
+                            newWork.replicate(originalUid);
+                            newWork.setTotalReplica(0);
+                            newWork.setReplicaSetSize(0);
+                            newWork.setExpectedReplications(0);
+
+                            theApp.incPendingJobs();
+                            jobOwner.incPendingJobs();
+                            if (hostUID.equals(theWork.getExpectedHost())) {
+                                theHost.incPendingJobs();
+                            }
+
+                            insert(newWork);
+                            replicatedWork.incTotalReplica();
+                        }
+                        replicatedWork.setReplicating();
+                        if (currentReplications >= replicatedWork.getTotalReplica()) {
+                            replicatedWork.setCompleted();
+                        }
+                        replicatedWork.update();
+                    }
+                } else {
+                    final long expectedReplications = theWork.getExpectedReplications();
+                    final long currentReplications = theWork.getTotalReplica();
+                    if ((currentReplications < expectedReplications) || (expectedReplications < 0)) {
+                        theWork.setReplicating();
+                    }
+                }
+
+                break;
+                case ERROR:
+                    if (theHost != null) {
+                        theHost.leaveMarketOrder(marketOrder);
+                        theHost.incErrorJobs();
+                        theHost.decRunningJobs();
+                    }
+                    theApp.decRunningJobs();
+                    theApp.incErrorJobs();
+                    jobOwner.incErrorJobs();
+                    jobOwner.decRunningJobs();
+                    theWork.setError(receivedJob.getErrorMsg());
+                    if (theTask != null) {
+                        theTask.setError();
                     }
                     break;
-				case COMPLETED:
+                case FAILED:
+                    if (theHost != null) {
+						theHost.leaveMarketOrder(marketOrder);
+						theHost.incErrorJobs();
+                        theHost.decRunningJobs();
+                    }
+                    theApp.decRunningJobs();
+                    jobOwner.incErrorJobs();
+                    jobOwner.decRunningJobs();
+                    theWork.setFailed(receivedJob.getErrorMsg());
+                    if (theTask != null) {
+                        theTask.setFailed();
+                    }
+                    break;
+            }
+            if(marketOrder != null) {
+                final Collection<WorkInterface> works = marketOrderWorks(marketOrder);
+                final long expectedWorkers = marketOrder.getExpectedWorkers();
+                final long trust = marketOrder.getTrust();
+                final long expectedContributions = (expectedWorkers * trust / 100);
+                long totalContributions = 0L;
+                for (final WorkInterface work : works) {
+                    if (work.hasContributed()
+                            && (work.getH2h2r().compareTo(theWork.getH2h2r()) == 0)
+                            && (work.getStatus() == theWork.getStatus())) {
+                        totalContributions++;
+                    }
+                }
 
-					theApp.decRunningJobs();
-					jobOwner.decRunningJobs();
-					if (theHost != null) {
-						theHost.decRunningJobs();
-					}
-					theWork.setResult(receivedJob.getResult());
-					theWork.setCompleted();
-					if (theTask != null) {
-						final Date startdate = theTask.getLastStartDate();
-						if (startdate != null) {
-							final int exectime = (int) (System.currentTimeMillis() - startdate.getTime());
-							if (theHost != null) {
-								theHost.leaveMarketOrder();
-								theHost.incAvgExecTime(exectime);
-							}
-							jobOwner.incUsedcputime(exectime);
-							theApp.incAvgExecTime(exectime);
-						}
-						theTask.setCompleted();
-					}
-					final UID originalUid = theWork.getReplicatedUid();
-					if (originalUid != null) {
-						synchronized (this) {
-							final WorkInterface replicatedWork = work(originalUid);
-							final long expectedReplications = replicatedWork.getExpectedReplications();
-							final long currentReplications = replicatedWork.getTotalReplica();
-							if ((currentReplications < expectedReplications) || (expectedReplications < 0)) {
-								logger.debug(realClient.getLogin() + " " + originalUid
-										+ " still has replications ; currently " + currentReplications + " ; expected "
-										+ expectedReplications);
-								final WorkInterface newWork = new WorkInterface(replicatedWork);
-								newWork.setUID(new UID());
-								newWork.replicate(originalUid);
-								newWork.setTotalReplica(0);
-								newWork.setReplicaSetSize(0);
-								newWork.setExpectedReplications(0);
+                logger.debug("status = " + theWork.getStatus());
+                logger.debug("trust = " + trust);
+                logger.debug("expectedWorkers = " + expectedWorkers);
+                logger.debug("expectedContributions = " + expectedContributions);
+                logger.debug("totalContributions = " + totalContributions);
 
-								theApp.incPendingJobs();
-								jobOwner.incPendingJobs();
-								if (hostUID.equals(theWork.getExpectedHost())) {
-									theHost.incPendingJobs();
-								}
+                if (totalContributions >= expectedContributions) {
+                    switch (theWork.getStatus()) {
+                        case COMPLETED:
+                            marketOrder.setCompleted();
+                            break;
+                        case ERROR:
+                        case FAILED:
+                            marketOrder.setError();
+                            break;
+                    }
+                }
 
-								insert(newWork);
-								rows.add(newWork);
-								replicatedWork.incTotalReplica();
-							}
-							replicatedWork.setReplicating();
-							if (currentReplications >= replicatedWork.getTotalReplica()) {
-								replicatedWork.setCompleted();
-							}
-							rows.add(replicatedWork);
-						}
-					} else {
-						final long expectedReplications = theWork.getExpectedReplications();
-						final long currentReplications = theWork.getTotalReplica();
-						if ((currentReplications < expectedReplications) || (expectedReplications < 0)) {
-							theWork.setReplicating();
-						}
-					}
-					break;
-					case ERROR:
-						if (theHost != null) {
-							theHost.leaveMarketOrder();
-							theHost.incErrorJobs();
-							theHost.decRunningJobs();
-						}
-						theApp.decRunningJobs();
-						theApp.incErrorJobs();
-						jobOwner.incErrorJobs();
-						jobOwner.decRunningJobs();
-						theWork.setError(receivedJob.getErrorMsg());
-						if (theTask != null) {
-							theTask.setError();
-						}
-						break;
-					case FAILED:
-						if (theHost != null) {
-							theHost.decRunningJobs();
-						}
-						theApp.decRunningJobs();
-						jobOwner.incErrorJobs();
-						jobOwner.decRunningJobs();
-						theWork.setFailed(receivedJob.getErrorMsg());
-						if (theTask != null) {
-							theTask.setFailed();
-						}
-						break;
-				}
+                marketOrder.update();
+            }
 
-				if (theTask != null) {
-					rows.add(theTask);
-				}
-				rows.add(theWork);
-				rows.add(theApp);
-				rows.add(jobOwner);
-				if (theHost != null) {
-					rows.add(theHost);
-				}
-				sendMail(jobOwner, theWork, realClient.getLogin() + " has updated ");
-				update(rows);
-			} else {
-				throw new AccessControlException("addWork() : " + mandatingClient.getLogin() + " can't update " + jobUID);
-			}
+            if (theTask != null) {
+                theTask.update();
+            }
+            theWork.update();
+            theApp.update();
+            jobOwner.update();
+            if (theHost != null) {
+                theHost.update();
+            }
+            sendMail(jobOwner, theWork, realClient.getLogin() + " has updated ");
+
 		} else {
 			if (mandatingClient.getRights().isWorker()) {
 				throw new AccessControlException("a worker can not insert a new work");
@@ -5400,8 +5490,6 @@ public final class DBInterface {
 				receivedJob.setStatus(StatusEnum.UNAVAILABLE);
 			}
 
-			final Vector<Table> rows = new Vector<>();
-
 			receivedJob.setReplicatedUid(null);
 			logger.debug(mandatingClient.getLogin() + " " + jobUID + " replications = " + receivedJob.getExpectedReplications()
 			+ " by " + receivedJob.getReplicaSetSize());
@@ -5412,7 +5500,9 @@ public final class DBInterface {
 					: 0L;
 			boolean firstJob = true;
 
-			for (; (replica <= receivedJob.getReplicaSetSize()) && (replica <= receivedJob.getExpectedReplications()); replica++) {
+			for (; (replica <= receivedJob.getReplicaSetSize()) && (replica <= receivedJob.getExpectedReplications() - 1);
+                 replica++) {
+
 				final WorkInterface newWork = new WorkInterface(receivedJob);
 				newWork.setUID(jobUID); // we insert the original work (to
 				// eventually be replicated)
@@ -5432,16 +5522,15 @@ public final class DBInterface {
 				useData(mandatingClient, newWork.getStdin());
 				useData(mandatingClient, newWork.getDirin());
 
-				rows.add(newWork);
-				System.out.println("DBInterface#addWork receivedJob = " + receivedJob.toXml());
-				System.out.println("DBInterface#addWork newWork = " + newWork.toXml());
+				newWork.update();
+				logger.debug("DBInterface#addWork receivedJob = " + receivedJob.toXml());
+                logger.debug("DBInterface#addWork newWork = " + newWork.toXml());
 				mandatingClient.incPendingJobs();
 			}
 
-			rows.add(mandatingClient);
+			mandatingClient.update();
 			theApp.incPendingJobs();
-			rows.add(theApp);
-			update(rows);
+			theApp.update();
 		}
 
 		return theWork;
@@ -5722,106 +5811,123 @@ public final class DBInterface {
 		}
 
 		try {
-			final HostInterface host = host(user, _host.getUID());
+			HostInterface theHost = host(user, _host.getUID());
 
-			if (host != null) {
+			if (theHost == null) {
+                try {
+                    logger.info(hostName + " not in DB; inserting " + _host.getUID().toString());
+                    insert(_host);
+                    theHost = _host;
+                } catch (final Exception e) {
+                    logger.exception(hostName + " can't create new host", e);
+                    return null;
+                }
+            }
 
-				if (_host.getUploadBandwidth() != 0) {
-					host.setUploadBandwidth(_host.getUploadBandwidth());
-				}
-				if (_host.getDownloadBandwidth() != 0) {
-					host.setDownloadBandwidth(_host.getDownloadBandwidth());
-				}
-				if (_host.getNbPing() != 0) {
-					host.setNbPing(_host.getNbPing());
-				}
-				if (_host.getAvgPing() != 0) {
-					host.setAvgPing(_host.getAvgPing());
-				}
-				host.setSharedApps(_host.getSharedApps());
-				host.setSharedDatas(_host.getSharedDatas());
-				host.setSharedPackages(_host.getSharedPackages());
-				host.setIncomingConnections(_host.incomingConnections());
+            // we can't use theHost.updateInterface()
+            // because we want to update data aggregated by the worker itself only
+            theHost.setUploadBandwidth(_host.getUploadBandwidth());
+            theHost.setDownloadBandwidth(_host.getDownloadBandwidth());
+            theHost.setNbPing(_host.getNbPing());
+            theHost.setAvgPing(_host.getAvgPing());
+            theHost.setSharedApps(_host.getSharedApps());
+            theHost.setSharedDatas(_host.getSharedDatas());
+            theHost.setSharedPackages(_host.getSharedPackages());
+            theHost.setIncomingConnections(_host.incomingConnections());
+            theHost.setProject(_host.getProject());
+            theHost.setIPAddr(_host.getIPAddr());
+            theHost.setNatedIPAddr(_host.getNatedIPAddr());
+            theHost.setJobId(_host.getJobId());
+            theHost.setBatchId(_host.getBatchId());
+            theHost.setAccessRights(_host.getAccessRights());
+            theHost.setVersion(_host.getVersion());
+            theHost.setOs(_host.getOs());
+            theHost.setOsVersion(_host.getOsVersion());
+            theHost.setJavaVersion(_host.getJavaVersion());
+            theHost.setJavaDataModel(_host.getJavaDataModel());
+            theHost.setCpu(_host.getCpu());
+            theHost.setCpuModel(_host.getCpuModel());
+            theHost.setCpuSpeed(_host.getCpuSpeed());
+            theHost.setLastAlive(_host.getLastAlive());
+            theHost.setAvailable(_host.isAvailable());
+            theHost.setSgId(_host.getSgId());
+            theHost.setPoolWorkSize(_host.getPoolWorkSize());
+            theHost.setFreeTmp(_host.getFreeTmp());
+            theHost.setTotalMem(_host.getTotalMem());
+            theHost.setEthWalletAddr(_host.getEthWalletAddr());
+            theHost.update();
 
-				host.setProject(_host.getProject());
-				host.setIPAddr(_host.getIPAddr());
-				host.setNatedIPAddr(_host.getNatedIPAddr());
+            final String workerWalletAddr = theHost.getEthWalletAddr();
+            if (!theHost.canContribute()) {
+                logger.info("hostRegister() - " + workerWalletAddr +" : don't want to contribute");
+                return theHost;
+            }
 
-				host.setJobId(_host.getJobId());
-				host.setBatchId(_host.getBatchId());
+            try {
+                final MarketOrderInterface marketOrder = marketOrderUnsatisfied(theHost.getWorkerPoolAddr());
+                if(marketOrder == null) {
+                    logger.info("hostRegister() - " + workerWalletAddr +" : no unsatisfied market order");
+                    return theHost;
+                }
 
-				host.setAccessRights(_host.getAccessRights());
-				host.setVersion(_host.getVersion());
-				host.setOs(_host.getOs());
-				host.setOsVersion(_host.getOsVersion());
-				host.setJavaVersion(_host.getJavaVersion());
-				host.setJavaDataModel(_host.getJavaDataModel());
-				host.setCpu(_host.getCpu());
-				host.setCpuModel(_host.getCpuModel());
-				host.setLastAlive(_host.getLastAlive());
-				host.setAvailable(_host.isAvailable());
-				host.setSgId(_host.getSgId());
-				host.setPoolWorkSize(_host.getPoolWorkSize());
-				host.setCpuSpeed(_host.getCpuSpeed());
-				host.setFreeTmp(_host.getFreeTmp());
-				host.setTotalMem(_host.getTotalMem());
+                if(marketOrder.getWorkerPoolAddr().compareTo(theHost.getWorkerPoolAddr()) != 0) {
+                    logger.error("hostRegister() : worker pool mismatch : "
+                            + marketOrder.getWorkerPoolAddr() + " != "
+                            + theHost.getWorkerPoolAddr());
+                    return theHost;
+                }
 
-				final String workerWalletAddr = host.getEthWalletAddr();
-				if (host.wantToContribute()) {
+                final Collection<HostInterface> hosts = hosts(new EthereumWallet(workerWalletAddr), marketOrder);
+                logger.debug("hostRegister() : " + workerWalletAddr + " : duplicated wallet " + (hosts == null ? 0 : hosts.size()));
 
-                    try {
-                        final MarketOrderInterface marketOrder = marketOrderUnsatisfied(host.getWorkerPoolAddr());
-                        if(marketOrder == null) {
-                            logger.info("hostRegister() - " + workerWalletAddr +" : no unsatisfied market order");
-                        } else {
-							if(marketOrder.getWorkerPoolAddr().compareTo(host.getWorkerPoolAddr()) != 0) {
-								logger.error("hostRegister() : worker pool mismatch : "
-										+ marketOrder.getWorkerPoolAddr() + " != "
-										+ host.getWorkerPoolAddr());
-							}
-							else {
-
-								logger.debug("hostRegister() - " + workerWalletAddr +" joins market order "
-										+ marketOrder.getUID());
-								marketOrder.addWorker(host);
-
-                                // following host.update() is not really necessary but helps comprehension
-                                // since createMarketOrder is long to execute on the blockchain
-                                // and update(host) below will not waste any time to write to DB
-                                // since it would have already been written here
-								host.update();
-								marketOrder.update();
-
-								if(marketOrder.canStart()) {
-									final ActuatorService actuatorService = ActuatorService.getInstance();
-									final BigInteger marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
-											BigInteger.valueOf(marketOrder.getTrust()),
-											BigInteger.valueOf(marketOrder.getPrice()),
-											BigInteger.valueOf(marketOrder.getVolume()));
-									marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
-									marketOrder.update();
-								}
-							}
-						}
-                    } catch (final IOException e) {
-                        logger.exception(e);
+                if (hosts != null) {
+                    boolean error = false;
+                    for (HostInterface ahost : hosts) {
+                        if (ahost.getUID().equals(theHost.getUID()))
+                            continue;
+                        error = true;
+                        logger.error("hostRegister() : " + workerWalletAddr + " : more than one wallet owner " + ahost.getUID());
+                        ahost.leaveMarketOrder(marketOrder);
+                        ahost.setActive(false);
+                        ahost.update();
                     }
+                    if (error) {
+                        logger.error("hostRegister() : " + workerWalletAddr + " : more than one wallet owner " + theHost.getUID());
+                        theHost.leaveMarketOrder(marketOrder);
+                        theHost.setActive(false);
+                        theHost.update();
+                        return theHost;
+                    }
+                }
 
-                } else {
-					logger.info("hostRegister() - " + workerWalletAddr +" : don't want to contribute");
-				}
+                logger.debug("hostRegister() - " + workerWalletAddr +" joins market order "
+                        + marketOrder.getUID());
+                marketOrder.addWorker(theHost);
 
-				update(host);
-				return host;
-			} else {
-				try {
-					logger.info(hostName + " not in DB; inserting " + _host.getUID().toString());
-					insert(_host);
-					return _host;
-				} catch (final Exception e) {
-					logger.exception(hostName + " can't create new host", e);
-				}
-			}
+                // following host.update() is not really necessary but helps comprehension
+                // since createMarketOrder is long to execute on the blockchain
+                // and update(host) below will not waste any time to write to DB
+                // since it would have already been written here
+                theHost.update();
+                marketOrder.update();
+
+                if(marketOrder.canStart()) {
+                    final ActuatorService actuatorService = ActuatorService.getInstance();
+                    final BigInteger marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
+                            BigInteger.valueOf(marketOrder.getTrust()),
+                            BigInteger.valueOf(marketOrder.getPrice()),
+                            BigInteger.valueOf(marketOrder.getVolume()));
+                    marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
+                    marketOrder.update();
+                }
+
+            } catch (final IOException e) {
+                logger.exception(e);
+            }
+
+            update(theHost);
+            return theHost;
+
 		} catch (final Exception e) {
 			logger.exception(e);
 			logger.debug("new connection");

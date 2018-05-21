@@ -24,10 +24,13 @@
 package xtremweb.dispatcher;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Vector;
 
+import com.iexec.common.model.MarketOrderModel;
+import com.iexec.scheduler.marketplace.MarketplaceService;
 import xtremweb.common.*;
 import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommandWorkRequest;
@@ -120,11 +123,9 @@ public class MatchingScheduler extends SimpleScheduler {
 			theWork = db.selectOne(workSelection, moreCriterias.toString());
 
 			if (theWork != null) {
-                final Collection<Table> rows = new Vector<>();
-                final UID theAppUID = theWork.getApplication();
-				final UID theWorkOwnerUID = theWork.getOwner();
-				final AppInterface theApp = db.app(user, theAppUID);
-				final UserInterface theWorkOwner = db.user(theWorkOwnerUID);
+				final AppInterface theApp = db.app(user, theWork.getApplication());
+				final UserInterface theWorkOwner = db.user(theWork.getOwner());
+				final MarketOrderInterface marketOrder = db.marketOrder(theWork.getMarketOrderUid());
 				theApp.decPendingJobs();
 				theApp.incRunningJobs();
 				theWorkOwner.decPendingJobs();
@@ -134,7 +135,16 @@ public class MatchingScheduler extends SimpleScheduler {
 				theTask = new TaskInterface(theWork);
 				theWork.setRunning();
 				theTask.setRunningBy(host.getUID());
-
+				if(marketOrder != null) {
+					marketOrder.setRunning();
+                    marketOrder.update();
+                    final MarketOrderModel marketOrderModel = MarketplaceService.getInstance().getMarketOrderModel(BigInteger.valueOf(marketOrder.getMarketOrderIdx()));
+					if(marketOrderModel != null) {
+						theTask.setPrice(marketOrderModel.getValue().longValue());
+					} else {
+					    logger.warn("can't find market order model from idx " + marketOrder.getMarketOrderIdx());
+                    }
+				}
 				//
 				// 20 juin 2011
 				// We must first update work, otherwise scheduler may return
@@ -143,24 +153,23 @@ public class MatchingScheduler extends SimpleScheduler {
 				//
 				DBConnPoolThread.getInstance().update(theWork, null, false);
 
-				rows.add(host);
-				rows.add(theTask);
-				rows.add(theApp);
-				rows.add(theWorkOwner);
-				db.update(rows);
+                host.update();
+				theTask.update();
+				theApp.update();
+				theWorkOwner.update();
 			}
 		} catch (final Exception e) {
 			getLogger().exception(e);
 			ioe = new IOException(e.toString());
 			if (theWork != null) {
 				theWork.setError("sched error " + e);
-				db.update(theWork);
+				theWork.update();
 			}
 			if (theTask != null) {
 				theTask.setError();
 				final Date now = new Date();
 				theTask.setRemovalDate(now);
-				db.update(theTask);
+				theTask.update();
 			}
 		} finally {
 			theTask = null;

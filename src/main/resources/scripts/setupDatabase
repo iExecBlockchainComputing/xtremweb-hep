@@ -525,7 +525,7 @@ if [ "$DBVENDOR" = "mysql" ] ; then
 	mysql $MYSQLOPTS -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSERLOGIN@localhost IDENTIFIED BY '$DBUSERPASSWORD' WITH GRANT OPTION"
 	mysql $MYSQLOPTS -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSERLOGIN@localhost.localdomain IDENTIFIED BY '$DBUSERPASSWORD' WITH GRANT OPTION"
 	mysql $MYSQLOPTS -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSERLOGIN@'$XWHOST' IDENTIFIED BY '$DBUSERPASSWORD' WITH GRANT OPTION"
-	mysql $MYSQLOPTS -e "set password for $DBUSERLOGIN@localhost = old_password('$DBUSERPASSWORD')"
+#	mysql $MYSQLOPTS -e "set password for $DBUSERLOGIN@localhost = old_password('$DBUSERPASSWORD')"
 
 	#
 	# next line ensures xwupdatedb-8.3.1 works correctly even if "version" table does not exist

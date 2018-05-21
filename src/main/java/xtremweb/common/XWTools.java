@@ -57,6 +57,7 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import xtremweb.communications.URI;
@@ -924,7 +925,7 @@ public class XWTools {
 	 *             on connection error
 	 * @since 10.5.0
 	 */
-	public static String jsonValueFromURL(final String u, final String key) throws IOException {
+	public static String jsonValueFromURL(final String u, final String key) throws IOException, JSONException {
 		final URL url = new URL(u);
 		try (final InputStream is = url.openStream();) {
 			final JSONTokener jst = new JSONTokener(is);
@@ -942,7 +943,7 @@ public class XWTools {
 	 *            is the JSon key name to retrieve
 	 * @since 10.5.0
 	 */
-	public static String jsonValueFromString(final String s, final String key) {
+	public static String jsonValueFromString(final String s, final String key) throws JSONException {
 		final JSONTokener jst = new JSONTokener(s);
 		final JSONObject obj = new JSONObject(jst);
 		return obj.getString(key);

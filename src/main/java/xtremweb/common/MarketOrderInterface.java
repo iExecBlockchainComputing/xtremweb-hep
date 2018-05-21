@@ -32,6 +32,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.sql.ResultSet;
+import java.util.Date;
 
 /**
  * @author Oleg Lodygensky
@@ -57,7 +58,26 @@ public final class MarketOrderInterface extends Table {
 				return MarketOrderDirectionEnum.valueOf(v.toUpperCase());
 			}
 		},
-        /**
+		/**
+		 * This is the column index of the status
+		 *
+		 * @see StatusEnum
+		 */
+		STATUS {
+			/**
+			 * This creates an object from String representation for this column
+			 * value
+			 *
+			 * @param v
+			 *            the String representation
+			 * @return an XWStatus representing the column value
+			 */
+			@Override
+			public StatusEnum fromString(final String v) {
+				return StatusEnum.valueOf(v.toUpperCase());
+			}
+		},
+		/**
          * The index as returned by actuatorService.createMarketOrder
          */
         MARKETORDERIDX {
@@ -148,6 +168,51 @@ public final class MarketOrderInterface extends Table {
 			public String fromString(final String v) {
 				return v;
 			}
+		},
+		/**
+		 * This is the column index of the arrival date
+		 */
+		ARRIVALDATE {
+			@Override
+			public Date fromString(final String v) {
+				return XWTools.getSQLDateTime(v);
+			}
+		},
+        /**
+         * This is the column index of the start date
+         */
+        STARTDATE {
+            @Override
+            public Date fromString(final String v) {
+                return XWTools.getSQLDateTime(v);
+            }
+        },
+        /**
+         * This is the column index of the contributing date
+         */
+        CONTRIBUTINGDATE {
+            @Override
+            public Date fromString(final String v) {
+                return XWTools.getSQLDateTime(v);
+            }
+        },
+		/**
+		 * This is the column index of the revealing date
+		 */
+		REVEALINGDATE {
+			@Override
+			public Date fromString(final String v) {
+				return XWTools.getSQLDateTime(v);
+			}
+		},
+		/**
+		 * This is the column index of the completed date
+		 */
+		COMPLETEDDATE {
+			@Override
+			public Date fromString(final String v) {
+				return XWTools.getSQLDateTime(v);
+			}
 		};
 
 		/**
@@ -226,13 +291,14 @@ public final class MarketOrderInterface extends Table {
 		super(THISTAG, TABLENAME);
 
 		setAttributeLength(ENUMSIZE);
-
+		setArrivalDate();
 		setAccessRights(XWAccessRights.USERALL);
 		setTrust(70L);
         setVolume(1L);
+        setStatus(StatusEnum.UNAVAILABLE);
         setExpectedWorkers(4L);
         setMarketOrderIdx(0);
-		setShortIndexes(new int[] { TableColumns.UID.getOrdinal(), Columns.MARKETORDERIDX.getOrdinal(), Columns.DIRECTION.getOrdinal() });
+		setShortIndexes(new int[] { TableColumns.UID.getOrdinal(), Columns.MARKETORDERIDX.getOrdinal(), Columns.DIRECTION.getOrdinal(), Columns.STATUS.getOrdinal() });
 	}
 
 	/**
@@ -301,13 +367,34 @@ public final class MarketOrderInterface extends Table {
             setRemaining((Long) Columns.REMAINING.fromResultSet(rs));
         } catch (final Exception e) {
         }
+		try {
+			setArrivalDate((Date) Columns.ARRIVALDATE.fromResultSet(rs));
+		} catch (final Exception e) {
+		}
+		try {
+			setCompletedDate((Date) Columns.COMPLETEDDATE.fromResultSet(rs));
+		} catch (final Exception e) {
+		}
+		try {
+			setRevealingDate((Date) Columns.REVEALINGDATE.fromResultSet(rs));
+		} catch (final Exception e) {
+		}
+        try {
+            setContributingDate((Date) Columns.CONTRIBUTINGDATE.fromResultSet(rs));
+        } catch (final Exception e) {
+        }
+        try {
+            setStartDate((Date) Columns.STARTDATE.fromResultSet(rs));
+        } catch (final Exception e) {
+        }
         try {
             setUID((UID) TableColumns.UID.fromResultSet(rs));
             setOwner((UID) TableColumns.OWNERUID.fromResultSet(rs));
             setAccessRights((XWAccessRights) TableColumns.ACCESSRIGHTS.fromResultSet(rs));
             setCategoryId((Long) Columns.CATEGORYID.fromResultSet(rs));
             setExpectedWorkers((Long) Columns.EXPECTEDWORKERS.fromResultSet(rs));
-            setDirection((MarketOrderDirectionEnum) Columns.DIRECTION.fromResultSet(rs));
+			setDirection((MarketOrderDirectionEnum) Columns.DIRECTION.fromResultSet(rs));
+			setStatus((StatusEnum) Columns.STATUS.fromResultSet(rs));
             setPrice((Long) Columns.PRICE.fromResultSet(rs));
             setTrust((Long) Columns.TRUST.fromResultSet(rs));
             setWorkerPoolAddr((String) Columns.WORKERPOOLADDR.fromResultSet(rs));
@@ -397,12 +484,20 @@ public final class MarketOrderInterface extends Table {
 		if (marketOrderInterface.getDirection() != null) {
 			setDirection(marketOrderInterface.getDirection());
 		}
+		if (marketOrderInterface.getStatus() != null) {
+			setStatus(marketOrderInterface.getStatus());
+		}
         if (marketOrderInterface.getCategoryId() != null) {
             setCategoryId(marketOrderInterface.getCategoryId());
         }
         if (marketOrderInterface.getMarketOrderIdx() != null) {
             setMarketOrderIdx(marketOrderInterface.getMarketOrderIdx());
         }
+		setArrivalDate(marketOrderInterface.getArrivalDate());
+		setCompletedDate(marketOrderInterface.getCompletedDate());
+		setRevealingDate(marketOrderInterface.getRevealingDate());
+        setContributingDate(marketOrderInterface.getContributingDate());
+        setStartDate(marketOrderInterface.getStartDate());
 		setExpectedWorkers(marketOrderInterface.getExpectedWorkers());
  		setNbWorkers(marketOrderInterface.getNbWorkers());
 		setTrust(marketOrderInterface.getTrust());
@@ -426,20 +521,28 @@ public final class MarketOrderInterface extends Table {
 	public MarketOrderDirectionEnum getDirection() {
 		return (MarketOrderDirectionEnum) getValue(Columns.DIRECTION);
 	}
-    /**
-     * This retrieves the category id
-     *
-     * @return this attribute, or null if not set
-     * @exception IOException
-     *                is thrown is attribute is nor well formed
-     */
-    public Long getCategoryId() throws IOException {
-        try {
-            return (Long) getValue(Columns.CATEGORYID);
-        } catch (final NullPointerException e) {
-            return null;
-        }
-    }
+	/**
+	 * This retrieves the category id
+	 *
+	 * @return this attribute, or null if not set
+	 * @exception IOException
+	 *                is thrown is attribute is nor well formed
+	 */
+	public Long getCategoryId() throws IOException {
+		try {
+			return (Long) getValue(Columns.CATEGORYID);
+		} catch (final NullPointerException e) {
+			return null;
+		}
+	}
+	/**
+	 * This retrieves market status
+	 *
+	 * @return the market status
+	 */
+	public StatusEnum getStatus() {
+		return (StatusEnum) getValue(Columns.STATUS);
+	}
     /**
      * This retrieves the market order index
      *
@@ -552,6 +655,46 @@ public final class MarketOrderInterface extends Table {
 		}
 	}
 	/**
+	 * This retrieves the submission date
+	 *
+	 * @return this attribute, or null if not set
+	 */
+	public Date getArrivalDate() {
+		return (Date) getValue(Columns.ARRIVALDATE);
+	}
+	/**
+	 * This retrieves the completion date
+	 *
+	 * @return this attribute, or null if not set
+	 */
+	public Date getCompletedDate() {
+		return (Date) getValue(Columns.COMPLETEDDATE);
+	}
+    /**
+     * This retrieves the contributing date
+     *
+     * @return this attribute, or null if not set
+     */
+    public Date getContributingDate() {
+        return (Date) getValue(Columns.CONTRIBUTINGDATE);
+    }
+    /**
+     * This retrieves the start date
+     *
+     * @return this attribute, or null if not set
+     */
+    public Date getStartDate() {
+        return (Date) getValue(Columns.STARTDATE);
+    }
+	/**
+	 * This retrieves the revealing date
+	 *
+	 * @return this attribute, or null if not set
+	 */
+	public Date getRevealingDate() {
+		return (Date) getValue(Columns.REVEALINGDATE);
+	}
+	/**
 	 * This sets parameter value; this is called from
 	 * TableInterface#fromXml(Attributes)
 	 *
@@ -575,11 +718,79 @@ public final class MarketOrderInterface extends Table {
 	/**
 	 * This sets market order direction
 	 * @param d is the market order direction
-     * @return true if value has changed, false otherwise
+	 * @return true if value has changed, false otherwise
 	 */
 	public boolean setDirection(final MarketOrderDirectionEnum d) {
 		return setValue(Columns.DIRECTION, d);
 	}
+    /**
+     * This sets market status
+     * @param s is the market order status
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setStatus(final StatusEnum s) {
+        return setValue(Columns.STATUS, s);
+    }
+    /**
+     * This sets this market order status to running
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setRunning() {
+        setStartDate();
+        return setValue(Columns.STATUS, StatusEnum.RUNNING);
+    }
+    /**
+     * This sets this market order status to contributing
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setContributing() {
+    	setContributingDate();
+        return setValue(Columns.STATUS, StatusEnum.CONTRIBUTING);
+    }
+    /**
+     * This sets this market order status to contributed
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setContributed() {
+        return setValue(Columns.STATUS, StatusEnum.CONTRIBUTED);
+    }
+    /**
+     * This sets this market order status to revealing
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setRevealing() {
+        setRevealingDate();
+    	return setValue(Columns.STATUS, StatusEnum.REVEALING);
+    }
+    /**
+     * This sets this market order status to completed
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setCompleted() {
+    	setCompletedDate();
+        return setValue(Columns.STATUS, StatusEnum.COMPLETED);
+    }
+    /**
+     * This sets this market order status to pending (ready to be bought)
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setPending() {
+        return setValue(Columns.STATUS, StatusEnum.PENDING);
+    }
+    /**
+     * This sets this market order status to waiting (still missing workers)
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setWaiting() {
+        return setValue(Columns.STATUS, StatusEnum.WAITING);
+    }
+    /**
+     * This sets this market order status to error
+     * @return true if value has changed, false otherwise
+     */
+    public boolean setError() {
+        return setValue(Columns.STATUS, StatusEnum.ERROR);
+    }
     /**
      * This sets the category id
      * @param c is the category id
@@ -589,11 +800,13 @@ public final class MarketOrderInterface extends Table {
         return setValue(Columns.CATEGORYID, Long.valueOf(c));
     }
     /**
-     * This sets the market order index
+     * This sets the market order index and marks this as PENDING
      * @param c is the category id
      * @return true if value has changed, false otherwise
      */
     public boolean setMarketOrderIdx(final long c)  {
+        if (c != 0L)
+            setPending();
         return setValue(Columns.MARKETORDERIDX, Long.valueOf(c));
     }
     /**
@@ -622,12 +835,25 @@ public final class MarketOrderInterface extends Table {
     /**
      * This marks the provided host as participating in this market order
      * and increments the amount of booked workers to reach the trust
-     * @param h is the participating host
-     * @return true if value has changed, false otherwise
+     * @param host is the participating host
+     * @return true
      */
-    public boolean addWorker(final HostInterface h)  {
-        h.setMarketOrderUid(getUID());
-        return setNbWorkers(getNbWorkers() + 1);
+    public boolean addWorker(final HostInterface host)  {
+        host.setMarketOrderUid(getUID());
+        incNbWorkers();
+        return true;
+    }
+    /**
+     * This removes the provided host from this market order
+     * and decrements the amount of booked workers to reach the trust
+     * @param host is the participating host
+     * @return true
+     */
+    public boolean removeWorker(final HostInterface host)  {
+        if(host != null)
+            host.leaveMarketOrder();
+        decNbWorkers();
+        return true;
     }
     /**
      * This marks the provided host as participating in this market order
@@ -635,7 +861,7 @@ public final class MarketOrderInterface extends Table {
      * @return true if value has changed, false otherwise
      */
     public boolean canStart()  {
-        return getExpectedWorkers() == getNbWorkers();
+        return getExpectedWorkers() <= getNbWorkers();
     }
     /**
      * This decrements the amount of booked workers to reach the trust
@@ -691,6 +917,86 @@ public final class MarketOrderInterface extends Table {
 	 */
 	public boolean setWorkerPoolOwnerAddr(final String addr)  {
 		return setValue(Columns.WORKERPOOLOWNERADDR, addr);
+	}
+	/**
+	 * This set the submission date
+	 *
+	 * @return true if value has changed, false otherwise
+	 */
+	public final boolean setArrivalDate() {
+		return setArrivalDate(new java.util.Date());
+	}
+	/**
+	 * This set the submission date
+	 *
+	 * @return true if value has changed, false otherwise
+	 */
+	public final boolean setArrivalDate(final Date v) {
+		return setValue(Columns.ARRIVALDATE, v);
+	}
+	/**
+	 * This set the completion date
+	 *
+	 * @return true if value has changed, false otherwise
+	 */
+	public final boolean setCompletedDate() {
+		return setCompletedDate(new java.util.Date());
+	}
+	/**
+	 * This set the completion date
+	 *
+	 * @return true if value has changed, false otherwise
+	 */
+	public final boolean setCompletedDate(final Date v) {
+		return setValue(Columns.COMPLETEDDATE, v);
+	}
+    /**
+     * This set the start date
+     *
+     * @return true if value has changed, false otherwise
+     */
+    public final boolean setStartDate() {
+        return setStartDate(new java.util.Date());
+    }
+    /**
+     * This set the start date
+     *
+     * @return true if value has changed, false otherwise
+     */
+    public final boolean setStartDate(final Date v) {
+        return setValue(Columns.STARTDATE, v);
+    }
+    /**
+     * This set the contributing date
+     *
+     * @return true if value has changed, false otherwise
+     */
+    public final boolean setContributingDate() {
+        return setContributingDate(new java.util.Date());
+    }
+    /**
+     * This set the contributing date
+     *
+     * @return true if value has changed, false otherwise
+     */
+    public final boolean setContributingDate(final Date v) {
+        return setValue(Columns.CONTRIBUTINGDATE, v);
+    }
+	/**
+	 * This set the revealing date
+	 *
+	 * @return true if value has changed, false otherwise
+	 */
+	public final boolean setRevealingDate() {
+		return setRevealingDate(new java.util.Date());
+	}
+	/**
+	 * This set the revealing date
+	 *
+	 * @return true if value has changed, false otherwise
+	 */
+	public final boolean setRevealingDate(final Date v) {
+		return setValue(Columns.REVEALINGDATE, v);
 	}
 
 	/**

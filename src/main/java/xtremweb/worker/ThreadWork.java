@@ -40,6 +40,7 @@ import java.util.Vector;
 
 import javax.net.SocketFactory;
 
+import com.iexec.common.ethereum.Utils;
 import org.xml.sax.SAXException;
 
 import xtremweb.common.*;
@@ -563,6 +564,8 @@ public class ThreadWork extends Thread {
 		}
 		smartSocketsProxies.clear();
 		smartSocketsProxies = null;
+		logger.config("stopProxy done");
+
 	}
 
 	/**
@@ -582,15 +585,20 @@ public class ThreadWork extends Thread {
 			return;
 		}
 		final StringBuilder command = new StringBuilder(unloadpath);
-		command.append(" " + currentWork.getCmdLine());
 
 		logger.config("unload");
 
-        try {
+        final File outf = new File(Worker.getConfig().getPath(XWPropertyDefs.TMPDIR), "unlaod" + currentWork.getUID() + ".out");
+        final File errf = new File(Worker.getConfig().getPath(XWPropertyDefs.TMPDIR), "unlaod" + currentWork.getUID() + ".err");
+        try (final FileOutputStream out = new FileOutputStream(outf);
+             final FileOutputStream err = new FileOutputStream(errf) ) {
 
 			final String[] envVars = getEnvVars();
-			final Executor unloader = new Executor(command.toString(), envVars);
-			unloader.setDelay(Long.parseLong(Worker.getConfig().getProperty(XWPropertyDefs.TIMEOUT)));
+            final Executor unloader = new Executor(command.toString(), envVars, currentWork.getScratchDirName(),
+                    null, out, err,
+                    Long.parseLong(Worker.getConfig().getProperty(XWPropertyDefs.TIMEOUT)));
+            unloader.setMaxWallClockTime(60);
+
 			try {
 				unloader.startAndWait();
 			} catch (final ExecutorLaunchException | ExecutorWallClockTimeException e) {
@@ -598,6 +606,9 @@ public class ThreadWork extends Thread {
 			}
 
 		} finally {
+			logger.config("unload done");
+			if(outf.exists()) outf.delete();
+            if(errf.exists()) errf.delete();
 		}
 	}
 
@@ -701,12 +712,17 @@ public class ThreadWork extends Thread {
 
         ret = currentWork.getStatus();
 
+		logger.debug("job killed " + currentWork.getUID() +" : " + killed);
+
 		if (!killed) {
 			try {
-				if (currentWork.isService() == false) {
-					if (currentWork.hasPackage() == false) {
-						zipResult();
-    					} else {
+				logger.debug("job isService " + currentWork.getUID() +" : " + currentWork.isService());
+				if (!currentWork.isService()) {
+					logger.debug("job hasPackage " + currentWork.getUID() +" : " + currentWork.hasPackage());
+					if (!currentWork.hasPackage()) {
+						logger.debug("zipping result for job " + currentWork.getUID());
+                        ret = zipResult();
+                    } else {
 						currentWork.setResult(null);
 					}
 				}
@@ -848,8 +864,6 @@ public class ThreadWork extends Thread {
 	protected String getUnloadScriptPath()
 			throws IOException, ClassNotFoundException, SAXException, URISyntaxException, InvalidKeyException {
 
-		String ret = null;
-
 		final UID workApp = currentWork.getApplication();
 
 		if (workApp == null) {
@@ -868,15 +882,12 @@ public class ThreadWork extends Thread {
 
 		final File scriptPath = new File(unloadScriptName);
 
-		if (scriptPath != null) {
-			if (!scriptPath.exists()) {
-				throw new IOException("can find script " + scriptPath);
-			}
+		if ((scriptPath != null) && scriptPath.exists()) {
 			scriptPath.setExecutable(true);
-			ret = scriptPath.getAbsolutePath();
+			return scriptPath.getAbsolutePath();
 		}
 
-		return ret;
+		return null;
 	}
 
 	/**
@@ -1218,20 +1229,18 @@ public class ThreadWork extends Thread {
 	 * @throws InvalidKeyException
 	 * @exception Exception
 	 *                is thrown on I/O error
-	 * @return the file containing the job result
 	 */
-	public synchronized File zipResult()
+	protected synchronized StatusEnum zipResult()
 			throws IOException, ClassNotFoundException, SAXException, URISyntaxException, InvalidKeyException {
 
 		boolean islocked = false;
-
+        StatusEnum ret = currentWork.getStatus();
 		final UID workUID = currentWork.getUID();
 		mileStone.println("<zipresult uid='" + workUID + "'>");
 
 		DataInterface data = null;
 		URI resulturi = currentWork.getResult();
 		if (resulturi == null) {
-
 			final UID uid = new UID();
 			resulturi = CommManager.getInstance().commClient().newURI(uid);
 			logger.debug("work setting new result URI : " + resulturi);
@@ -1264,6 +1273,7 @@ public class ThreadWork extends Thread {
 			}
 		}
 		data.setOwner(currentWork.getOwner());
+		data.incLinks();
 
 		File resultFile = null;
 		try {
@@ -1287,13 +1297,23 @@ public class ThreadWork extends Thread {
 			final File consensusFile = new File (XWTools.CONSENSUSFILENAME);
 			if (consensusFile.exists() && (consensusFile.length() == 0)) {
 				try {
-					currentWork.setH2r(XWTools.sha256CheckSum(consensusFile));
+                    final String h2r = XWTools.sha256CheckSum(consensusFile);
+					final String h2h2r = XWTools.sha256(h2r);
+					logger.debug("ThreadWork#zipResult() shasum (" + XWTools.CONSENSUSFILENAME + ") = " + h2r);
+                    logger.debug("ThreadWork#zipResult() currentWork.setH2h2r(" + h2h2r + ")");
+                    logger.debug("ThreadWork#zipResult() currentWork.setHiddenH2r(" + h2r + ")");
+                    currentWork.setH2h2r(h2h2r);
+                    currentWork.setHiddenH2r(h2r);
+                    ret = StatusEnum.CONTRIBUTING;
+                    currentWork.setContributing();
 				} catch (final Exception e) {
-                    currentWork.setH2r(null);
-					logger.exception(e);
+                    throw new IOException("contribution error " + e.getMessage());
 				}
-			}
-			logger.debug("ThreadWork#zipResult : resultFile " + resultFilePath);
+			} else {
+                logger.info("no consensus file found");
+            }
+
+            logger.debug("ThreadWork#zipResult : resultFile " + resultFilePath);
 
 			if (out.exists() && (out.length() == 0)) {
 				out.delete();
@@ -1310,8 +1330,10 @@ public class ThreadWork extends Thread {
 			data = (DataInterface) CommManager.getInstance().commClient().get(resulturi, false);
 
 			if (zipper.zip(resultDirName, Worker.getConfig().getBoolean(XWPropertyDefs.OPTIMIZEZIP))) {
+                logger.debug("data zipped");
 				data.setType(DataTypeEnum.ZIP);
 			} else {
+			    logger.debug("data not zipped");
 				data.setType(DataTypeEnum.NONE);
 
 				if (zipper.getFileName() != null) {
@@ -1331,9 +1353,23 @@ public class ThreadWork extends Thread {
 			}
 			if (resultFile.exists()) {
 				try {
-					data.setShasum(XWTools.sha256CheckSum(resultFile));
-				} catch (NoSuchAlgorithmException e) {
-					logger.exception(e);
+					final String h2r = XWTools.sha256CheckSum(resultFile);
+					final String h2h2r = Utils.hashResult(h2r);
+                    logger.debug("ThreadWork#zipResult() shasum (" + resultFile + ") = " + h2r);
+					data.setShasum(h2r);
+
+                    if(currentWork.getH2h2r() == null) {
+                        logger.debug("ThreadWork#zipResult() currentWork.setH2h2r(" + h2h2r + ")");
+                        currentWork.setH2h2r(h2h2r);
+                    }
+                    if(currentWork.getHiddenH2r() == null) {
+                        logger.debug("ThreadWork#zipResult() currentWork.setHiddenH2r(" + h2r + ")");
+                        currentWork.setHiddenH2r(h2r);
+                    }
+                    ret = StatusEnum.CONTRIBUTING;
+                    currentWork.setContributing();
+                } catch (Exception e) {
+					throw new IOException("contribution error " + e.getMessage());
 				}
 				data.setSize(resultFile.length());
 			} else {
@@ -1345,9 +1381,10 @@ public class ThreadWork extends Thread {
 				CommManager.getInstance().commClient().unlock(currentWork.getResult());
 			}
 		}
+        logger.debug("ThreadWork#zipResult() currentWork = " + currentWork.toXml());
 		mileStone.println("</zipresult>");
 
-		return resultFile;
+		return ret;
 	}
 
 	/**

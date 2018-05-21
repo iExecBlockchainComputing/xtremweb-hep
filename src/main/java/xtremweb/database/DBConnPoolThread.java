@@ -664,7 +664,7 @@ public class DBConnPoolThread extends Thread {
 	}
 
 	/**
-	 * This inserts this object in DB
+	 * This inserts this object in DB and cache
 	 *
 	 * @param row
 	 *            is the row to insert
@@ -680,8 +680,8 @@ public class DBConnPoolThread extends Thread {
 		final String query = "INSERT INTO " + config.getProperty(XWPropertyDefs.DBNAME) + "." + row.tableName() + ("(")
 				+ row.getColumns() + (") ") + " VALUES (" + criteria + ")";
 
-		// executeQuery(query, row);
-		updateFifo.put(XWTools.newURI(row.getUID()), query);
+		executeQuery(query, row);
+		//updateFifo.put(XWTools.newURI(row.getUID()), query);
         putToCache(row);
 		notify();
 	}

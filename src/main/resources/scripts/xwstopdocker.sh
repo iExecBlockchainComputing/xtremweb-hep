@@ -128,10 +128,10 @@ SCRIPTNAME="$(basename "$0")"
 if [ "${SCRIPTNAME#*.sh}" ]; then
   SCRIPTNAME=xwstartvm.sh
   VERBOSE=TRUE
-  TESTINGONLY=''                         # Worker, so debug is NOT possible
+  TESTINGONLY='FALSE'                         # Worker, so debug is NOT possible
 else
   VERBOSE=''
-  TESTINGONLY=TRUE                       # Local machine, so debug is possible
+  TESTINGONLY='FALSE'                         # Local machine, so debug is possible
 fi
 
 if [ "$TESTINGONLY" = "TRUE" ] ; then
@@ -149,10 +149,21 @@ fi
 
 IMAGENAME="xwimg_${XWJOBUID}"
 CONTAINERNAME="xwcontainer_${XWJOBUID}"
- 
 
-# clean everything
-docker stop ${CONTAINERNAME} &&docker rm ${CONTAINERNAME} && docker rmi ${IMAGENAME}
+
+# clean all: if the docker container still exists, it will be stop and removed as well as the image
+docker ps --all -f name=${CONTAINERNAME} | grep ${CONTAINERNAME} > /dev/null 2>&1
+if [ $?  -eq 0 ] ; then
+  docker stop ${CONTAINERNAME} > /dev/null 2>&1
+fi
+docker ps --all -f name=${CONTAINERNAME} | grep ${CONTAINERNAME} > /dev/null 2>&1
+if [ $?  -eq 0 ] ; then
+  docker rm ${CONTAINERNAME} > /dev/null 2>&1
+fi
+docker images ${IMAGENAME} | grep ${IMAGENAME} > /dev/null 2>&1
+if [ $?  -eq 0 ] ; then
+  docker rmi ${IMAGENAME} > /dev/null 2>&1
+fi
 
 
 exit 0

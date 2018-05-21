@@ -163,7 +163,7 @@ public class PoolWork {
 			notifyAll();
 			return;
 		}
-		logger.debug("PoolWork::saveWork(" + uid + ")");
+		logger.debug("PoolWork::saveWork(" + uid + ") = " + w.toXml());
 		if (savingWorks.get(uid) != null) {
 			// this may happen on communication failure
 			// then, work has already been saved, and we retry to upload result
@@ -205,6 +205,9 @@ public class PoolWork {
 	 */
 	public synchronized Work getSavingWork(final UID uid) {
 
+		if(uid == null)
+			return null;
+
 		final Work ret = savingWorks.get(uid);
 		logger.debug("PoolWork::getSavingWork() : task " + (ret == null ? "not" : "") + " found " + uid);
 		notifyAll();
@@ -212,12 +215,34 @@ public class PoolWork {
 	}
 
 	/**
+	 * This saves a revealed work so that its result can be sent
+	 *
+	 * @param w is the revealed work
+	 * @since 13.1.0
+	 */
+	public synchronized void saveRevealedWork(final Work w) {
+
+		final UID uid = w.getUID();
+		if(uid == null) {
+			logger.error("saveRevealedWork can't find uid???");
+			notifyAll();
+			return;
+		}
+
+		final Work ret = savingWorks.remove(uid);
+		logger.debug("PoolWork::saveRevealedWork(" + uid + ") : work " + (ret == null ? "not" : "") + " found in savings");
+
+        logger.debug("PoolWork::saveRevealedWork(" + uid + ") = " + w.toXml());
+
+		savingWorks.put(uid, w);
+		notifyAll();
+	}
+	/**
 	 * This removes provided work from saving list. This is called when work
 	 * results have been successfully saved by the server, or when the work is
 	 * in unrecoverable error state.
 	 *
-	 * @param uid
-	 *            is the task UID to remove
+	 * @param uid is the task UID to remove
 	 */
 	public synchronized void removeWork(final UID uid) {
 

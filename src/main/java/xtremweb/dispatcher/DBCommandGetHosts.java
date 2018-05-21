@@ -59,8 +59,7 @@ public final class DBCommandGetHosts extends DBCommand implements CommCallback {
 	 * This is called by client to disconnect from server This deletes the
 	 * client sessions
 	 *
-	 * @param client
-	 *            defines the client
+	 * @param command is the RPC command
 	 * @exception IOException
 	 *                is thrown general error
 	 * @exception InvalidKeyException

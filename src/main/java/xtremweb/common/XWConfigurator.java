@@ -76,6 +76,7 @@ import javax.swing.JMenuItem;
 import com.iexec.common.ethereum.CommonConfiguration;
 import com.iexec.common.ethereum.CredentialsService;
 import com.iexec.common.ethereum.IexecConfigurationService;
+import com.iexec.common.ethereum.WalletConfig;
 import com.iexec.common.workerpool.WorkerPoolConfig;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
@@ -239,6 +240,22 @@ public final class XWConfigurator extends Properties {
     public void disableBlockchain() {
         setProperty(XWPropertyDefs.BLOCKCHAINETHENABLED, "false");
     }
+
+	public String getWalletPath() {
+		return getProperty(XWPropertyDefs.ETHWALLETPATH);
+	}
+
+	public String getWalletPassword() {
+		return getProperty(XWPropertyDefs.ETHWALLETPASSWORD);
+	}
+
+	public String getDispatcher() {
+		return getProperty(XWPropertyDefs.DISPATCHERS);
+	}
+
+	public String getHttpsPort() {
+		return getProperty(XWPropertyDefs.HTTPSPORT);
+	}
 
     /**
 	 * This is the maximum jobs this worker will compute before dying This is
@@ -932,28 +949,6 @@ public final class XWConfigurator extends Properties {
 			setProperty(XWPropertyDefs.SSLKEYSTORE, "");
 		}
 
-		ethWalletFile = getFile(XWPropertyDefs.ETHWALLETPATH);
-		if ((ethWalletFile == null) || !ethWalletFile.exists()) {
-			logger.info("No Ethereum wallet file or file not found");
-		} else {
-			web3 = Web3j.build(new HttpService());  // defaults to http://localhost:8545/
-			try {
-				Web3ClientVersion web3ClientVersion = web3.web3ClientVersion().send();
-				final String clientVersion = web3ClientVersion.getWeb3ClientVersion();
-				logger.info("Web3j client version " + clientVersion);
-			} catch (IOException e) {
-				logger.exception("Web3j error; cancelling wallet access", e);
-				ethWalletFile = null;
-			}
-
-			ethWalletPassword = getProperty(XWPropertyDefs.ETHWALLETPASSWORD);
-			try {
-				walletCredentials = WalletUtils.loadCredentials(ethWalletPassword, ethWalletFile);
-				logger.info("Credentials " + walletCredentials.getAddress());
-			} catch (IOException | CipherException e) {
-				logger.fatal("Web3j error; can't read walletCredentials : " + e);
-			}
-		}
 		// worker don't use certificates
 		if (!XWRole.isClient()) {
 			setProperty(XWPropertyDefs.X509USERPROXY, "");
