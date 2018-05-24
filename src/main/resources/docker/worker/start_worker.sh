@@ -72,7 +72,7 @@ fi
 
 # Change a flag in the docker start and stop scripts to still be able to debug
 sed -i "s/TESTINGONLY=.*/TESTINGONLY=FALSE/g" /iexec/bin/xwstartdocker.sh
-sed -i "s/TESTINGONLY=.*/TESTINGONLY=FALSE/g" /iexec/bin/xwstopdocker.sh
+# sed -i "s/TESTINGONLY=.*/TESTINGONLY=FALSE/g" /iexec/bin/xwstopdocker.sh
 
 # Add the bin folder to the path
 echo "export PATH=/iexec/bin:\$PATH" >> /root/.bashrc

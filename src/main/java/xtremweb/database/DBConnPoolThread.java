@@ -100,9 +100,8 @@ public class DBConnPoolThread extends Thread {
 	 *
 	 * @since 7.5.0
 	 */
-	private Hashtable<URI, String> updateFifo;
-
-	/**
+	private Hashtable<URI, List<String> > updateFifo;
+    /**
 	 * This is the singleton
 	 */
 	private static DBConnPoolThread instance = null;
@@ -232,7 +231,14 @@ public class DBConnPoolThread extends Thread {
 //				}
                 for (Enumeration<URI> enums = updateFifo.keys(); enums.hasMoreElements();) {
                     key = enums.nextElement();
-                    executeQuery(updateFifo.remove(key), null);
+                    final List<String> listUid = updateFifo.get(key);
+                    if (!listUid.isEmpty()) {
+                        final String query = listUid.remove(0);
+                        executeQuery(query, null);
+                    } else {
+                        updateFifo.remove(key);
+                        //removeFromCache(key);
+                    }
                 }
 			} catch (final Exception e) {
                 logger.exception(e);
@@ -512,7 +518,13 @@ public class DBConnPoolThread extends Thread {
 
 			if (pool == true) {
 				logger.finest("updateFifo.add(" + query + ")");
-				updateFifo.put(newURI(row.getUID()), query);
+				final URI key = newURI(row.getUID());
+                final List<String> queryList = (updateFifo.containsKey(key) ?
+                        updateFifo.get(key) :
+                        Collections.synchronizedList(new LinkedList<String>()));
+                queryList.add(query);
+                updateFifo.put(key, queryList);
+
 			} else {
 				executeQuery(query, row);
 			}
@@ -680,8 +692,15 @@ public class DBConnPoolThread extends Thread {
 		final String query = "INSERT INTO " + config.getProperty(XWPropertyDefs.DBNAME) + "." + row.tableName() + ("(")
 				+ row.getColumns() + (") ") + " VALUES (" + criteria + ")";
 
+        logger.finest("insert(" + row.getUID() + ", " + query + ")");
+        final URI key = newURI(row.getUID());
+        final List<String> queryList = (updateFifo.containsKey(key) ?
+                updateFifo.get(key) :
+                Collections.synchronizedList(new LinkedList<String>()));
+        queryList.add(query);
+        updateFifo.put(key, queryList);
+
 		// executeQuery(query, row);
-		updateFifo.put(newURI(row.getUID()), query);
         putToCache(row);
 		notify();
 	}
