@@ -320,6 +320,14 @@ project.ext.getWorkerDockerImageName = {
     return "iexechub/worker:" + getDockerImageVersion()
 }
 
+project.ext.getARM32WorkerDockerImageName = {
+    return "iexechub/worker-arm32:" + getDockerImageVersion()
+}
+
+project.ext.getARM64WorkerDockerImageName = {
+    return "iexechub/worker-arm64:" + getDockerImageVersion()
+}
+
 project.ext.getClientDockerImageName = {
     return "iexechub/client:" + getDockerImageVersion()
 }
@@ -357,8 +365,22 @@ task buildWorkerDockerImage(type: Exec) {
 }
 buildWorkerDockerImage.enabled = canBuildDockerImages
 
-task buildImages() {
-    dependsOn(buildWorkerDockerImage, buildClientDockerImage, buildServerDockerImage)
+task buildARM32WorkerDockerImage(type: Exec) {
+    description 'Build a docker image for ARM32 worker'
+    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/worker-arm32/Dockerfile -t " + getARM32WorkerDockerImageName() + " " + dist)
+}
+buildARM32WorkerDockerImage.enabled = canBuildDockerImages
+
+task buildARM64WorkerDockerImage(type: Exec) {
+    description 'Build a docker image for ARM64 worker'
+    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/worker-arm64/Dockerfile -t " + getARM64WorkerDockerImageName() + " " + dist)
+}
+buildARM64WorkerDockerImage.enabled = canBuildDockerImages
+
+
+task buildImages(){
+    dependsOn (buildWorkerDockerImage, buildClientDockerImage, buildServerDockerImage, buildARM32WorkerDockerImage)
+    // TODO buildARM64WorkerDockerImage
 }
 
 buildImages.enabled = canBuildDockerImages
@@ -371,6 +393,8 @@ task pushImages(type: Exec) {
                 "docker push " + getServerDockerImageName() + " && " +
                 "docker push " + getClientDockerImageName() + " && " +
                 "docker push " + getWorkerDockerImageName() + " && " +
+                "docker push " + getARM32WorkerDockerImageName() + " && " +
+                // TODO "docker push " + getARM64WorkerDockerImageName() + " && " +
                 "docker logout")
     } else {
         println "Credentials for DockerHub are missing, the images cannot be pushed"
