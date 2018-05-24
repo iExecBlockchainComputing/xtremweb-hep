@@ -8,6 +8,7 @@ fi
 # Modify etc hosts if an ip is given in parameters
 if [ ! -z $SCHEDULER_IP ] ; then
 	echo "$SCHEDULER_IP $SCHEDULER_DOMAIN" >> /etc/hosts
+    sed -i "s/^schedulerUrl: https.*/schedulerUrl: https:\/\/${SCHEDULER_IP}:443/g" /iexec/conf/iexec-worker.yml
 fi
 
 # download the certificate from the server
