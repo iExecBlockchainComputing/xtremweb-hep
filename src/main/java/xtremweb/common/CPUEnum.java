@@ -23,6 +23,8 @@
 
 package xtremweb.common;
 
+import java.util.Arrays;
+
 /**
  * XWCPUs.java<br />
  *
@@ -40,67 +42,36 @@ public enum CPUEnum {
 
 	NONE, ALL, IX86, X86_64, IA64, PPC, SPARC, ALPHA, AMD64, ARM32, ARM64;
 
-	public static final CPUEnum LAST = ARM64;
-	public static final int SIZE = LAST.ordinal() + 1;
+	public static final int SIZE = CPUEnum.values().length;
 
-	public static CPUEnum fromInt(final int v) throws IllegalArgumentException {
-		for (final CPUEnum i : CPUEnum.values()) {
-			if (i.ordinal() == v) {
-				return i;
-			}
-		}
-		throw new IllegalArgumentException("unvalid XWCPUs value " + v);
-	}
+	// this should be uppercase
+	public static final String[] ARM_ARCH_ARRAY = {"ARM", "AARCH"};
+	public static final String[] IX86_ARCH_ARRAY = {"I86", "X86", "IX86", "I386", "X386", "IX386", "I486", "X486", "IX486",
+			"I586", "X586", "IX586", "I686", "X686", "IX686"};
 
-	/**
-	 * Get Hardware name If this architecture is not supported by XtremWeb, this
-	 * forces the program to immediately stop
-	 *
-	 * @see #getCpuName(String)
-	 */
-	public static String getCpuName() {
-		try {
-			return getCpuName(System.getProperty("os.arch"));
-		} catch (final Exception e) {
-			XWTools.fatal(e.toString());
-		}
-		return null;
-	}
 
-	/**
-	 * This forces architecture name to predefined values to avoid confusion
-	 *
-	 * @param archName
-	 *            the architecture name
-	 * @exception ClassNotFound
-	 *                exception is thrown if archName is not supported by
-	 *                XtremWeb
-	 */
-	public static String getCpuName(final String archName) throws IllegalArgumentException {
-
-		if ((archName.compareToIgnoreCase("i86") == 0) || (archName.compareToIgnoreCase("x86") == 0)
-				|| (archName.compareToIgnoreCase("ix86") == 0) || (archName.compareToIgnoreCase("i386") == 0)
-				|| (archName.compareToIgnoreCase("x386") == 0) || (archName.compareToIgnoreCase("ix386") == 0)
-				|| (archName.compareToIgnoreCase("i486") == 0) || (archName.compareToIgnoreCase("x486") == 0)
-				|| (archName.compareToIgnoreCase("ix486") == 0) || (archName.compareToIgnoreCase("i586") == 0)
-				|| (archName.compareToIgnoreCase("x586") == 0) || (archName.compareToIgnoreCase("ix586") == 0)
-				|| (archName.compareToIgnoreCase("i686") == 0) || (archName.compareToIgnoreCase("x686") == 0)
-				|| (archName.compareToIgnoreCase("ix686") == 0)) {
-			return IX86.toString();
-		}
-
-		return valueOf(archName.toUpperCase()).toString();
+	public static CPUEnum fromInt(final int i) throws IllegalArgumentException {
+		if (0 <= i && i < SIZE) return CPUEnum.values()[i];
+		throw new IllegalArgumentException("unvalid XWCPUs value " + i);
 	}
 
 	/**
 	 * Get Hardware type If this architecture is not supported by XtremWeb, this
-	 * forces the program to immediately stop
+	 * forces the program to stop immediately
 	 *
-	 * @see #getCpu(String)
+	 * @return host's architecture type
 	 */
 	public static CPUEnum getCpu() {
 		try {
-			return getCpu(System.getProperty("os.arch"));
+			String archName = System.getProperty("os.arch").toUpperCase();
+
+			if (Arrays.asList(IX86_ARCH_ARRAY).contains(archName)) return IX86;
+
+			if (Arrays.stream(ARM_ARCH_ARRAY).parallel().anyMatch(archName::contains))
+				return valueOf("ARM" + System.getProperty("sun.arch.data.model")); // ARM32 or ARM64
+
+			return valueOf(archName);
+
 		} catch (final Exception e) {
 			XWTools.fatal(e.toString());
 		}
@@ -113,9 +84,15 @@ public enum CPUEnum {
 	 * @param archName
 	 *            the architecture name
 	 * @return architecture type
+	 * @exception IllegalArgumentException
+	 *                exception is thrown if archName is not supported by XtremWeb
 	 */
 	public static CPUEnum getCpu(final String archName) throws IllegalArgumentException {
-		return valueOf(getCpuName(archName));
+
+		if (Arrays.asList(IX86_ARCH_ARRAY).contains(archName.toUpperCase()))
+			return IX86;
+
+		return valueOf(archName.toUpperCase());
 	}
 
 	/**
