@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # Add the script that will set up the configuration in the container
-COPY docker/server/start_server.sh /iexec/start_server.sh
+COPY docker/server-arm32/start_server.sh /iexec/start_server.sh
 RUN chmod +x /iexec/start_server.sh
 
 RUN [ "cross-build-end" ]

@@ -56,12 +56,12 @@ replace_commented_var_in_conf DELEGATEDREGISTRATION
 
 
 # keystore is generated from the script xwhepgenkeys directly in the container
-rm /iexec/keystore/cacerts
-rm /iexec/keystore/*.keys
-rm /iexec/keystore/*.p12
-/iexec/bin/xwhepgenkeys
-if [ $? -eq 0 ] ; then echo "Keystores generated" ; else echo "ERROR: keystores generation error"; exit 1 ;
-fi
+# rm /iexec/keystore/cacerts
+# rm /iexec/keystore/*.keys
+# rm /iexec/keystore/*.p12
+# /iexec/bin/xwhepgenkeys
+# if [ $? -eq 0 ] ; then echo "Keystores generated" ; else echo "ERROR: keystores generation error"; exit 1 ;
+# fi
 
 
 if [ ! -z $ALIVEPERIOD ] ; 

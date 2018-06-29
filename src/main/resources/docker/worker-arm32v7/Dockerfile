@@ -22,7 +22,7 @@ RUN curl -fsSL get.docker.com | sh
 RUN mkdir -p /iexec/bin /iexec/certificate /iexec/wallet
 
 # this script will set up the configuration in the container
-COPY docker/worker/start_worker.sh /iexec/start_worker.sh
+COPY docker/worker-arm32/start_worker.sh /iexec/start_worker.sh
 RUN chmod +x /iexec/start_worker.sh
 
 RUN [ "cross-build-end" ]
