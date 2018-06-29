@@ -322,7 +322,7 @@ project.ext.getServerDockerImageName = {
 }
 
 project.ext.getARM32ServerDockerImageName = {
-    return "iexechub/server:arm32-" + getDockerImageVersion()
+    return "iexechub/server:arm32v7-" + getDockerImageVersion()
 }
 
 project.ext.getWorkerDockerImageName = {
@@ -330,7 +330,7 @@ project.ext.getWorkerDockerImageName = {
 }
 
 project.ext.getARM32WorkerDockerImageName = {
-    return "iexechub/worker:arm32-" + getDockerImageVersion()
+    return "iexechub/worker:arm32v7-" + getDockerImageVersion()
 }
 
 project.ext.getClientDockerImageName = {
@@ -345,7 +345,7 @@ buildServerDockerImage.enabled = canBuildDockerImages
 
 task buildARM32ServerDockerImage(type: Exec) {
     description 'Build a docker image for the ARM32 server'
-    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/server-arm32/Dockerfile -t " + getARM32ServerDockerImageName() + " " + dist)
+    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/server-arm32v7/Dockerfile -t " + getARM32ServerDockerImageName() + " " + dist)
 }
 buildARM32ServerDockerImage.enabled = canBuildDockerImages
 
@@ -378,7 +378,7 @@ buildWorkerDockerImage.enabled = canBuildDockerImages
 
 task buildARM32WorkerDockerImage(type: Exec) {
     description 'Build a docker image for the ARM32 worker'
-    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/worker-arm32/Dockerfile -t " + getARM32WorkerDockerImageName() + " " + dist)
+    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/worker-arm32v7/Dockerfile -t " + getARM32WorkerDockerImageName() + " " + dist)
 }
 buildARM32WorkerDockerImage.enabled = canBuildDockerImages
 
