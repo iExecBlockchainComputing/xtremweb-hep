@@ -1,12 +1,13 @@
-FROM ubuntu:16.04
+FROM resin/raspberrypi3-openjdk:8-jre
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+RUN [ "cross-build-start" ]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         apt-transport-https \
         ca-certificates \
         curl \
-        openjdk-8-jre \
         openssl \
         software-properties-common \
         unzip \
@@ -16,19 +17,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# install docker
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
-    add-apt-repository \
-        "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-        $(lsb_release -cs) \
-        stable" && \
-    apt-get update && apt-get install -y --no-install-recommends docker-ce
+RUN curl -fsSL get.docker.com | sh
 
 RUN mkdir -p /iexec/bin /iexec/certificate /iexec/wallet
 
-# Add the script that will set up the configuration in the container
-COPY docker/worker/start_worker.sh /iexec/start_worker.sh
+# this script will set up the configuration in the container
+COPY docker/worker-arm32/start_worker.sh /iexec/start_worker.sh
 RUN chmod +x /iexec/start_worker.sh
+
+RUN [ "cross-build-end" ]
 
 COPY lib                        /iexec/lib
 COPY bin/xtremweb               /iexec/bin/

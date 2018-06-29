@@ -321,8 +321,16 @@ project.ext.getServerDockerImageName = {
     return "iexechub/server:" + getDockerImageVersion()
 }
 
+project.ext.getARM32ServerDockerImageName = {
+    return "iexechub/server:arm32v7-" + getDockerImageVersion()
+}
+
 project.ext.getWorkerDockerImageName = {
     return "iexechub/worker:" + getDockerImageVersion()
+}
+
+project.ext.getARM32WorkerDockerImageName = {
+    return "iexechub/worker:arm32v7-" + getDockerImageVersion()
 }
 
 project.ext.getClientDockerImageName = {
@@ -334,6 +342,12 @@ task buildServerDockerImage(type: Exec) {
     commandLine("sh", "-c", "docker image build -f " + dist + "/docker/server/Dockerfile -t " + getServerDockerImageName() + " " + dist)
 }
 buildServerDockerImage.enabled = canBuildDockerImages
+
+task buildARM32ServerDockerImage(type: Exec) {
+    description 'Build a docker image for the ARM32 server'
+    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/server-arm32v7/Dockerfile -t " + getARM32ServerDockerImageName() + " " + dist)
+}
+buildARM32ServerDockerImage.enabled = canBuildDockerImages
 
 task copyConfigDockerClient(type: Copy) {
     into dist
@@ -362,8 +376,14 @@ task buildWorkerDockerImage(type: Exec) {
 }
 buildWorkerDockerImage.enabled = canBuildDockerImages
 
+task buildARM32WorkerDockerImage(type: Exec) {
+    description 'Build a docker image for the ARM32 worker'
+    commandLine("sh", "-c", "docker image build -f " + dist + "/docker/worker-arm32v7/Dockerfile -t " + getARM32WorkerDockerImageName() + " " + dist)
+}
+buildARM32WorkerDockerImage.enabled = canBuildDockerImages
+
 task buildImages() {
-    dependsOn(buildWorkerDockerImage, buildClientDockerImage, buildServerDockerImage)
+    dependsOn(buildWorkerDockerImage, buildARM32WorkerDockerImage, buildClientDockerImage, buildServerDockerImage, buildARM32ServerDockerImage)
 }
 
 buildImages.enabled = canBuildDockerImages
@@ -374,8 +394,10 @@ task pushImages(type: Exec) {
     if (project.hasProperty("dockerHubUser") && project.hasProperty("dockerHubPassword")) {
         commandLine("sh", "-c", "docker login -u " + project.dockerHubUser + " -p " + project.dockerHubPassword + " && " +
                 "docker push " + getServerDockerImageName() + " && " +
+                "docker push " + getARM32ServerDockerImageName() + " && " +
                 "docker push " + getClientDockerImageName() + " && " +
                 "docker push " + getWorkerDockerImageName() + " && " +
+                "docker push " + getARM32WorkerDockerImageName() + " && " +
                 "docker logout")
     } else {
         println "Credentials for DockerHub are missing, the images cannot be pushed"

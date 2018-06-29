@@ -1,11 +1,12 @@
-FROM ubuntu:16.04
+FROM resin/raspberrypi3-openjdk:8-jdk
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+RUN [ "cross-build-start" ]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         iputils-ping \
         make \
-        openjdk-8-jdk \
         unzip \
         wget \
         zip \
@@ -14,8 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # Add the script that will set up the configuration in the container
-COPY docker/server/start_server.sh /iexec/start_server.sh
+COPY docker/server-arm32/start_server.sh /iexec/start_server.sh
 RUN chmod +x /iexec/start_server.sh
+
+RUN [ "cross-build-end" ]
 
 COPY bin                        /iexec/bin
 COPY lib                        /iexec/lib

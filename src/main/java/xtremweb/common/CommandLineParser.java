@@ -168,7 +168,7 @@ public final class CommandLineParser {
 
 		try {
 			// is it a CPU ?
-			return CPUEnum.getCpu(param.toUpperCase());
+			return CPUEnum.getCpu(param);
 		} catch (final IllegalArgumentException e) {
 		}
 
