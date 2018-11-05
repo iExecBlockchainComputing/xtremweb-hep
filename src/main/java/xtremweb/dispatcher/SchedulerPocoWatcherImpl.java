@@ -18,6 +18,8 @@ import xtremweb.communications.XMLRPCCommandSendWork;
 import xtremweb.database.SQLRequest;
 import xtremweb.security.XWAccessRights;
 
+import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -750,38 +752,58 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
         } catch(final IOException e) {
             logger.exception(e);
         }
+
+        if (actuatorService.finalizeWork(woid,
+                "",
+                "",
+                result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
+
+            logger.debug("doFinalize() : WARN:stillFinalizing");
+            marketOrder.setErrorMsg("WARN:stillFinalizing");
+        }
+        else {
+            logger.debug("doFinalize() : INFO:finalized");
+            marketOrder.setCompleted();
+            marketOrder.setErrorMsg("INFO:finalized");
 /*
-        if (actuatorService.finalizeWork(woid,
-                "",
-                "",
-                result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
+            XWTools.STDOUT
+			XWTools.STDERR
+            data.setType(DataTypeEnum.TEXT);
+            protected WorkInterface work(final String workOrderId) {
 
-            logger.debug("doFinalize() : WARN:stillFinalizing");
-            marketOrder.setErrorMsg("WARN:stillFinalizing");
-        }
-        else {
-            WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(woid);
-            if (!workOrderModel.getBeneficiary().equals("0x")){ // check beneficiary is set
-                ActuatorService.getInstance().triggerWorkOrderCallback(woid,"","", result.toString());
-            }
-            logger.debug("doFinalize() : INFO:finalized");
-            marketOrder.setCompleted();
-            marketOrder.setErrorMsg("INFO:finalized");
-        }
 */
+            final WorkInterface work = DBInterface.getInstance().work(woid);
+            try {
+                final DataInterface data = work == null ?
+                        null :
+                        DBInterface.getInstance().data(work.getResult());
 
-        if (actuatorService.finalizeWork(woid,
-                "",
-                "",
-                result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
+                final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+                        ModelService.getInstance().getWorkOrderModel(woid) :
+                        null;
 
-            logger.debug("doFinalize() : WARN:stillFinalizing");
-            marketOrder.setErrorMsg("WARN:stillFinalizing");
-        }
-        else {
-            logger.debug("doFinalize() : INFO:finalized");
-            marketOrder.setCompleted();
-            marketOrder.setErrorMsg("INFO:finalized");
+                if (workOrderModel != null && !workOrderModel.getBeneficiary().equals("0x")) { // check beneficiary is set
+
+                    try (final FileInputStream finput = new FileInputStream(data.getPath());
+                         final DataInputStream input = new DataInputStream(finput);
+                         final StreamIO io = new StreamIO(null, input,false)) {
+
+                        final boolean isStdErr =
+                                data != null &&
+                                data.getName() != null &&
+                                data.getName().compareTo(XWTools.STDERR) == 0;
+
+                        final String content = io.readString();
+
+                        ActuatorService.getInstance().triggerWorkOrderCallback(woid,
+                                isStdErr == true ? "" : content,
+                                isStdErr == true ? content : "",
+                                result.toString());
+                    }
+                }
+            } catch(IOException e) {
+                logger.exception(e);
+            }
         }
 //        final long revealingDate = marketOrder.getRevealingDate().getTime();
 //        final long now = new Date().getTime();
