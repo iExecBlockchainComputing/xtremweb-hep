@@ -258,7 +258,7 @@ fi
 
 PDOARGS=""
 if [ ! -z "${PDOENABLED}" ] ; then
-	PDOARGS="--device=/dev/isgx"
+	PDOARGS="--device=/dev/isgx -v /var/run/aesmd:/var/run/aesmd"
 fi
 
 ENVFILENAME="/tmp/env_${XWJOBUID}.list"
