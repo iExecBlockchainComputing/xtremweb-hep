@@ -793,7 +793,7 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                                 data.getName() != null &&
                                 data.getName().compareTo(XWTools.STDERR) == 0;
 
-                        final String content = io.readString();
+                        final String content = io.readString().substring(0, 250);
 
                         ActuatorService.getInstance().triggerWorkOrderCallback(woid,
                                 isStdErr == true ? "" : content,
