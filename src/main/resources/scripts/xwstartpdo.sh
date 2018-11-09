@@ -132,8 +132,18 @@ IEXECDIRNAME="iexec"
 PDOWORKINGDIR="/tmp/pdo/${IEXECDIRNAME}"
 
 [ -d ${PDOWORKINGDIR} ] || mkdir -p ${PDOWORKINGDIR}
+
+#
+# files will be stored in /iexec in the container
+# but we must retrieve result files here
+#
+
 ln -s ${PDOWORKINGDIR} . || fatal "can't link ${PDOWORKINGDIR}"
 cd ${IEXECDIRNAME}
+
+#
+# clean first
+#
 rm -f *
 
 # the container must have been launched in ${PDOWORKINGDIR} using the following command
@@ -141,6 +151,9 @@ rm -f *
 
 docker exec  --workdir /${IEXECDIRNAME} ${CONTAINERNAME} ${ARGS} 2>&1
 
+#
+# we want toretrieve result files here
+#
 cd ..
 mv ${IEXECDIRNAME}/* .
 rm -Rf ${IEXECDIRNAME}
