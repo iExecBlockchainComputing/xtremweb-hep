@@ -1,12 +1,12 @@
 #!/bin/sh
 #=============================================================================
 #
-#  File    : docker
-#  Date    : March, 2018
+#  File    : xwstartpdo.sh
+#  Date    : November, 2018
 #  Author  : Oleg Lodygensky
 #
 #  Change log:
-#  - Jul 3rd,2017 : Oleg Lodygensky; creation
+#  - Nov 9th,2018 : Oleg Lodygensky; creation
 #
 #  OS      : Linux, mac os x
 #
@@ -29,14 +29,14 @@
 #=============================================================================
 
 
-# Copyrights     : CNRS
+# Copyrights     : iExec
 # Author         : Oleg Lodygensky
-# Acknowledgment : XtremWeb-HEP is based on XtremWeb 1.8.0 by inria : http://www.xtremweb.net/
-# Web            : http://www.xtremweb-hep.org
+# Acknowledgment : XtremWeb-HEP is based on XtremWeb-HEP by CNRS
+# Web            : https://iex.ec
 #
 #      This file is part of XtremWeb-HEP.
 #
-# Copyright [2018] [CNRS]
+# Copyright [2018] [iExec]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,9 +87,6 @@ fatal ()
 
   echo  "$(date "$DATE_FORMAT")  $SCRIPTNAME  FATAL : $msg"
 
-  [ "$FORCE" = "TRUE" ]  &&  clean
-
-
   exit 1
 }
 
@@ -131,50 +128,6 @@ debug ()
 
 #=============================================================================
 #
-#  Function  clean ()
-#
-#=============================================================================
-clean ()
-{
-  echo
-  info_message  "clean '${CONTAINERNAME}'"
-
-  [ "$VERBOSE" ]  &&  echo  > /dev/stderr
-  [ "${CONTAINERNAME}" ]  ||  return
-  }
-
-#=============================================================================
-#
-#  Function  usage ()
-#
-#=============================================================================
-usage()
-{
-cat << END_OF_USAGE
-  This script is an example only to show how to start a Docker container
-  on a distributed volunteer resource.
-
-  Some environment variables, automatically set by the volunteer resource:
-  - XWJOBUID : this must contain the job UID on worker side
-  - XWSCRATCHPATH : this must contains the directory where drive are stored
-  - XWRAMSIZE : this may contain expected RAM size
-  - XWDOCKERIMAGE : this may contain docker image name
-  - XWDISKSPACE : this may contain expected storage capacity
-  - XWPORTS  : this may contain a comma separated ports list
-               ssh  port forwarding localhost:$XWPORTS[0] to guest:22
-               http port forwarding localhost:$XWPORTS[1] to guest:80
-
-  This script does not permit the Dockerfile usage to build Docker image.
-  If Dockerfile is found, this script fails.
-
-END_OF_USAGE
-
-  exit 0
-}
-
-
-#=============================================================================
-#
 #  Main
 #
 #=============================================================================
@@ -184,30 +137,7 @@ trap  fatal  INT  TERM
 
 SCRIPTNAME="$(basename "$0")"
 
-if [ "${SCRIPTNAME#*.sh}" ]; then
-  SCRIPTNAME=xwstartdocker.sh
-  VERBOSE=TRUE
-  TESTINGONLY='FALSE'                         # Worker, so debug is NOT possible
-else
-  VERBOSE=''
-  TESTINGONLY='FALSE'                         # Local machine, so debug is possible
-fi
-
-if [ "$TESTINGONLY" = "TRUE" ] ; then
-  XWJOBUID="$(date '+%Y-%m-%d-%H-%M-%S')"
-  XWSCRATCHPATH="$(dirname "$0")"
-  SAVDIR=`pwd`
-  cd "$XWSCRATCHPATH"
-  XWSCRATCHPATH=`pwd`
-  cd "$SAVDIR"
-  XWCPULOAD=100
-else
-  [ -z "$XWJOBUID" ] && fatal "XWJOBUID is not set"
-  [ -z "$XWSCRATCHPATH" ] && fatal "XWSCRATCHPATH is not set"
-  [ -z "$XWCPULOAD" ] && fatal "XWCPULOAD is not set"
-  [ -z "$XWRAMSIZE" ] && fatal "XWRAMSIZE is not set"
-  [ -z "$XWDISKSPACE" ] && fatal "XWDISKSPACE is not set"
-fi
+[ -z "$XWJOBUID" ] && fatal "XWJOBUID is not set"
 
 
 ARGS=$*
