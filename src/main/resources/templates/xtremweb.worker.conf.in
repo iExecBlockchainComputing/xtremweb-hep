@@ -392,10 +392,10 @@ COMMHANDLERS=attic:xtremweb.communications.HTTPClient
 #
 # sharedapps is a String determining the local applications the worker wants to share.
 # This contains a comma separated list of application types. 
-# See xtremweb.common.ApplicationType
+# See xtremweb.common.AppTypeEnum
 #
 # Example : 
-#  SHAREDAPPS=virtualbox,vmware,vlc
+#  SHAREDAPPS=virtualbox,vmware,vlc,docker, pdo
 #
 # Default is null
 #
