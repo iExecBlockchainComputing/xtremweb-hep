@@ -395,7 +395,7 @@ COMMHANDLERS=attic:xtremweb.communications.HTTPClient
 # See xtremweb.common.ApplicationType
 #
 # Example : 
-#  SHAREDAPPS=virtualbox,vmware,vlc
+#  SHAREDAPPS=virtualbox,vmware,vlc,pdo
 #
 # Default is null
 #
