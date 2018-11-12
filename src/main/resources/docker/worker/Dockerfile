@@ -9,6 +9,7 @@ ADD bin/xtremweb.worker /iexec/bin
 ADD bin/xtremweb /iexec/bin
 ADD bin/xtremwebconf.sh /iexec/bin
 ADD bin/xwstartdocker.sh /iexec/bin
+ADD bin/xwstartpdo.sh /iexec/bin
 ADD bin/xwstopdocker.sh /iexec/bin
 ADD lib /iexec/lib
 
