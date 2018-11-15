@@ -40,8 +40,8 @@ fi
 
 # Add defined SHAREDAPPS variable if defined, otherwise use a default value
 if [ ! -z $SHAREDAPPS ] ; then
-	sed -i "s/^#SHAREDAPPS=.*/SHAREDAPPS=$SHAREDAPPS/g" /iexec/conf/xtremweb.worker.conf
-else sed -i "s/^#SHAREDAPPS=.*/SHAREDAPPS=docker/g" /iexec/conf/xtremweb.worker.conf
+	sed -i "s/^SHAREDAPPS=.*/SHAREDAPPS=$SHAREDAPPS/g" /iexec/conf/xtremweb.worker.conf
+else sed -i "s/^SHAREDAPPS=.*/SHAREDAPPS=docker/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Add SHAREDPACKAGES only if it is given in parameters
