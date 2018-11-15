@@ -149,7 +149,8 @@ rm -f *
 # the container must have been launched in ${PDOWORKINGDIR} using the following command
 #docker run ${PDOARGS} -v ${PDOWORKINGDIR}:/iexec --rm --name ${CONTAINERNAME} --env-file ${ENVFILENAME} ${IMAGENAME} ${ARGS} 2>&1 |  grep -vE "Unable to find image|Pulling from|Pull complete|Digest:|Status:|: Pulling fs layer|: Verifying Checksum|: Download complete|: Already exists"
 
-docker exec  --workdir /${IEXECDIRNAME} ${CONTAINERNAME} ${ARGS} 2>&1
+#docker exec  --workdir /${IEXECDIRNAME} ${CONTAINERNAME} ${ARGS} 2>&1
+docker exec  ${CONTAINERNAME} ${ARGS} 2>&1
 
 #
 # we want toretrieve result files here
