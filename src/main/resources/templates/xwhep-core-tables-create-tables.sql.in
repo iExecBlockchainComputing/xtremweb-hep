@@ -302,6 +302,7 @@ insert into appTypes (appTypeId, appTypeName, appTypeDescription) values (1, 'DE
 insert into appTypes (appTypeId, appTypeName, appTypeDescription) values (2, 'SHARED',     'Type for an application that is shared by volunteer resources :  Its binary should not be downloaded by volunteer resources.');
 insert into appTypes (appTypeId, appTypeName, appTypeDescription) values (3, 'VIRTUALBOX', 'Type for a VirtualBox image of a virtual machine');
 insert into appTypes (appTypeId, appTypeName, appTypeDescription) values (4, 'DOCKER',     'Type for a Docker image of a container');
+insert into appTypes (appTypeId, appTypeName, appTypeDescription) values (5, 'PDO',        'Type for Intel PDO');
 
 -- ---------------------------------------------------------------------------
 -- Data for table "packageTypes"

@@ -220,17 +220,6 @@ public class ThreadWork extends Thread {
 		logger.warn("ThreadWork#ThreadWork() : RPCXW services disabled");
 
 		sandboxBinFile = null;
-		if (Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH) != null) {
-			try {
-				final String sandboxAttr = Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH).trim().toUpperCase();
-				final AppTypeEnum appTypeEnum = AppTypeEnum.valueOf(sandboxAttr);
-				sandboxBinFile = appTypeEnum.getPath();
-				logger.debug("sandboxBinFile = " + sandboxBinFile);
-			} catch(final Exception e) {
-				sandboxBinFile = new File(Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH).trim());
-				logger.debug("sandboxBinFile = " + sandboxBinFile);
-			}
-		}
 		Runtime.getRuntime().addShutdownHook(new Thread("ThreadWorkCleaner") {
 			@Override
 			public void run() {
@@ -1303,7 +1292,7 @@ public class ThreadWork extends Thread {
 			boolean contribution = false;
 			String currentDir = currentWork.getScratchDirName();
 			logger.debug("ThreadWork#zipResult : currentDir : " + currentDir );
-
+/*
             final File fileCurrentDir = new File (currentDir);
             File[] filesList = fileCurrentDir.listFiles();
             for (File file : filesList) {
@@ -1320,7 +1309,7 @@ public class ThreadWork extends Thread {
                     logger.debug("*****************************");
                 }
             }
-
+*/
             final File consensusFile = new File (currentDir + "/" + XWTools.CONSENSUSFILENAME);
 			if (consensusFile.exists() && (consensusFile.length() != 0)) {
 				logger.info("ThreadWork#zipResult : consensus file found");

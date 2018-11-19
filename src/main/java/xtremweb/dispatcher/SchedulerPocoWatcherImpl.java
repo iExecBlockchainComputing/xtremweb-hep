@@ -18,6 +18,8 @@ import xtremweb.communications.XMLRPCCommandSendWork;
 import xtremweb.database.SQLRequest;
 import xtremweb.security.XWAccessRights;
 
+import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -324,9 +326,15 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             return null;
         }
 
-        final UserInterface requester = getUser(workModel.getRequester());
+        String user = workModel.getRequester();
+        // ISSUE add support of beneficiary param : https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/93
+        if( !workModel.getBeneficiary().equals("0x")){
+            logger.info("Beneficiary is not null replace current getRequester["+user+"] by ["+workModel.getBeneficiary()+"]");
+            user=workModel.getBeneficiary();
+        }
+        final UserInterface requester = getUser(user);
         if (requester == null) {
-            logger.error("createWork() : unkown requester " + workModel.getRequester());
+            logger.error("createWork() : unkown requester " + user);
             return null;
         }
 
@@ -750,29 +758,55 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
         } catch(final IOException e) {
             logger.exception(e);
         }
-/*
-        if (actuatorService.finalizeWork(woid,
-                "",
-                "",
-                result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
 
-            logger.debug("doFinalize() : WARN:stillFinalizing");
-            marketOrder.setErrorMsg("WARN:stillFinalizing");
-        }
-        else {
-            WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(woid);
-            if (!workOrderModel.getBeneficiary().equals("0x")){ // check beneficiary is set
-                ActuatorService.getInstance().triggerWorkOrderCallback(woid,"","", result.toString());
+        //Valorized stdOutCallback and stdErrCallback for finalizeWork and triggerWorkOrderCallback
+        String stdOutCallback="";
+        String stdErrCallback="";
+        try {
+
+          final WorkInterface work = DBInterface.getInstance().work(woid);
+          final DataInterface data = work == null ?
+                  null :
+                  DBInterface.getInstance().data(work.getResult());
+          final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+                    ModelService.getInstance().getWorkOrderModel(woid) :
+                    null;
+          if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+                final FileInputStream finput = new FileInputStream(data.getPath());
+                final DataInputStream input = new DataInputStream(finput);
+                final StreamIO io = new StreamIO(null, input,false);
+                final boolean isStdErr =
+                         data != null &&
+                         data.getName() != null &&
+                         data.getName().compareTo(XWTools.STDERR) == 0;
+
+                 String content= io.readString();
+                 if(content != null && content.length() >250){
+                   logger.debug("cut callback content to 250 char");
+                   content=content.substring(0, 250);
+                 }
+                 if(isStdErr){
+                   stdErrCallback =content;
+                   logger.debug("valorize stdOutCallback to :"+stdErrCallback);
+                 }
+                 else{
+                   stdOutCallback=content;
+                   logger.debug("valorize stdOutCallback to :"+stdOutCallback);
+                 }
             }
-            logger.debug("doFinalize() : INFO:finalized");
-            marketOrder.setCompleted();
-            marketOrder.setErrorMsg("INFO:finalized");
+            else{
+              logger.debug("callback is unset no stdout valorized");
+            }
+        } catch(final Exception e) {
+            logger.error("Failed to valorized  stdoutCallback and stderrCallback");
+            logger.exception(e);
         }
-*/
+
+
 
         if (actuatorService.finalizeWork(woid,
-                "",
-                "",
+                stdOutCallback,
+                stdErrCallback,
                 result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
 
             logger.debug("doFinalize() : WARN:stillFinalizing");
@@ -782,6 +816,32 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             logger.debug("doFinalize() : INFO:finalized");
             marketOrder.setCompleted();
             marketOrder.setErrorMsg("INFO:finalized");
+/*
+            XWTools.STDOUT
+			XWTools.STDERR
+            data.setType(DataTypeEnum.TEXT);
+            protected WorkInterface work(final String workOrderId) {
+
+*/
+          // ISSUE add callback support https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/94
+          try {
+              final WorkInterface work = DBInterface.getInstance().work(woid);
+              final DataInterface data = work == null ?
+                    null :
+                    DBInterface.getInstance().data(work.getResult());
+              final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+                        ModelService.getInstance().getWorkOrderModel(woid) :
+                        null;
+              if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+                  ActuatorService.getInstance().triggerWorkOrderCallback(woid,
+                              stdOutCallback,
+                              stdErrCallback,
+                              result == null ? "" : result.toString());
+
+               }
+            } catch(IOException e) {
+                logger.exception(e);
+            }
         }
 //        final long revealingDate = marketOrder.getRevealingDate().getTime();
 //        final long now = new Date().getTime();

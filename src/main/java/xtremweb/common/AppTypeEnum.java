@@ -55,132 +55,22 @@ public enum AppTypeEnum {
 	SHARED,
 	/**
 	 * On July 3rd, 2017, this is our 2nd shared application: docker
+	 * @since 14.0.0
+	 */
+	PDO,
+	/**
+	 * On July 3rd, 2017, this is our 2nd shared application: docker
 	 * @since 11.0.0
 	 */
-	DOCKER {
-
-		@Override
-		public String getPathName() {
-			return dockerpaths[OSEnum.getOs().ordinal()];
-		}
-
-		/**
-		 * This retrieves application default pathname
-		 *
-		 * @return application binary path for the current OS
-		 * @throws FileNotFoundException
-		 *             if no application binary path found for the current OS
-		 * @see xtremweb.common.OSEnum#getOs(String)
-		 */
-		@Override
-		public File getPath() throws FileNotFoundException {
-			final String filePath = dockerpaths[OSEnum.getOs().ordinal()];
-			if (filePath == null) {
-				throw new FileNotFoundException(NOBINPATH + this);
-			}
-			final File f = new File(filePath);
-			if (f.exists()) {
-				return f;
-			}
-			throw new FileNotFoundException(NOBINPATH + this);
-		}
-		/**
-		 * This retrieves application default command line arguments
-		 * @return "run"
-		 * @since 12.1.0
-		 */
-		@Override
-		public String getStartCommandLineArgs()  {
-			return " run --rm ";
-		}
-		/**
-		 * This retrieves command line arguments to mount a volume
-		 * @param pwd represents the path to be mounted as volume
-         * @return " -v " + pwd.getAbsolutePath() + ":" + pwd.getAbsolutePath()
-		 * @since 12.1.0
-		 */
-		@Override
-		public String getMountVolumeCommandLine(final File pwd)  {
-			return  " -v " + pwd.getAbsolutePath() + ":" + pwd.getAbsolutePath();
-		}
-        /**
-         * This retrieves command line arguments to use PWD
-         * @param pwd represents the path of the present working directory
-         * @return " -w " + pwd.getAbsolutePath()
-         * @since 12.2.8
-         */
-        @Override
-        public String getDefaultWorkingDirectoryCommandLine(final File pwd) {
-            return  " -w " + pwd.getAbsolutePath();
-        }
-	},
+	DOCKER,
 	/**
 	 * On Dec 2nd, 2011, this denotes our 1st shared application. This denotes
 	 * VirtualBox as shared application
 	 */
-	VIRTUALBOX {
-		@Override
-		public String getPathName() {
-			return virtualboxpaths[OSEnum.getOs().ordinal()];
-		}
-
-		/**
-		 * This retrieves application default pathname
-		 *
-		 * @return application binary path for the current OS
-		 * @throws FileNotFoundException
-		 *             if no application binary path found for the current OS
-		 * @see xtremweb.common.OSEnum#getOs(String)
-		 * @since 8.0.0 (FG)
-		 */
-		@Override
-		public File getPath() throws FileNotFoundException {
-			final String filePath = virtualboxpaths[OSEnum.getOs().ordinal()];
-			if (filePath == null) {
-				throw new FileNotFoundException(NOBINPATH + this);
-			}
-			final File f = new File(filePath);
-			if (f.exists()) {
-				return f;
-			}
-			throw new FileNotFoundException(NOBINPATH + this);
-		}
-	};
+	VIRTUALBOX ;
 
 	public static final AppTypeEnum LAST = VIRTUALBOX;
 	public static final int SIZE = LAST.ordinal() + 1;
-
-	/**
-	 * This contains default docker pathnames (one entry per OS).
-	 * Each entry is a semicolon separated paths list
-	 * paths
-	 *
-	 * @since 11.0.0
-	 */
-	private static final String[] dockerpaths = { null, // NONE
-			"/usr/bin/docker", // LINUX
-			"c:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe", // WIN32
-			"/usr/local/bin/docker", // MACOSX
-			null, // SOLARIS
-			null // JAVA
-	};
-
-	/**
-	 * This array stores default VirtualBox pathnames (one entry per OS). Each
-	 * entry is a semicolon separated paths list Defaults are Oracle VirtualBox
-	 * paths
-	 *
-	 * @since 8.0.0 (FG)
-	 */
-	private static final String[] virtualboxpaths = { null, // NONE
-			"/usr/bin/VBoxHeadless", // LINUX
-			"c:\\Program Files\\Oracle\\VirtualBox\\VBoxHeadless.exe;c:\\Program Files\\VirtualBox\\VBoxHeadless.exe;c:\\Program Files (x86)\\Oracle\\VirtualBox\\VBoxHeadless.exe;c:\\Program Files (x86)\\VirtualBox\\VBoxHeadless.exe", // WIN32
-			"/Applications/VirtualBox.app/Contents/MacOS/VBoxHeadless", // MACOSX
-			null, // SOLARIS
-			null // JAVA
-	};
-
-	private static final String NOBINPATH = "no binary path for ";
 
 	/**
 	 * This retrieves an OS from its ordinal value
@@ -211,18 +101,6 @@ public enum AppTypeEnum {
 	}
 
 	/**
-	 * This retrieves application default pathname
-	 * @return application binary path if available
-	 * @throws FileNotFoundException
-	 *             if no binary path available for the provided application type
-	 * @see xtremweb.common.OSEnum#getOs(String)
-	 * @since 8.0.0 (FG)
-	 */
-	public String getPathName() {
-		return null;
-	}
-
-	/**
 	 * This retrieves application launch script name.
 	 * Since 13.0.0 applications do not have launchscript any more
 	 * @return application binary path if available
@@ -239,19 +117,6 @@ public enum AppTypeEnum {
 	 */
 	final public String getUnloadScriptName() {
 		return XWTools.UNLOADSCRIPTHEADER + this.toString().toLowerCase() + XWTools.UNLOADSCRIPTTRAILER;
-	}
-
-	/**
-	 * This retrieves application default pathname
-     * If not overridden, this always throws a FileNotFoundException
-	 * @return application binary path for the current OS
-	 * @throws FileNotFoundException
-	 *             if no application binary path found for the current OS
-	 * @see xtremweb.common.OSEnum#getOs(String)
-	 * @since 8.0.0 (FG)
-	 */
-	public File getPath() throws FileNotFoundException {
-		throw new FileNotFoundException(NOBINPATH + this);
 	}
 	/**
 	 * This retrieves application default command line arguments
@@ -279,33 +144,6 @@ public enum AppTypeEnum {
     public String getDefaultWorkingDirectoryCommandLine(final File pwd) {
         return "";
     }
-	/**
-	 * This dumps path
-	 *
-	 * @see xtremweb.common.OSEnum#getOs(String)
-	 * @since 8.0.0 (FG)
-	 */
-	public static void dumpPath() {
-		for (final AppTypeEnum a : AppTypeEnum.values()) {
-			try {
-				System.out.println(a.getPath());
-			} catch (final Exception e) {
-			}
-		}
-	}
-
-	/**
-	 * This checks if the provided application is available
-	 *
-	 * @return true if getPath() != null; false otherwise
-	 * @throws FileNotFoundException
-	 *             if application path is not valid
-	 * @see #getPath()
-	 * @since 8.0.0 (FG)
-	 */
-	public boolean available() throws FileNotFoundException {
-		return getPath() != null;
-	}
 
 	/**
 	 * This is for debug purposes

@@ -1295,34 +1295,36 @@ public final class XWConfigurator extends Properties {
 		}
 
 		final String localAppsProperty = getProperty(XWPropertyDefs.SHAREDAPPS);
-		final StringBuilder localAppNames = new StringBuilder();
 
-		logger.debug("localAppsProperty = " + localAppsProperty);
+        final StringBuilder localAppNames = new StringBuilder();
 
-		if (localAppsProperty != null) {
+        logger.debug("localAppsProperty = " + localAppsProperty);
 
-			localApps = XWTools.split(localAppsProperty.toUpperCase(), ",");
+        if (localAppsProperty != null) {
 
-			if (localApps != null) {
+            localApps = XWTools.split(localAppsProperty.toUpperCase(), ",");
 
-				final Iterator<String> enumapps = localApps.iterator();
+            if (localApps != null) {
 
-				while (enumapps.hasNext()) {
+                final Iterator<String> enumapps = localApps.iterator();
 
-					final String apptype = enumapps.next();
-					try {
-						final AppTypeEnum at = AppTypeEnum.valueOf(apptype);
-						if (at.available()) {
-							localAppNames.append(apptype + " ");
-						}
-					} catch (final Exception e) {
-						logger.exception("Invalid application type : " + apptype, e);
-						enumapps.remove();
-					}
-				}
-			}
-			_host.setSharedApps(localAppNames.toString().trim().replace(' ', ','));
-		}
+                while (enumapps.hasNext()) {
+
+                    final String apptype = enumapps.next();
+                    try {
+                        final AppTypeEnum at = AppTypeEnum.valueOf(apptype);
+                        localAppNames.append(apptype + " ");
+                        logger.config("Application type : " + apptype);
+                    } catch (final Exception e) {
+                        logger.exception("Invalid application type : " + apptype, e);
+                        enumapps.remove();
+                    }
+                }
+            }
+            _host.setSharedApps(localAppNames.toString().trim().replace(' ', ','));
+        }
+
+		_host.setSharedApps(localAppsProperty);
 
 		final String localPkgsProperty = getProperty(XWPropertyDefs.SHAREDPACKAGES);
 		if (localPkgsProperty != null) {
@@ -1335,32 +1337,6 @@ public final class XWConfigurator extends Properties {
 		final String localDatasPathProperty = getProperty(XWPropertyDefs.SHAREDDATASPATH);
 		if ((localDatasProperty != null) && (localDatasPathProperty != null)) {
 			setDataPackagesDir(localDatasProperty, localDatasProperty);
-		}
-
-		File sandboxBinFile = null;
-		try {
-			//
-			// since 12.1.0 we can use AppTypeEnum.DOCKER as sandbox
-			// This has the advantage that AppTypEnum knows where is docker tool binary, for each OS
-			//
-			final String sandboxAttr = Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH).trim().toUpperCase();
-			final AppTypeEnum appTypeEnum = AppTypeEnum.valueOf(sandboxAttr);
-			sandboxBinFile = appTypeEnum.getPath();
-			logger.debug("sandboxBinFile = " + sandboxBinFile);
-		} catch(final Exception e) {
-		}
-		if (sandboxBinFile == null) {
-			try {
-				//
-				// since 12.1.0 we can still define the full sandbox path
-				//
-				sandboxBinFile = new File(Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH).trim());
-				logger.debug("sandboxBinFile = " + sandboxBinFile);
-			} catch(final Exception e) {
-			}
-		}
-		if ((sandboxBinFile != null) && !sandboxBinFile.exists()) {
-			logger.fatal("Sandboxing not found : \"" + getProperty(XWPropertyDefs.SANDBOXPATH) + "\"");
 		}
 
 		_host.setTracing(getBoolean(XWPropertyDefs.TRACES));
