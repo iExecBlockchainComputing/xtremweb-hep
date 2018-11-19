@@ -326,9 +326,15 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             return null;
         }
 
-        final UserInterface requester = getUser(workModel.getRequester());
+        String user = workModel.getRequester();
+        // ISSUE add support of beneficiary param : https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/93
+        if( !workModel.getBeneficiary().equals("0x")){
+            logger.info("Beneficiary is not null replace current getRequester["+user+"] by ["+workModel.getBeneficiary()+"]");
+            user=workModel.getBeneficiary();
+        }
+        final UserInterface requester = getUser(user);
         if (requester == null) {
-            logger.error("createWork() : unkown requester " + workModel.getRequester());
+            logger.error("createWork() : unkown requester " + user);
             return null;
         }
 
@@ -753,9 +759,54 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             logger.exception(e);
         }
 
+        //Valorized stdOutCallback and stdErrCallback for finalizeWork and triggerWorkOrderCallback
+        String stdOutCallback="";
+        String stdErrCallback="";
+        try {
+
+          final WorkInterface work = DBInterface.getInstance().work(woid);
+          final DataInterface data = work == null ?
+                  null :
+                  DBInterface.getInstance().data(work.getResult());
+          final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+                    ModelService.getInstance().getWorkOrderModel(woid) :
+                    null;
+          if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+                final FileInputStream finput = new FileInputStream(data.getPath());
+                final DataInputStream input = new DataInputStream(finput);
+                final StreamIO io = new StreamIO(null, input,false);
+                final boolean isStdErr =
+                         data != null &&
+                         data.getName() != null &&
+                         data.getName().compareTo(XWTools.STDERR) == 0;
+
+                 String content= io.readString();
+                 if(content != null && content.length() >250){
+                   logger.debug("cut callback content to 250 char");
+                   content=content.substring(0, 250);
+                 }
+                 if(isStdErr){
+                   stdErrCallback =content;
+                   logger.debug("valorize stdOutCallback to :"+stdErrCallback);
+                 }
+                 else{
+                   stdOutCallback=content;
+                   logger.debug("valorize stdOutCallback to :"+stdOutCallback);
+                 }
+            }
+            else{
+              logger.debug("callback is unset no stdout valorized");
+            }
+        } catch(final Exception e) {
+            logger.error("Failed to valorized  stdoutCallback and stderrCallback");
+            logger.exception(e);
+        }
+
+
+
         if (actuatorService.finalizeWork(woid,
-                "",
-                "",
+                stdOutCallback,
+                stdErrCallback,
                 result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
 
             logger.debug("doFinalize() : WARN:stillFinalizing");
@@ -772,35 +823,22 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             protected WorkInterface work(final String workOrderId) {
 
 */
-            final WorkInterface work = DBInterface.getInstance().work(woid);
-            try {
-                final DataInterface data = work == null ?
-                        null :
-                        DBInterface.getInstance().data(work.getResult());
-
-                final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+          // ISSUE add callback support https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/94
+          try {
+              final WorkInterface work = DBInterface.getInstance().work(woid);
+              final DataInterface data = work == null ?
+                    null :
+                    DBInterface.getInstance().data(work.getResult());
+              final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
                         ModelService.getInstance().getWorkOrderModel(woid) :
                         null;
+              if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+                  ActuatorService.getInstance().triggerWorkOrderCallback(woid,
+                              stdOutCallback,
+                              stdErrCallback,
+                              result == null ? "" : result.toString());
 
-                if (workOrderModel != null && !workOrderModel.getBeneficiary().equals("0x")) { // check beneficiary is set
-
-                    try (final FileInputStream finput = new FileInputStream(data.getPath());
-                         final DataInputStream input = new DataInputStream(finput);
-                         final StreamIO io = new StreamIO(null, input,false)) {
-
-                        final boolean isStdErr =
-                                data != null &&
-                                data.getName() != null &&
-                                data.getName().compareTo(XWTools.STDERR) == 0;
-
-                        final String content = io.readString().substring(0, 250);
-
-                        ActuatorService.getInstance().triggerWorkOrderCallback(woid,
-                                isStdErr == true ? "" : content,
-                                isStdErr == true ? content : "",
-                                result.toString());
-                    }
-                }
+               }
             } catch(IOException e) {
                 logger.exception(e);
             }
