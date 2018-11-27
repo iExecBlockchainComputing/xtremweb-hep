@@ -78,6 +78,7 @@ import java.security.cert.CertificateExpiredException;
 import java.util.*;
 
 import static xtremweb.common.XWPropertyDefs.BLOCKCHAINETHENABLED;
+import static xtremweb.common.XWPropertyDefs.WORKERETHNODEADDRESS;
 import static xtremweb.common.XWPropertyDefs.XWCP;
 
 public final class XWConfigurator extends Properties {
@@ -218,6 +219,9 @@ public final class XWConfigurator extends Properties {
     public boolean blockchainEnabled() {
         return getBoolean(BLOCKCHAINETHENABLED);
     }
+	public String getWorkerEthNodeAddress() {
+		return getProperty(XWPropertyDefs.WORKERETHNODEADDRESS);
+	}
     /**
      * This disables blockchain access
      * @since 13.1.0
@@ -277,17 +281,18 @@ public final class XWConfigurator extends Properties {
 				walletConfig.setPassword(getWalletPassword());
 				walletConfig.setRlcDeposit(getRLCDeposit());
 
-				IexecWorkerLibrary.initialize(walletConfig, commonConfiguration);
-				WorkerPocoWatcherImpl workerPocoWatcher = new WorkerPocoWatcherImpl();
+				IexecWorkerLibrary.initialize(walletConfig, commonConfiguration, false);
 
 				final WorkerPoolConfig workerPoolConfig = commonConfiguration.getContractConfig().getWorkerPoolConfig();
 				if (workerPoolConfig != null) {
 					_host.setWorkerPoolAddr(workerPoolConfig.getAddress());
 				}
+				WorkerPocoWatcherImpl workerPocoWatcher = new WorkerPocoWatcherImpl();
 			}
 
-		} catch (final Exception e) {
-			logger.exception("Can't get iExec config from " + schedulerApiUrl + XWTools.IEXECETHCONFPATH, e);
+            logger.info("getBlockchainEthConfig() : configuration retrieved");
+		} catch (final Throwable e) {
+			logger.fatal("Can't get iExec config from " + schedulerApiUrl + XWTools.IEXECETHCONFPATH + " : " + e + " " + e.getCause().getMessage());
 		}
 
 
@@ -326,6 +331,17 @@ public final class XWConfigurator extends Properties {
 			setProperty(XWPropertyDefs.TIMEOUT, "" + MAXTIMEOUT);
 			return MAXTIMEOUT;
 		}
+	}
+	/**
+	 * @since 13.1.0
+	 */
+	public int getTimeout() {
+		try {
+			return Integer.parseInt(getProperty(XWPropertyDefs.TIMEOUT));
+		} catch (final Exception e) {
+			setProperty(XWPropertyDefs.TIMEOUT, "" + XWPropertyDefs.TIMEOUT.defaultValue());
+		}
+		return Integer.parseInt(getProperty(XWPropertyDefs.TIMEOUT));
 	}
 
 	/**
@@ -1279,34 +1295,36 @@ public final class XWConfigurator extends Properties {
 		}
 
 		final String localAppsProperty = getProperty(XWPropertyDefs.SHAREDAPPS);
-		final StringBuilder localAppNames = new StringBuilder();
 
-		logger.debug("localAppsProperty = " + localAppsProperty);
+        final StringBuilder localAppNames = new StringBuilder();
 
-		if (localAppsProperty != null) {
+        logger.debug("localAppsProperty = " + localAppsProperty);
 
-			localApps = XWTools.split(localAppsProperty.toUpperCase(), ",");
+        if (localAppsProperty != null) {
 
-			if (localApps != null) {
+            localApps = XWTools.split(localAppsProperty.toUpperCase(), ",");
 
-				final Iterator<String> enumapps = localApps.iterator();
+            if (localApps != null) {
 
-				while (enumapps.hasNext()) {
+                final Iterator<String> enumapps = localApps.iterator();
 
-					final String apptype = enumapps.next();
-					try {
-						final AppTypeEnum at = AppTypeEnum.valueOf(apptype);
-						if (at.available()) {
-							localAppNames.append(apptype + " ");
-						}
-					} catch (final Exception e) {
-						logger.exception("Invalid application type : " + apptype, e);
-						enumapps.remove();
-					}
-				}
-			}
-			_host.setSharedApps(localAppNames.toString().trim().replace(' ', ','));
-		}
+                while (enumapps.hasNext()) {
+
+                    final String apptype = enumapps.next();
+                    try {
+                        final AppTypeEnum at = AppTypeEnum.valueOf(apptype);
+                        localAppNames.append(apptype + " ");
+                        logger.config("Application type : " + apptype);
+                    } catch (final Exception e) {
+                        logger.exception("Invalid application type : " + apptype, e);
+                        enumapps.remove();
+                    }
+                }
+            }
+            _host.setSharedApps(localAppNames.toString().trim().replace(' ', ','));
+        }
+
+		_host.setSharedApps(localAppsProperty);
 
 		final String localPkgsProperty = getProperty(XWPropertyDefs.SHAREDPACKAGES);
 		if (localPkgsProperty != null) {
@@ -1319,32 +1337,6 @@ public final class XWConfigurator extends Properties {
 		final String localDatasPathProperty = getProperty(XWPropertyDefs.SHAREDDATASPATH);
 		if ((localDatasProperty != null) && (localDatasPathProperty != null)) {
 			setDataPackagesDir(localDatasProperty, localDatasProperty);
-		}
-
-		File sandboxBinFile = null;
-		try {
-			//
-			// since 12.1.0 we can use AppTypeEnum.DOCKER as sandbox
-			// This has the advantage that AppTypEnum knows where is docker tool binary, for each OS
-			//
-			final String sandboxAttr = Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH).trim().toUpperCase();
-			final AppTypeEnum appTypeEnum = AppTypeEnum.valueOf(sandboxAttr);
-			sandboxBinFile = appTypeEnum.getPath();
-			logger.debug("sandboxBinFile = " + sandboxBinFile);
-		} catch(final Exception e) {
-		}
-		if (sandboxBinFile == null) {
-			try {
-				//
-				// since 12.1.0 we can still define the full sandbox path
-				//
-				sandboxBinFile = new File(Worker.getConfig().getProperty(XWPropertyDefs.SANDBOXPATH).trim());
-				logger.debug("sandboxBinFile = " + sandboxBinFile);
-			} catch(final Exception e) {
-			}
-		}
-		if ((sandboxBinFile != null) && !sandboxBinFile.exists()) {
-			logger.fatal("Sandboxing not found : \"" + getProperty(XWPropertyDefs.SANDBOXPATH) + "\"");
 		}
 
 		_host.setTracing(getBoolean(XWPropertyDefs.TRACES));
@@ -2467,6 +2459,10 @@ public final class XWConfigurator extends Properties {
 				&& (IexecConfigurationService.getInstance().getCommonConfiguration() != null)) {
 
 			_host.setEthWalletAddr(CredentialsService.getInstance().getCredentials().getAddress());
+
+// not sure this could work
+//			_host.setUID(new UID(UUID.nameUUIDFromBytes(CredentialsService.getInstance().getCredentials().getAddress().getBytes()).toString()));
+//
 			final CommonConfiguration commonConfiguration = IexecConfigurationService.getInstance().getCommonConfiguration();
 			out.println("Wallet     addr     : " + _host.getEthWalletAddr());
 			out.println("Eth client addr     : " + commonConfiguration.getNodeConfig().getClientAddress());

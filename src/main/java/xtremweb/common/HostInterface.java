@@ -141,7 +141,12 @@ public final class HostInterface extends Table {
 		/**
 		 * This is the column index of the host name
 		 */
-		NAME,
+		NAME {
+			@Override
+			public String fromString(final String v) {
+				return v == null ? v : v.replaceAll("[\\n\\s\'\"]+", "");
+			}
+		},
 		/**
 		 * This is the column index of the percentage of CPU usable by the worker
 		 *
@@ -1144,23 +1149,38 @@ public final class HostInterface extends Table {
             return null;
         }
     }
-    /**
-     * This checks if this worker can contribute to a market order
-     *
-     * @return (getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null)
-     * @since 13.1.0
-     */
-    public boolean canContribute() {
-        try {
-            return (!hasContributed() &&
-					(getMarketOrderUid() == null) &&
+	/**
+	 * This checks if this worker can joins a market order
+	 *
+	 * @return (getMarketOrderUid() == null) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null) && (getContributionStatus() == StatusEnum.UNAVAILABLE)
+	 * @since 13.1.0
+	 */
+	public boolean canJoinMarketOrder() {
+		try {
+			return ((getMarketOrderUid() == null) &&
 					(getEthWalletAddr() != null)  &&
 					(getWorkerPoolAddr() != null) &&
-                    (getContributionStatus() == StatusEnum.UNAVAILABLE));
-        } catch (final Exception e) {
-            return false;
-        }
-    }
+					(getContributionStatus() == StatusEnum.UNAVAILABLE));
+		} catch (final Exception e) {
+			return false;
+		}
+	}
+	/**
+	 * This checks if this worker can contribute to the given market order
+	 *
+	 * @return (getMarketOrderUid().equals(marketOrder.getUID()) && (getEthWalletAddr() != null) && (getWorkerPoolAddr() != null)  && (getContributionStatus() == StatusEnum.PENDING)
+	 * @since 13.1.0
+	 */
+	public boolean canContribute(final MarketOrderInterface marketOrder) {
+		try {
+			return ((getMarketOrderUid().equals(marketOrder.getUID())) &&
+					(getEthWalletAddr() != null)  &&
+					(getWorkerPoolAddr() != null) &&
+					(getContributionStatus() == StatusEnum.PENDING));
+		} catch (final Exception e) {
+			return false;
+		}
+	}
 	/**
 	 * This retrieves the download bandwidth usage
 	 *
@@ -2347,14 +2367,22 @@ public final class HostInterface extends Table {
         return setValue(Columns.CONTRIBUTIONSTATUS, v);
     }
 
-    /**
-     * This set  contribution to REVEALING
-     * @return true if value has changed, false otherwise
-     * @since 13.1.0
-     */
-    public final boolean setRevealing() {
-        return setContributionStatus(StatusEnum.REVEALING);
-    }
+	/**
+	 * This set  contribution to ERROR
+	 * @return true if value has changed, false otherwise
+	 * @since 13.1.0
+	 */
+	public final boolean setContributionError() {
+		return setContributionStatus(StatusEnum.ERROR);
+	}
+	/**
+	 * This set  contribution to REVEALING
+	 * @return true if value has changed, false otherwise
+	 * @since 13.1.0
+	 */
+	public final boolean setRevealing() {
+		return setContributionStatus(StatusEnum.REVEALING);
+	}
     /**
      * This set  contribution to RUNNING
      * @return true if value has changed, false otherwise

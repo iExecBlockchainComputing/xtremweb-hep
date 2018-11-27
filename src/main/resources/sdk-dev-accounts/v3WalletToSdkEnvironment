@@ -1,0 +1,28 @@
+#!/bin/bash
+# Usage : ./v3WalletToSdkEnvironment 1_UTC--2018-02-14T08-32-12.500000000Z--8bd535d49b095ef648cd85ea827867d358872809.json whatever
+
+walletFile=$1
+walletPassword=$2
+
+walletDir=$(dirname $walletFile)
+
+sdkDir=$walletDir/'sdk-env'
+
+echo "Converting wallet(v3) to SDK environment"
+
+rm -rf $sdkDir
+mkdir $sdkDir
+
+cp $walletFile $sdkDir/encrypted-wallet.json
+cd $sdkDir
+
+iexec init
+rm wallet.json account.json
+
+iexec wallet decrypt --password $walletPassword
+
+iexec account login
+
+echo "Conversion from wallet(v3) to SDK environment COMPLETED"
+echo "iExec SDK environment ready in folder $(pwd)"
+

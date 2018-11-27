@@ -114,7 +114,9 @@ public final class MarketOrderInterface extends Table {
             }
         },
         /**
-         * Trust level for this order
+         * Trust level for this order.
+         * This defines ExpectedWorkers as : trust / 10
+         * @see #setTrust(long)
          */
 		TRUST {
 			@Override
@@ -283,7 +285,6 @@ public final class MarketOrderInterface extends Table {
 
 	/**
 	 * This is the default constructor
-     * TRUST is forced to 70
      * EXPECTEDWORKERS is forced to 10
 	 */
 	public MarketOrderInterface() {
@@ -293,11 +294,11 @@ public final class MarketOrderInterface extends Table {
 		setAttributeLength(ENUMSIZE);
 		setArrivalDate();
 		setAccessRights(XWAccessRights.USERALL);
-		setTrust(70L);
         setVolume(1L);
+        setNbWorkers(0);
         setRemaining(getVolume());
         setStatus(StatusEnum.WAITING);
-        setExpectedWorkers(4L);
+        setTrust(0L);
         setMarketOrderIdx(0);
 		setShortIndexes(new int[] { TableColumns.UID.getOrdinal(), Columns.MARKETORDERIDX.getOrdinal(), Columns.DIRECTION.getOrdinal(), Columns.STATUS.getOrdinal() });
 	}
@@ -536,10 +537,8 @@ public final class MarketOrderInterface extends Table {
      * This retrieves the market order index
      *
      * @return this attribute, or null if not set
-     * @exception IOException
-     *                is thrown is attribute is nor well formed
      */
-    public Long getMarketOrderIdx() throws IOException {
+    public Long getMarketOrderIdx()  {
         try {
             return (Long) getValue(Columns.MARKETORDERIDX);
         } catch (final NullPointerException e) {
@@ -712,6 +711,23 @@ public final class MarketOrderInterface extends Table {
 	public boolean setDirection(final MarketOrderDirectionEnum d) {
 		return setValue(Columns.DIRECTION, d);
 	}
+
+	/**
+	 * This tests if this can be closed (aka removed)
+	 * @return true if status is WAITING, AVAILABLE, COMPLETED, ERROR; false otherwise
+	 */
+	public boolean canBeClosed() {
+		final StatusEnum status = getStatus();
+		switch (status) {
+			case WAITING:
+			case AVAILABLE:
+			case COMPLETED:
+			case ERROR:
+				return true;
+			default:
+			return false;
+		}
+	}
     /**
      * This sets market status
      * @param s is the market order status
@@ -746,14 +762,21 @@ public final class MarketOrderInterface extends Table {
     public boolean setContributed() {
         return setValue(Columns.STATUS, StatusEnum.CONTRIBUTED);
     }
-    /**
-     * This sets this market order status to revealing
-     * @return true if value has changed, false otherwise
-     */
-    public boolean setRevealing() {
-        setRevealingDate();
-    	return setValue(Columns.STATUS, StatusEnum.REVEALING);
-    }
+	/**
+	 * This sets this market order status to revealing
+	 * @return true if value has changed, false otherwise
+	 */
+	public boolean setRevealing() {
+		setRevealingDate();
+		return setValue(Columns.STATUS, StatusEnum.REVEALING);
+	}
+	/**
+	 * This sets this market order status to finalizing
+	 * @return true if value has changed, false otherwise
+	 */
+	public boolean setFinalizing() {
+		return setValue(Columns.STATUS, StatusEnum.FINALIZING);
+	}
     /**
      * This sets this market order status to completed
      * @return true if value has changed, false otherwise
@@ -802,7 +825,7 @@ public final class MarketOrderInterface extends Table {
         return setValue(Columns.CATEGORYID, Long.valueOf(c));
     }
     /**
-     * This sets the market order index and marks this as PENDING (the work order has been bought)
+     * This sets the market order index and marks this as AVAILABLE
      * @param c is the category id
      * @return true if value has changed, false otherwise
      */
@@ -816,8 +839,28 @@ public final class MarketOrderInterface extends Table {
      * @param e is the amount of needed workers
      * @return true if value has changed, false otherwise
      */
-    public boolean setExpectedWorkers(final long e)  {
-        return setValue(Columns.EXPECTEDWORKERS, Long.valueOf(e));
+    private boolean setExpectedWorkers(final long e)  {
+        return setValue(Columns.EXPECTEDWORKERS, Long.valueOf(e < 0 ? 0 : e));
+    }
+	/**
+	 * This increments the amount of needed workers to safely reach the trust.
+	 * @return true
+	 */
+    public boolean incExpectedWorkers()  {
+		Thread.currentThread().dumpStack();
+        return addExpectedWorkers(1);
+    }
+
+    /**
+     * This adds nbWorkers to the amount of needed workers to safely reach the trust.
+     * @param nbWorkers is the amount of workers to add
+     * @return true if value has changed, false otherwise
+     */
+    public boolean addExpectedWorkers(final long nbWorkers)  {
+        if (nbWorkers < 0) {
+            return false;
+        }
+        return setExpectedWorkers(getExpectedWorkers() + nbWorkers);
     }
     /**
      * This sets the amount of booked workers to reach the trust
@@ -835,6 +878,13 @@ public final class MarketOrderInterface extends Table {
         return setNbWorkers(getNbWorkers() + 1);
     }
     /**
+     * This decrements the amount of booked workers to reach the trust
+     * @return true if value has changed, false otherwise
+     */
+    public boolean decNbWorkers()  {
+        return setNbWorkers(getNbWorkers() - 1);
+    }
+    /**
      * This marks the provided host as participating in this market order
      * and increments the amount of booked workers to reach the trust
      * @param host is the participating host
@@ -844,6 +894,10 @@ public final class MarketOrderInterface extends Table {
         if(host == null)
             return false;
         host.setMarketOrderUid(getUID());
+        if(getMarketOrderIdx() > 0) {
+            // this is necessary if need to reschedule a lost work
+            host.setPending();
+        }
         incNbWorkers();
         return true;
     }
@@ -854,33 +908,40 @@ public final class MarketOrderInterface extends Table {
      * @return true
      */
     public boolean removeWorker(final HostInterface host)  {
-        if(host != null)
-            host.leaveMarketOrder();
+        if(host == null) {
+			return false;
+		}
+		final UID hostMoUid = host.getMarketOrderUid();
+		if((hostMoUid == null) || (!hostMoUid.equals(this.getUID()))) {
+			return false;
+		}
+		host.leaveMarketOrder();
         decNbWorkers();
         return true;
     }
     /**
-     * This marks the provided host as participating in this market order
-     * and increments the amount of booked workers to reach the trust
-     * @return true if value has changed, false otherwise
+     * This checks is this market order can be created on the blockchain
+     * @return true if getExpectedWorkers() <= getNbWorkers() && getMarketOrderIdx() <= 0
      */
-    public boolean canStart()  {
-        return getExpectedWorkers() <= getNbWorkers();
-    }
-    /**
-     * This decrements the amount of booked workers to reach the trust
-     * @return true if value has changed, false otherwise
-     */
-    public boolean decNbWorkers()  {
-        return setNbWorkers(getNbWorkers() - 1);
+    public boolean canBeCreated()  {
+        return getStatus() != StatusEnum.ERROR &&
+				getExpectedWorkers() <= getNbWorkers()
+                && getMarketOrderIdx() <= 0;
     }
 	/**
-	 * This sets the trust value
+	 * This sets the trust value and expectedWortkers as well
 	 * @param t is the trust
      * @return true if value has changed, false otherwise
+     * @see Columns#TRUST
 	 */
 	public boolean setTrust(final long t)  {
-	    return setValue(Columns.TRUST, t <= 100 ? t : 100);
+	    long trust = t < 10 ? 10 : t;
+	    if (t > 100) trust = 100;
+		long workers = trust / 10;
+
+		setExpectedWorkers(workers);
+
+        return setValue(Columns.TRUST, trust);
 	}
 	/**
 	 * This sets the price value

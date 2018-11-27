@@ -74,7 +74,7 @@ public abstract class SQLRequest {
 	/**
 	 * This contains the DB name This is set externally by DBInterface
 	 *
-	 * @see xtremweb.dspatcher.DBInterface#DBInterface(XWConfigurator)
+	 * @see xtremweb.dispatcher.DBInterface#DBInterface(XWConfigurator)
 	 */
 	private static String dbName = null;
 
@@ -90,7 +90,7 @@ public abstract class SQLRequest {
 	 * This is true if using an HSQLDB engine; false otherwise This is set
 	 * externally by DBInterface
 	 *
-	 * @see xtremweb.dspatcher.DBInterface#DBInterface(XWConfigurator)
+	 * @see xtremweb.dispatcher.DBInterface#DBInterface(XWConfigurator)
 	 */
 	private static boolean hsqldb = false;
 

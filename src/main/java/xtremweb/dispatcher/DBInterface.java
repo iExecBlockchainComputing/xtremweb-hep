@@ -38,9 +38,11 @@ import javax.mail.MessagingException;
 import com.iexec.common.contracts.generated.IexecHub;
 import com.iexec.common.contracts.generated.WorkerPool;
 import com.iexec.common.ethereum.*;
+import com.iexec.common.model.ConsensusModel;
+import com.iexec.common.model.ContributionStatusEnum;
 import com.iexec.common.workerpool.WorkerPoolConfig;
 import com.iexec.scheduler.actuator.ActuatorService;
-import org.web3j.utils.Numeric;
+import com.iexec.scheduler.marketplace.MarketplaceService;
 import xtremweb.common.*;
 import xtremweb.communications.*;
 import xtremweb.database.ColumnSelection;
@@ -72,7 +74,7 @@ public final class DBInterface {
 	 *
 	 * @since 9.1.0
 	 */
-	EmailSender emailSender;
+	private EmailSender emailSender;
 
 	/**
 	 * Constants that define some fixed dirnames These are not considered as
@@ -88,7 +90,7 @@ public final class DBInterface {
 
 	private static DBInterface instance = null;
 
-	public static final DBInterface getInstance() {
+	public static DBInterface getInstance() {
 		return instance;
 	}
 
@@ -102,7 +104,7 @@ public final class DBInterface {
 	/**
 	 * This inserts an object to both DB and cache
 	 *
-	 * @throws IOException
+	 * @throws IOException on error
 	 * @since 9.0.0
 	 */
 	private <T extends Table> void insert(final T row) throws IOException, URISyntaxException {
@@ -115,26 +117,26 @@ public final class DBInterface {
 	 * @since 7.4.0
 	 */
 	private Table getFromCache(final URI uri) {
-		return dbConnPool.getInstance().getFromCache(uri);
+		return DBConnPoolThread.getInstance().getFromCache(uri);
 	}
 
-	/**
-	 * This retrieves an object from cache
-	 *
-	 * @since 8.2.0
-	 */
-	private <T extends Table> T getFromCache(final URI uri, final T row) {
-		return dbConnPool.getInstance().getFromCache(uri, row);
-	}
-
-	/**
-	 * This retrieves an object from cache
-	 *
-	 * @since 7.4.0
-	 */
-	private <T extends Table> T getFromCache(final UID uid, final T row) {
-        return dbConnPool.getInstance().getFromCache(uid, row);
-	}
+//	/**
+//	 * This retrieves an object from cache
+//	 *
+//	 * @since 8.2.0
+//	 */
+//	private <T extends Table> T getFromCache(final URI uri, final T row) {
+//		return DBConnPoolThread.getInstance().getFromCache(uri, row);
+//	}
+//
+//	/**
+//	 * This retrieves an object from cache
+//	 *
+//	 * @since 7.4.0
+//	 */
+//	private <T extends Table> T getFromCache(final UID uid, final T row) {
+//        return DBConnPoolThread.getInstance().getFromCache(uid, row);
+//	}
 
 	/**
 	 * This retrieves an object interface from cache
@@ -169,7 +171,7 @@ public final class DBInterface {
 	 */
 	private <T extends Table> T getFromCache(final UserInterface u, final UID uid, final T row)
 			throws IOException, AccessControlException {
-        return dbConnPool.getInstance().getFromCache(u, uid, row);
+        return DBConnPoolThread.getInstance().getFromCache(u, uid, row);
 	}
 
 	/**
@@ -191,17 +193,17 @@ public final class DBInterface {
 	 * @since 7.4.0
 	 */
 	private void removeFromCache(final UID uid) {
-        dbConnPool.getInstance().removeFromCache(uid);
+        DBConnPoolThread.getInstance().removeFromCache(uid);
 	}
 
-	/**
-	 * This removes an object from cache
-	 *
-	 * @since 7.4.0
-	 */
-	private void removeFromCache(final URI uri) throws IOException {
-		dbConnPool.getInstance().removeFromCache(uri);
-	}
+//	/**
+//	 * This removes an object from cache
+//	 *
+//	 * @since 7.4.0
+//	 */
+//	private void removeFromCache(final URI uri) throws IOException {
+//        DBConnPoolThread.getInstance().removeFromCache(uri);
+//	}
 
 	/**
 	 * This instantiates a DBConnPoolThread, update application pools and set
@@ -214,7 +216,6 @@ public final class DBInterface {
 	public DBInterface(final XWConfigurator c) throws IOException {
 		logger = new Logger(this);
 		mileStone = new MileStone(this.getClass());
-
 		config = c;
 		dbConnPool = new DBConnPoolThread(config);
 		dbConnPool.start();
@@ -252,7 +253,7 @@ public final class DBInterface {
 		}
 		try {
 			final String to = theClient.getEMail();
-			if ((to != null) || (to.length() > 1)) {
+			if ((to != null) && (to.length() > 1)) {
 				emailSender.send("XtremWeb-HEP@" + XWTools.getLocalHostName() + " : " + row.getUID(),
 						theClient.getEMail(),
 						msg + "\n" + row.toString(false, true) + "\n\n" + "https://" + XWTools.getLocalHostName() + ":"
@@ -265,16 +266,15 @@ public final class DBInterface {
 
 	/**
 	 * This inserts missing element from src to dest
-	 * @param src
-	 * @param dest
+	 * @param src is the source
+	 * @param dest is the destination
 	 * @return dest with missing elements from src
 	 */
 	private Collection<UID> mergeCollections(final Collection<UID> src, final Collection<UID> dest) {
 		if((src == null) || (dest == null)) {
 			return dest ;
 		}
-		for (final Iterator<UID> it = src.iterator(); it.hasNext();) {
-			final UID uid = it.next();
+		for (final UID uid : src) {
 			if(!dest.contains(uid)){
 				dest.add(uid);
 			}
@@ -329,8 +329,8 @@ public final class DBInterface {
 	 * @return a collection of TableInterface
 	 * @since 5.8.0
 	 */
-	protected <T extends Table> Collection<T> selectAll(final T row) throws IOException {
-		return selectAll(row, (String) null);
+	private <T extends Table> Collection<T> selectAll(final T row) throws IOException {
+		return selectAll(row, null);
 	}
 
 	/**
@@ -349,7 +349,7 @@ public final class DBInterface {
 	 * @return a Collection of public rows
 	 * @since 7.0.0
 	 */
-	public <T extends Table> Collection<T> selectAllPublic(final T row) throws IOException {
+	 <T extends Table> Collection<T> selectAllPublic(final T row) throws IOException {
 		if (row == null) {
 			logger.warn("selectAll : row is null ?!?!");
 			return null;
@@ -367,7 +367,7 @@ public final class DBInterface {
 	 * @return a Collection of found rows
 	 * @since 5.8.0
 	 */
-	protected <T extends Table> Collection<T> selectAll(final T row, final String conditions) throws IOException {
+	private <T extends Table> Collection<T> selectAll(final T row, final String conditions) throws IOException {
 		if (row == null) {
 			logger.warn("selectAll : row is null ?!?!");
 			return null;
@@ -439,8 +439,8 @@ public final class DBInterface {
 	 * @return a Collection of found UID
 	 * @since 5.8.0
 	 */
-	protected <T extends Table> Collection<UID> selectUID(final T row) throws IOException {
-		return selectUID(row, (String) null);
+	private <T extends Table> Collection<UID> selectUID(final T row) throws IOException {
+		return selectUID(row, null);
 	}
 
 	/**
@@ -453,7 +453,7 @@ public final class DBInterface {
 	 * @return a Collection of found UID
 	 * @since 5.8.0
 	 */
-	protected <T extends Table> Collection<UID> selectUID(final T row, final String conditions) throws IOException {
+	private <T extends Table> Collection<UID> selectUID(final T row, final String conditions) throws IOException {
 		if (row == null) {
 			logger.warn("selectUID : row is null ?!?!");
 			return null;
@@ -471,8 +471,8 @@ public final class DBInterface {
 	 * @return the first found row, or null
 	 * @since 5.8.0
 	 */
-	protected <T extends Table> T selectOne(final T row) throws IOException {
-		return selectOne(row, (String) null);
+	private <T extends Table> T selectOne(final T row) throws IOException {
+		return selectOne(row,  null);
 	}
 
 	/**
@@ -485,7 +485,7 @@ public final class DBInterface {
 	 * @return a Collection of found rows
 	 * @since 10.0.0
 	 */
-	protected <T extends Table> T selectOne(final T row, final String conditions) throws IOException {
+	 <T extends Table> T selectOne(final T row, final String conditions) throws IOException {
 		if (row == null) {
 			logger.warn("selectOne : row is null ?!?!");
 			return null;
@@ -713,7 +713,7 @@ public final class DBInterface {
 	 * @param command is the command to execute
 	 * @since 5.8.0
 	 * @return the application which uid is provided; null if uid is null
-	 * @throws InvalidKeyException 
+	 * @throws InvalidKeyException on authn/authz error
 	 */
 	public AppInterface app(final XMLRPCCommand command) throws IOException, InvalidKeyException {
 		final UID uid = command.getURI().getUID();
@@ -790,7 +790,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	public Collection<UID> appsUID(final UserInterface u) throws IOException {
+	private Collection<UID> appsUID(final UserInterface u) throws IOException {
 		final AppInterface row = readableAppUID(u);
 		return selectUID(row);
 	}
@@ -849,7 +849,7 @@ public final class DBInterface {
 	 * then in DB. Data access rights are checked.
 	 *
 	 * @param command is the command to execute
-	 * @throws InvalidKeyException 
+	 * @throws InvalidKeyException on authn/authz error
 	 * @since 5.8.0
 	 */
 	protected DataInterface data(final XMLRPCCommand command) throws IOException, AccessControlException, InvalidKeyException {
@@ -875,7 +875,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	public Collection<UID> datasUID(final UserInterface user) throws IOException {
+	private Collection<UID> datasUID(final UserInterface user) throws IOException {
 		final DataInterface row = readableDataUID(user);
 		return selectUID(row);
 	}
@@ -888,7 +888,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 7.0.0
 	 */
-	public Collection<UID> ownerDatasUID(final UserInterface user) throws IOException {
+	private Collection<UID> ownerDatasUID(final UserInterface user) throws IOException {
 		final DataInterface row = readableDataUID(user);
 		return selectUID(row, "maintable.owneruid='" + user.getUID() + "'");
 	}
@@ -968,7 +968,7 @@ public final class DBInterface {
 	/**
 	 * This retrieves a category
 	 *
-	 * @param command
+	 * @param command is the requesting command
 	 * @return a category interface
 	 * @since 13.0.0
 	 */
@@ -1054,8 +1054,8 @@ public final class DBInterface {
      * @return a Collection of UID
      * @since 13.0.0
      */
-    protected Collection<UID> categoriesUID(final UserInterface u) throws IOException {
-        return categoriesUID(u, (String) null);
+    private Collection<UID> categoriesUID(final UserInterface u) throws IOException {
+        return categoriesUID(u, null);
     }
 
     /**
@@ -1067,7 +1067,7 @@ public final class DBInterface {
      * @return a Collection of UID
      * @since 13.0.0
      */
-    protected Collection<UID> categoriesUID(final UserInterface u, final String criterias) throws IOException {
+    private Collection<UID> categoriesUID(final UserInterface u, final String criterias) throws IOException {
         final CategoryInterface row = readableCategoryUID(u);
         return selectUID(row, criterias);
     }
@@ -1080,7 +1080,7 @@ public final class DBInterface {
      * @return how many category exist
      * @since 13.0.0
      */
-    protected int categorieSize(final UserInterface u) throws IOException {
+    protected int categorieSize(final UserInterface u)  {
         try {
             categoriesUID(u).size();
         } catch (final Exception e) {
@@ -1132,7 +1132,7 @@ public final class DBInterface {
 	 *            is the UID of the readable market to retrieve
 	 * @since 13.1.0
 	 */
-	protected MarketOrderInterface marketOrder(final UserInterface u, final UID uid)
+	private MarketOrderInterface marketOrder(final UserInterface u, final UID uid)
 			throws IOException, AccessControlException {
 
 		if (uid == null) {
@@ -1150,11 +1150,11 @@ public final class DBInterface {
 	/**
 	 * This retrieves a market order
 	 *
-	 * @param command
+	 * @param command is the command to execute
 	 * @return a market order interface
 	 * @since 13.1.0
 	 */
-	protected MarketOrderInterface marketOrder(final XMLRPCCommand command) throws InvalidKeyException, IOException, AccessControlException {
+	private MarketOrderInterface marketOrder(final XMLRPCCommand command) throws InvalidKeyException, IOException, AccessControlException {
 		final UID uid = command.getURI().getUID();
 		if (uid == null) {
 			return null;
@@ -1185,28 +1185,92 @@ public final class DBInterface {
         return selectOne(row, conditions);
     }
     /**
-     * This retrieves a market order lacking computing resources, bypassing access rights
-	 * @param workerPoolAddr is the address of the worker pool
+     * This retrieves a market order without computing resource, bypassing access rights
+     * @param workerPoolAddr is the address of the worker pool
      * @since 13.1.0
+     * @see #marketOrderUnsatisfied(String)
      */
-    protected MarketOrderInterface marketOrderUnsatisfied(final String workerPoolAddr) throws IOException {
+    private MarketOrderInterface marketOrderHavingNoResource(final String workerPoolAddr) throws IOException {
 
         if(workerPoolAddr == null) {
             return null;
         }
 
-        return selectOne(new MarketOrderInterface(),
-                SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.NBWORKERS + "<"
-                        + MarketOrderInterface .Columns.EXPECTEDWORKERS
-						+ " AND " + MarketOrderInterface .Columns.WORKERPOOLADDR + "='" + workerPoolAddr + "'"
-						+ " AND " + MarketOrderInterface .Columns.REMAINING + " > 0");
+        return marketOrderUnsatisfied(SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.NBWORKERS + "<"
+                + MarketOrderInterface .Columns.EXPECTEDWORKERS
+                + " AND " + MarketOrderInterface .Columns.NBWORKERS + "=0"
+                + " AND " + MarketOrderInterface .Columns.WORKERPOOLADDR + "='" + workerPoolAddr + "'"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "!='" + StatusEnum.FINALIZING + "'"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "!='" + StatusEnum.ERROR + "'"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "!='" + StatusEnum.COMPLETED + "'");
+    }
+    /**
+     * This retrieves a market order already having but lacking computing resources, bypassing access rights
+     * @param workerPoolAddr is the address of the worker pool
+     * @since 13.1.0
+     * @see #marketOrderUnsatisfied(String)
+     */
+    private MarketOrderInterface marketOrderLackingResources(final String workerPoolAddr) throws IOException {
+
+        if(workerPoolAddr == null) {
+            return null;
+        }
+
+        return marketOrderUnsatisfied(SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.NBWORKERS + "<"
+                + MarketOrderInterface .Columns.EXPECTEDWORKERS
+                + " AND " + MarketOrderInterface .Columns.NBWORKERS + ">0"
+                + " AND " + MarketOrderInterface .Columns.WORKERPOOLADDR + "='" + workerPoolAddr + "'"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "!='" + StatusEnum.FINALIZING + "'"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "!='" + StatusEnum.ERROR + "'"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "!='" + StatusEnum.COMPLETED + "'");
+    }
+    /**
+     * This retrieves a market order already having computing resources but not enough, bypassing access rights.
+     * The idea is to avoid dead lock on computing resources.
+     * @since 13.1.0
+     * @see HashTaskSet#detectAbortedTasks()
+     */
+     Collection<MarketOrderInterface> marketOrderLockingResources() throws IOException {
+        final MarketOrderInterface row = new MarketOrderInterface();
+        final int aliveTimeout = Integer.parseInt(Dispatcher.getConfig().getProperty(XWPropertyDefs.ALIVETIMEOUT.toString()));
+
+        return selectAll(row,SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.NBWORKERS + "<"
+                + MarketOrderInterface .Columns.EXPECTEDWORKERS
+                + " AND " + MarketOrderInterface .Columns.NBWORKERS + ">0"
+                + " AND date_add(" + MarketOrderInterface.Columns.ARRIVALDATE + ", interval " + aliveTimeout + " second) < now()"
+                + " AND " + MarketOrderInterface .Columns.STATUS + "='" + StatusEnum.WAITING + "'");
+    }
+    /**
+     * This retrieves a market order from DB according to request, bypassing access rights
+     * @param request is the SQL request
+     * @since 13.1.0
+     */
+    private MarketOrderInterface marketOrderUnsatisfied(final String request) throws IOException {
+        return selectOne(new MarketOrderInterface(), request);
+    }
+    /**
+     * This retrieves a market order starving computing resources, bypassing access rights
+     * This permits to avoid dead lock in computing resource reservation.
+     * @param workerPoolAddr is the address of the worker pool
+     * @since 13.1.0
+     * @see #marketOrderLackingResources(String)
+     * @see #marketOrderHavingNoResource(String)
+     */
+    private MarketOrderInterface marketOrderStarvingResources(final String workerPoolAddr) throws IOException {
+        logger.debug("marketOrderStarvingResources(" + workerPoolAddr + ")");
+        MarketOrderInterface marketOrder = marketOrderLackingResources(workerPoolAddr);
+        if (marketOrder == null) {
+            logger.info("marketOrderStarvingResources(" + workerPoolAddr  + ") : no unsatisfied market order");
+            marketOrder = marketOrderHavingNoResource(workerPoolAddr);
+        }
+        return marketOrder;
     }
     /**
      * This retrieves a market order by its id, bypassing access rights
      * @param idx is the market order
      * @since 13.1.0
      */
-    protected MarketOrderInterface marketOrderByIdx(final long idx) throws IOException {
+     MarketOrderInterface marketOrderByIdx(final long idx) throws IOException {
         return selectOne(new MarketOrderInterface(),
                 SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.MARKETORDERIDX + "="
                         + idx);
@@ -1223,7 +1287,7 @@ public final class DBInterface {
      * @param uid is the market order uid
      * @since 13.1.0
      */
-    protected MarketOrderInterface marketOrder(final UID uid) throws IOException {
+     MarketOrderInterface marketOrder(final UID uid) throws IOException {
         return select(new MarketOrderInterface(), uid);
     }
 	/**
@@ -1247,25 +1311,59 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 13.1.0
 	 */
-	protected Collection<UID> marketOrdersUID(final UserInterface u) throws IOException {
-		return marketOrdersUID(u, (String) null);
+	private Collection<UID> marketOrdersUID(final UserInterface u) throws IOException {
+		return marketOrdersUID(u, null);
 	}
 
-	/**
-	 * This retrieves a market order from DB for the requesting user according to
-	 * criteria
-	 *
-	 * @param u
-	 *            is the requesting user
-	 * @return a Collection of UID
-	 * @since 13.1.0
-	 */
-	protected Collection<UID> marketOrdersUID(final UserInterface u, final String criterias) throws IOException {
-		final MarketOrderInterface row = readableMarketOrderUID(u);
-		return selectUID(row, criterias);
-	}
-
-	/**
+    /**
+     * This retrieves a market order from DB for the requesting user according to
+     * criteria
+     *
+     * @param u
+     *            is the requesting user
+     * @return a Collection of UID
+     * @since 13.1.0
+     */
+    private Collection<UID> marketOrdersUID(final UserInterface u, final String criterias) throws IOException {
+        final MarketOrderInterface row = readableMarketOrderUID(u);
+        return selectUID(row, criterias);
+    }
+    /**
+     * This retrieves market order UIDs from DB for the requesting user according to
+     * criteria
+     *
+     * @return a Collection of UID
+     * @since 13.1.0
+     */
+    protected Collection<UID> marketOrdersUID() throws IOException {
+        final MarketOrderInterface row = new MarketOrderInterface();
+        return selectUID(row, null);
+    }
+    /**
+     * This retrieves market orders from DB, which status is REVEALING
+     *
+     * @return a Collection of UID
+     * @since 13.1.0
+     */
+    Collection<MarketOrderInterface> revealingOrFinalizingMarketOrders() throws IOException {
+        final MarketOrderInterface row = new MarketOrderInterface();
+        return selectAll(row,
+                MarketOrderInterface .Columns.STATUS + "='" + StatusEnum.REVEALING + "' OR " +
+                        MarketOrderInterface .Columns.STATUS + "='" + StatusEnum.FINALIZING + "'");
+    }
+    /**
+     * This retrieves market orders from DB, which status is CONTRIBUTING
+     *
+     * @return a Collection of UID
+     * @since 13.1.0
+     */
+    Collection<MarketOrderInterface> contributingOrContributedMarketOrders() throws IOException {
+        final MarketOrderInterface row = new MarketOrderInterface();
+        return selectAll(row,
+                MarketOrderInterface .Columns.STATUS + "='" + StatusEnum.CONTRIBUTING + "' OR " +
+                        MarketOrderInterface .Columns.STATUS + "='" + StatusEnum.CONTRIBUTED + "'");
+    }
+    /**
 	 * This retrieves the number of market order
 	 *
 	 * @param u
@@ -1280,17 +1378,33 @@ public final class DBInterface {
 		}
 		return 0;
 	}
-    /**
-     * This retrieves all works the the given market order, bypassing access rights
-     * @param marketOrder is the market order
-     * @since 13.1.0
-     */
-    protected Collection<WorkInterface> marketOrderWorks(final MarketOrderInterface marketOrder) throws IOException {
-        if(marketOrder == null || marketOrder.getUID() == null){
-            return null;
-        }
-        return selectAll(new WorkInterface(), "maintable.MARKETORDERUID='" + marketOrder.getUID() + "'");
-    }
+	/**
+	 * This retrieves all works the the given market order, bypassing access rights
+	 * @param marketOrder is the market order
+	 * @since 13.1.0
+	 */
+	Collection<WorkInterface> marketOrderWorks(final MarketOrderInterface marketOrder) throws IOException {
+		if(marketOrder == null || marketOrder.getUID() == null){
+			return null;
+		}
+		return selectAll(new WorkInterface(), "maintable.MARKETORDERUID='" + marketOrder.getUID() + "'");
+	}
+	/**
+	 * This retrieves all PENDING works the the given market order, having a "lost" worker
+     * (a worker expected but no alive)
+	 * This is done bypassing access rights
+	 * @since 13.1.0
+	 */
+	Collection<WorkInterface> marketOrderLostPendingWorks() throws IOException {
+		int aliveTimeOut = Integer
+				.parseInt(Dispatcher.getConfig().getProperty(XWPropertyDefs.ALIVETIMEOUT.toString()));
+
+		final String query = "select works.* from works,hosts where not isnull(works.marketorderuid) and"
+				+ " not isnull(works.expectedhostuid) and works.expectedhostuid=hosts.uid and "
+				+ WorkInterface.Columns.STATUS +"='" + StatusEnum.PENDING+ "'"
+				+ "and (unix_timestamp(now())-unix_timestamp(hosts.lastalive)) > " + aliveTimeOut;
+		return DBConnPoolThread.getInstance().executeQuery(query, new WorkInterface());
+ 	}
 
 	/**
 	 * This creates a new readable group to retrieve from DB
@@ -1373,8 +1487,8 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	public Collection<UID> groupsUID(final UserInterface u) throws IOException {
-		return groupsUID(u, (String) null);
+	private Collection<UID> groupsUID(final UserInterface u) throws IOException {
+		return groupsUID(u, null);
 	}
 
 	/**
@@ -1388,7 +1502,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	public Collection<UID> groupsUID(final UserInterface u, final String criterias) throws IOException {
+	private Collection<UID> groupsUID(final UserInterface u, final String criterias) throws IOException {
 		final GroupInterface row = readableGroupUID(u);
 		return selectUID(row, criterias);
 	}
@@ -1590,8 +1704,8 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	public Collection<UID> hostsUID(final UserInterface u) throws IOException {
-		return hostsUID(u, (String) null);
+	private Collection<UID> hostsUID(final UserInterface u) throws IOException {
+		return hostsUID(u, null);
 	}
 
 	/**
@@ -1605,7 +1719,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.9.0
 	 */
-	public Collection<UID> hostsUID(final UserInterface u, final String conditions) throws IOException {
+    private Collection<UID> hostsUID(final UserInterface u, final String conditions) throws IOException {
 		final HostInterface row = readableHostUID(u);
 		return selectUID(row, conditions);
 	}
@@ -1617,7 +1731,7 @@ public final class DBInterface {
 	 *            is the requesting user
 	 * @since 5.8.0
 	 */
-	public int hostSize(final UserInterface u) throws IOException {
+    private int hostSize(final UserInterface u) throws IOException {
 		try {
 			hostsUID(u).size();
 		} catch (final Exception e) {
@@ -1739,8 +1853,8 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> sessionsUID(final UserInterface u) throws IOException {
-		return sessionsUID(u, (String) null);
+	private Collection<UID> sessionsUID(final UserInterface u) throws IOException {
+		return sessionsUID(u, null);
 	}
 
 	/**
@@ -1752,7 +1866,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> sessionsUID(final UserInterface u, final String criterias) throws IOException {
+    private Collection<UID> sessionsUID(final UserInterface u, final String criterias) throws IOException {
 		final SessionInterface row = readableSessionUID(u);
 		return selectUID(row, criterias);
 	}
@@ -1854,8 +1968,8 @@ public final class DBInterface {
 	}
 
 	/**
-	 * This retrieves the first task for a given work and a given worker Access
-	 * rights are not checked.
+	 * This retrieves the first task for a given work and a given worker, having status nor FAILED neither ERROR.
+     * Access rights are not checked.
 	 *
 	 * @param work
 	 *            is the work we look for
@@ -1864,12 +1978,14 @@ public final class DBInterface {
 	 * @return a task or null
 	 * @since 8.0.0
 	 */
-	protected TaskInterface task(final WorkInterface work, final HostInterface host) throws IOException {
+	 TaskInterface computingTask(final WorkInterface work, final HostInterface host) throws IOException {
 		if ((work == null) || (work.getUID() == null) || (host == null)) {
 			return null;
 		}
-		return task(TaskInterface.Columns.WORKUID + "='" + work.getUID() + "' and " + TaskInterface.Columns.HOSTUID
-				+ "='" + host.getUID() + "'");
+		return task(TaskInterface.Columns.WORKUID + "='" + work.getUID() + "' and "
+                + TaskInterface.Columns.HOSTUID + "='" + host.getUID() + "' and "
+                + TaskInterface.Columns.STATUS + "!='" + StatusEnum.FAILED + "' and "
+                + TaskInterface.Columns.STATUS + "!='" + StatusEnum.ERROR + "'");
 	}
 
 	/**
@@ -1898,11 +2014,13 @@ public final class DBInterface {
 	 * @return a task or null
 	 * @since 8.0.0
 	 */
-	protected TaskInterface task(final WorkInterface work) throws IOException {
+	 TaskInterface computingTask(final WorkInterface work) throws IOException {
 		if ((work == null) || (work.getUID() == null)) {
 			return null;
 		}
-		return task(TaskInterface.Columns.WORKUID + "='" + work.getUID() + "'");
+		return task(TaskInterface.Columns.WORKUID + "='" + work.getUID() + "' and "
+                + TaskInterface.Columns.STATUS + "!='" + StatusEnum.FAILED + "' and "
+                + TaskInterface.Columns.STATUS + "!='" + StatusEnum.ERROR + "'");
 	}
 
 	/**
@@ -1993,7 +2111,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> tasksUID(final UserInterface u) throws IOException {
+	 Collection<UID> tasksUID(final UserInterface u) throws IOException {
 		final TaskInterface row = readableTaskUID(u);
 		return selectUID(row);
 	}
@@ -2130,7 +2248,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> tracesUID(final UserInterface u) throws IOException {
+	 Collection<UID> tracesUID(final UserInterface u) throws IOException {
 		final TraceInterface row = readableTraceUID(u);
 		return selectUID(row);
 	}
@@ -2260,7 +2378,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> usergroupsUID(final UserInterface u) throws IOException {
+	 Collection<UID> usergroupsUID(final UserInterface u) throws IOException {
 		final UserGroupInterface row = readableUserGroupUID(u);
 		return selectUID(row);
 	}
@@ -2390,7 +2508,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> usersUID(final UserInterface u) throws IOException {
+	 Collection<UID> usersUID(final UserInterface u) throws IOException {
 		return usersUID(u, (String) null);
 	}
 
@@ -2405,7 +2523,7 @@ public final class DBInterface {
 	 * @return a Collection of UID
 	 * @since 5.8.0
 	 */
-	protected Collection<UID> usersUID(final UserInterface u, final String criterias) throws IOException {
+	 Collection<UID> usersUID(final UserInterface u, final String criterias) throws IOException {
 		final UserInterface row = readableUserUID(u);
 		return selectUID(row, criterias);
 	}
@@ -2565,7 +2683,7 @@ public final class DBInterface {
 	/**
 	 * This retrieves readable works for the given user
 	 *
-	 * @param command
+	 * @param command is the command to execute
 	 * @return a work interface
 	 * @since 11.4.0
 	 */
@@ -2953,9 +3071,12 @@ public final class DBInterface {
 
 		final UserInterface theClient = checkClient(command, UserRightEnum.STANDARD_USER);
 
-		if (removeWork(command)) {
-			return true;
-		}
+        if (removeMarketOrder(command)) {
+            return true;
+        }
+        if (removeWork(command)) {
+            return true;
+        }
 		if (removeData(theClient, uid)) {
 			return true;
 		}
@@ -3790,17 +3911,17 @@ public final class DBInterface {
 				theApp.setSolaris_sparc(appitf.getSolarisSparc());
 
 				if (theClient.getRights().lowerThan(UserRightEnum.ADVANCED_USER)) {
-					logger.debug("set app AR to USERALL " + new XWAccessRights(XWAccessRights.USERALL.value() | isStickyBit));
+					logger.debug("update app set AR to USERALL " + new XWAccessRights(XWAccessRights.USERALL.value() | isStickyBit));
 					appitf.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | isStickyBit));
 				}
 				if (theClient.getRights().doesEqual(UserRightEnum.SUPER_USER)) {
 					if (appitf.getAccessRights() == null) {
-						logger.debug("set app AR to DEFAULT " + new XWAccessRights(XWAccessRights.DEFAULT.value() | isStickyBit));
+						logger.debug("update app set AR to DEFAULT " + new XWAccessRights(XWAccessRights.DEFAULT.value() | isStickyBit));
 						appitf.setAccessRights(new XWAccessRights(XWAccessRights.DEFAULT.value() | isStickyBit));
 					}
 				} else {
 					if ((theClient.getRights().higherOrEquals(UserRightEnum.INSERTAPP)) && (clientGroup != null)) {
-						logger.debug("set app AR to OWNERGROUP " + new XWAccessRights(XWAccessRights.OWNERGROUP.value() | isStickyBit));
+						logger.debug("update app set AR to OWNERGROUP " + new XWAccessRights(XWAccessRights.OWNERGROUP.value() | isStickyBit));
 						appitf.setAccessRights(new XWAccessRights(XWAccessRights.OWNERGROUP.value() | isStickyBit));
 					}
 				}
@@ -3824,7 +3945,7 @@ public final class DBInterface {
 					theClient.getLogin() + " can't create " + appitf.getName() + " : " + e.getMessage());
 		}
 
-		if (theClient.getRights().lowerThan(UserRightEnum.ADVANCED_USER)) {
+        if (theClient.getRights().lowerThan(UserRightEnum.ADVANCED_USER)) {
 			logger.debug("set app AR to USERALL " + new XWAccessRights(XWAccessRights.USERALL.value() | isStickyBit));
 			appitf.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | isStickyBit));
 		}
@@ -3833,6 +3954,9 @@ public final class DBInterface {
 				logger.debug("set app AR to DEFAULT " + new XWAccessRights(XWAccessRights.DEFAULT.value() | isStickyBit));
 				appitf.setAccessRights(new XWAccessRights(XWAccessRights.DEFAULT.value() | isStickyBit));
 			}
+			else {
+                logger.debug("keeping app AR " + appitf.getAccessRights());
+            }
 		} else {
 			if ((theClient.getRights().higherOrEquals(UserRightEnum.INSERTAPP)) && (clientGroup != null)) {
 				logger.debug("set app AR to OWNERGROUP " + new XWAccessRights(XWAccessRights.OWNERGROUP.value() | isStickyBit));
@@ -4363,24 +4487,12 @@ public final class DBInterface {
 
         final UserInterface theClient = checkClient(command, UserRightEnum.DELETEMARKETORDER);
         final UID uid = command.getURI().getUID();
-        if (uid == null) {
-            return false;
-        }
-        final MarketOrderInterface marketOrder = marketOrder(theClient, uid);
-        if (marketOrder == null) {
-            return false;
-        }
-
-        if (deleteJobs(theClient, getMarketOrderJobs(command))) {
-            return delete(theClient, marketOrder);
-        }
-
-        return false;
+        return removeMarketOrder(theClient, uid);
     }
     /**
      * This deletes a session from DB and all its associated jobs
      *
-     * @param client
+     * @param theClient
      *            describes the requesting client
      * @param uid
      *            is the UID of the session to delete
@@ -4394,23 +4506,39 @@ public final class DBInterface {
      *                is thrown if client does not have enough rights
      * @since 13.1.0
      */
-    protected boolean removeMarketOrder(final UserInterface client, final UID uid)
+    protected boolean removeMarketOrder(final UserInterface theClient, final UID uid)
             throws IOException, InvalidKeyException, AccessControlException {
 
-        final UserInterface theClient = checkClient(client, UserRightEnum.DELETEMARKETORDER);
         if (uid == null) {
             return false;
         }
-        final MarketOrderInterface session = marketOrder(theClient, uid);
-        if (session == null) {
+        final MarketOrderInterface marketOrder = marketOrder(theClient, uid);
+        if (marketOrder == null) {
             return false;
         }
+		if(!marketOrder.canBeClosed()) {
+			logger.error("removeMarketOrder(" + uid +") : " + " can't be closed " + marketOrder.getStatus());
+        	return false;
+		}
+        logger.debug("removeMarketOrder(" + uid + ")");
 
-        if (deleteJobs(theClient, getMarketOrderJobs(theClient, uid))) {
-            return delete(theClient, session);
+        final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
+        if(workers != null) {
+	        for(final HostInterface worker : workers ) {
+				logger.info("removeMarketOrder(); worker.leaveMarketOrder() : " + worker.getUID());
+				worker.leaveMarketOrder();
+			}
         }
 
-        return false;
+        boolean ret = false;
+        if (deleteJobs(theClient, getMarketOrderJobs(theClient, uid))) {
+            ret = delete(theClient, marketOrder);
+        }
+
+        if(ret == true) {
+           MarketplaceService.getInstance().getMarketplace().closeMarketOrder(BigInteger.valueOf(marketOrder.getMarketOrderIdx())).sendAsync();
+        }
+        return ret;
     }
 
     /**
@@ -4769,9 +4897,7 @@ public final class DBInterface {
 
         final UserInterface theClient = checkClient(command, UserRightEnum.LISTJOB);
         final UID uid = command.getURI().getUID();
-        final MarketOrderInterface marketOrder = marketOrder(command);
-        return marketOrdersUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERUID
-                + "='" + marketOrder.getUID() + "'");
+        return getMarketOrderJobs(theClient, uid);
     }
     /**
      * This retrieves jobs for a market order
@@ -4796,9 +4922,8 @@ public final class DBInterface {
 
         final UserInterface theClient = checkClient(client, UserRightEnum.LISTJOB);
         final MarketOrderInterface marketOrder = marketOrder(client, uid);
-
-        return marketOrdersUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERUID
-                + "='" + marketOrder.getUID() + "'");
+		return worksUID(theClient, SQLRequest.MAINTABLEALIAS + "." + WorkInterface.Columns.MARKETORDERUID + "='"
+                + marketOrder.getUID() + "'");
     }
 
 	/**
@@ -4942,7 +5067,6 @@ public final class DBInterface {
 			logger.warn(e.getMessage());
 		}
 
-		final Vector<Table> updateRows = new Vector<>();
 		final Vector<TaskInterface> theTasks = (Vector<TaskInterface>) tasks(theWork);
 
 		if (theTasks != null) {
@@ -4957,18 +5081,18 @@ public final class DBInterface {
                 final MarketOrderInterface marketOrder = marketOrder(theHost.getMarketOrderUid());
 				if (delete(theClient, theTask)) {
 					if (theHost != null) {
+//                        theHost.leaveMarketOrder(marketOrder);
 						switch (theWork.getStatus()) {
                             case CONTRIBUTING:
                             case CONTRIBUTED:
                             case REVEALING:
-                                theHost.leaveMarketOrder(marketOrder);
     						case RESULTREQUEST:
                             case DATAREQUEST:
 		    				case RUNNING:
 			    				theHost.decRunningJobs();
-				    			updateRows.add(theHost);
 				    			break;
 						}
+                        theHost.update();
 					}
 				}
 			}
@@ -5000,8 +5124,6 @@ public final class DBInterface {
 				theApp.decRunningJobs();
 			}
 			if (theExpectedHost != null) {
-                final MarketOrderInterface marketOrder = marketOrder(theExpectedHost.getMarketOrderUid());
-                theExpectedHost.leaveMarketOrder(marketOrder);
 				theExpectedHost.decRunningJobs();
 			}
 			break;
@@ -5010,11 +5132,8 @@ public final class DBInterface {
 		deleteJobs(theClient, replicasUID(theClient, theWork.getUID()));
 
 		delete(theClient, theWork);
-
-		updateRows.add(theExpectedHost);
-		updateRows.add(theClient);
-		updateRows.add(theApp);
-		update(updateRows);
+        theClient.update();
+		theApp.update();
 
 		return true;
 	}
@@ -5241,10 +5360,10 @@ public final class DBInterface {
             if (theHost != null) {
                 if (clientRights.isWorker()) {
                     if (theHost != null) {
-                        theTask = task(theWork, theHost);
+                        theTask = computingTask(theWork, theHost);
                     }
                 } else {
-                    theTask = task(theWork);
+                    theTask = computingTask(theWork);
                 }
                 if (theTask == null) {
                     throw new IOException(
@@ -5310,43 +5429,83 @@ public final class DBInterface {
                     }
                 }
                 break;
-            case CONTRIBUTED:
-                if(marketOrder == null) {
-                    final String msg = "work cannot be a contribution without market order";
-                    theWork.setError(msg);
+                case CONTRIBUTING:
+                    if(marketOrder == null) {
+                        final String msg = "work cannot becontributing without market order";
+                        theWork.setError(msg);
+                        if(theTask != null) {
+                            theTask.setErrorMsg(msg);
+                        }
+                        if (theHost != null) {
+                            theHost.incErrorJobs();
+                            theHost.decRunningJobs();
+                        }
+                        theApp.decRunningJobs();
+                        theApp.incErrorJobs();
+                        jobOwner.incErrorJobs();
+                        jobOwner.decRunningJobs();
+                        break;
+                    }
                     if(theTask != null) {
-                        theTask.setErrorMsg(msg);
+                        theTask.setContributing();
                     }
-                    if (theHost != null) {
-                        theHost.incErrorJobs();
-                        theHost.decRunningJobs();
-                    }
-                    theApp.decRunningJobs();
-                    theApp.incErrorJobs();
-                    jobOwner.incErrorJobs();
-                    jobOwner.decRunningJobs();
-                    break;
-                }
-                if(theTask != null) {
-                    theTask.setContributed();
-                }
-                if (theHost != null) {
-                    theHost.setContributed();
-                }
-                if (mustReveal) {
                     if (theHost != null) {
                         theHost.setContributing();
                     }
-                    theWork.setRevealing();
-                    theTask.setRevealing();
-                    if (theHost != null) {
-                        theHost.setRevealing();
+                    theWork.update(false);
+                    marketOrder.setContributing();
+                    break;
+
+                case CONTRIBUTED:
+                    if(marketOrder == null) {
+                        final String msg = "work cannot be a contribution without market order";
+                        theWork.setError(msg);
+                        if(theTask != null) {
+                            theTask.setErrorMsg(msg);
+                        }
+                        if (theHost != null) {
+                            theHost.incErrorJobs();
+                            theHost.decRunningJobs();
+                        }
+                        theApp.decRunningJobs();
+                        theApp.incErrorJobs();
+                        jobOwner.incErrorJobs();
+                        jobOwner.decRunningJobs();
+                        break;
                     }
-                }
+                    if(theTask != null) {
+                        theTask.setContributed();
+                    }
+                    if (theHost != null) {
+                        theHost.setContributed();
+                    }
+                    theWork.update(false);
+                    marketOrder.setContributing();
+                    break;
 
-				checkContribution(theWork, marketOrder);
-
+                case REVEALING:
+				if(marketOrder == null) {
+					final String msg = "work cannot revealed without market order";
+					theWork.setError(msg);
+					if(theTask != null) {
+						theTask.setErrorMsg(msg);
+					}
+					if (theHost != null) {
+						theHost.incErrorJobs();
+						theHost.decRunningJobs();
+					}
+					theApp.decRunningJobs();
+					theApp.incErrorJobs();
+					jobOwner.incErrorJobs();
+					jobOwner.decRunningJobs();
+					break;
+				}
+				if (theHost != null) {
+					theHost.setRevealing();
+				}
+				theTask.setRevealing();
                 break;
+
             case COMPLETED:
 
                 theApp.decRunningJobs();
@@ -5368,6 +5527,7 @@ public final class DBInterface {
                         theApp.incAvgExecTime(exectime);
                     }
                     theTask.setCompleted();
+                    theTask.update(false);
                 }
                 final UID originalUid = theWork.getReplicatedUid();
                 if (originalUid != null) {
@@ -5382,9 +5542,7 @@ public final class DBInterface {
                             final WorkInterface newWork = new WorkInterface(replicatedWork);
                             newWork.setUID(new UID());
                             newWork.replicate(originalUid);
-                            newWork.setTotalReplica(0);
-                            newWork.setReplicaSetSize(0);
-                            newWork.setExpectedReplications(0);
+                            newWork.insert();
 
                             theApp.incPendingJobs();
                             jobOwner.incPendingJobs();
@@ -5392,27 +5550,29 @@ public final class DBInterface {
                                 theHost.incPendingJobs();
                             }
 
-                            insert(newWork);
                             replicatedWork.incTotalReplica();
                         }
-                        replicatedWork.setReplicating();
+//                        replicatedWork.setReplicating();
                         if (currentReplications >= replicatedWork.getTotalReplica()) {
                             replicatedWork.setCompleted();
                         }
                         replicatedWork.update();
                     }
-                } else {
-                    final long expectedReplications = theWork.getExpectedReplications();
-                    final long currentReplications = theWork.getTotalReplica();
-                    if ((currentReplications < expectedReplications) || (expectedReplications < 0)) {
-                        theWork.setReplicating();
-                    }
                 }
+//                else {
+//                    final long expectedReplications = theWork.getExpectedReplications();
+//                    final long currentReplications = theWork.getTotalReplica();
+//                    if ((currentReplications < expectedReplications) || (expectedReplications < 0)) {
+//                        theWork.setReplicating();
+//                    }
+//                }
 
                 break;
                 case ERROR:
                     if (theHost != null) {
-                        theHost.leaveMarketOrder(marketOrder);
+//                        theHost.leaveMarketOrder(marketOrder);
+                        theHost.setContributionError();
+                        theHost.setErrorMsg("contribution error");
                         theHost.incErrorJobs();
                         theHost.decRunningJobs();
                     }
@@ -5423,6 +5583,15 @@ public final class DBInterface {
                     theWork.setError(receivedJob.getErrorMsg());
                     if (theTask != null) {
                         theTask.setError();
+                    }
+                    if(theWork.getMarketOrderUid() != null) {
+                        final WorkInterface newWork = new WorkInterface(theWork);
+                        newWork.setUID(new UID());
+                        newWork.replicate(theWork.getReplicatedUid() != null ? theWork.getReplicatedUid() : theWork.getUID());
+                        newWork.setExpectedHost(null);
+                        newWork.insert();
+                        theApp.incPendingJobs();
+                        jobOwner.incPendingJobs();
                     }
                     break;
                 case FAILED:
@@ -5445,6 +5614,7 @@ public final class DBInterface {
             theWork.update();
             theApp.update();
             jobOwner.update();
+            marketOrder.update();
             if (theHost != null) {
                 theHost.update();
             }
@@ -5471,7 +5641,7 @@ public final class DBInterface {
 					? receivedJob.getExpectedReplications() - receivedJob.getReplicaSetSize()
 					: 0L;
 
-            final Stack<HostInterface> workers = new Stack<HostInterface>();
+			final Stack<HostInterface> workers = new Stack<HostInterface>();
             workers.addAll(DBInterface.getInstance().hosts(marketOrder));
             if(receivedJob.getExpectedReplications() != workers.size()) {
                 logger.error("market order error: " + receivedJob.getExpectedReplications() + "!=" + workers.size());
@@ -5527,116 +5697,6 @@ public final class DBInterface {
 
 		return theWork;
 	}
-
-    /**
-     * This is replaces the blockchain event watcher automatically called on worker contribution.
-     * The scheduler must ask to reveal to all workers as soon as the consensus us reached
-     */
-    public void checkContribution(final WorkInterface theWork, MarketOrderInterface marketOrder) {
-		logger.debug("checkContribution() : in the method with marketOrder: " + marketOrder);
-		logger.debug("checkContribution() : in the method with work: " + theWork);
-        try {
-            if (theWork == null)
-                return;
-
-            logger.debug("checkContribution() : " + theWork.toXml());
-
-            final Collection<WorkInterface> works = marketOrderWorks(marketOrder);
-
-            if (works == null) {
-                logger.error("checkContribution() : can't retrieve any work for market order : "
-                        + marketOrder.getUID());
-                return;
-            }
-
-            final TaskInterface theWorkTask = DBInterface.getInstance().task(theWork);
-            final HostInterface theHost = DBInterface.getInstance().host(theWorkTask.getHost());
-            theHost.setContributed();
-            theHost.update();
-
-            final long expectedWorkers = marketOrder.getExpectedWorkers();
-            final long trust = marketOrder.getTrust();
-            final long expectedContributions = (long)Math.ceil(expectedWorkers * trust / 100d);
-			logger.debug("checkContribution() : expected workers: " + expectedWorkers);
-			logger.debug("checkContribution() : trust: " + trust);
-			logger.debug("checkContribution() : expectedContributions: " + expectedContributions);
-            long totalContributions = 0L;
-			logger.debug("checkContribution() : number of works: " + works.size());
-            for (final WorkInterface work : works) {
-
-				logger.debug("checkContribution() : for work: " + work);
-
-                if(work.getUID().equals(theWork.getUID())) {
-                    totalContributions++;
-                    continue;
-                }
-
-                if (work.hasContributed()
-                        && (work.getH2h2r().compareTo(theWork.getH2h2r()) == 0)) {
-                    totalContributions++;
-					logger.debug("checkContribution() : add a contribution");
-                }
-            }
-			logger.debug("checkContribution() : totalContributions: " + totalContributions);
-            if (totalContributions >= expectedContributions) {
-                logger.debug("checkContribution() : enough contributions");
-                theWork.setRevealing();
-                try {
-                    theWork.update();
-                } catch (final IOException e) {
-                    logger.exception(e);
-                }
-                logger.debug("checkContribution() : work must be revealed " + theWork.toXml());
-
-                for (final WorkInterface contributingWork : works) {
-
-                    logger.debug("checkContribution() : work must be revealed " + contributingWork.toXml());
-                    try {
-                        contributingWork.setRevealing();
-                        contributingWork.update();
-
-                        final TaskInterface contributingTask = DBInterface.getInstance().task(contributingWork);
-                        if (contributingTask != null) {
-                            contributingTask.setRevealing();
-                            contributingTask.update();
-                        }
-                    } catch (final IOException e) {
-                        logger.exception(e);
-                    }
-                }
-
-                marketOrder.setRevealing();
-                logger.debug("checkContribution() : market order has been setRevealing: " + marketOrder);
-                try {
-                    marketOrder.update();
-                } catch (final IOException e) {
-                    logger.exception(e);
-                }
-
-				TransactionStatus status = ActuatorService.getInstance().revealConsensus(theWork.getWorkOrderId(), Utils.hashResult(theWork.getH2h2r()));
-				logger.debug("checkContribution() : transaction status: " + status);
-                if (status == TransactionStatus.FAILURE) {
-                    marketOrder.setErrorMsg("transaction error : revealConsensus");
-                    marketOrder.setError();
-                    try {
-                        final Collection<HostInterface> workers = hosts(marketOrder);
-                        for (final HostInterface w : workers) {
-                            w.leaveMarketOrder(marketOrder);
-                            w.update();
-                        }
-                        marketOrder.update();
-                    } catch (final IOException e) {
-                        logger.exception(e);
-                    }
-                }
-
-            } else {
-                logger.debug("checkContribution() : not enough contributions");
-            }
-        } catch (final Exception e) {
-            logger.exception(e);
-        }
-    }
 
     /**
 	 * This retrieves a job status
@@ -5824,7 +5884,6 @@ public final class DBInterface {
                 || (moitf.getDirection() == null)
                 || (moitf.getCategoryId() == null)
                 || (moitf.getExpectedWorkers() == 0)
-                || (moitf.getTrust() == 0)
                 || (moitf.getPrice() == 0) ) {
             throw new IOException("add market order error : missing values");
         }
@@ -5856,6 +5915,8 @@ public final class DBInterface {
             return true;
         }
 
+        // set set expected workers
+        moitf.setTrust(moitf.getTrust());
         if (moitf.getUID() == null) {
             final UID uid = new UID();
             moitf.setUID(uid);
@@ -5924,7 +5985,7 @@ public final class DBInterface {
 		}
 
 		try {
-			HostInterface theHost = host(user, _host.getUID());
+            HostInterface theHost = host(user, _host.getUID());
 
 			if (theHost == null) {
                 try {
@@ -5994,6 +6055,7 @@ public final class DBInterface {
 
         hostContribution(theHost);
 	}
+
     /**
      * This inserts the host associated to the provided wallet to a market order, if applicable
      * @param theHost
@@ -6001,6 +6063,7 @@ public final class DBInterface {
      * @since 13.1.0
      */
 	protected synchronized HostInterface hostContribution(final HostInterface theHost) throws IOException {
+
         if (theHost == null) {
             logger.info("hostContribution() : host is null");
             return null;
@@ -6013,77 +6076,128 @@ public final class DBInterface {
             return theHost;
         }
 
+        if (marketOrder(theHost.getMarketOrderUid()) == null) {
+            theHost.leaveMarketOrder();
+            theHost.update(false);
+        }
+
         final EthereumWallet workerWalletAddr = new EthereumWallet(theHost.getEthWalletAddr());
-        if (!theHost.canContribute()) {
-            logger.info("hostContribution(" + workerWalletAddr + ") : don't want to contribute");
+        if (!theHost.canJoinMarketOrder()) {
+            logger.info("hostContribution(" + workerWalletAddr + ") : cannot join marketorder");
             return theHost;
         }
         logger.debug("hostContribution(" + workerWalletAddr + ") : " + theHost.toXml());
-        final MarketOrderInterface marketOrder = marketOrderUnsatisfied(theHost.getWorkerPoolAddr());
-        if(marketOrder == null) {
-            logger.info("hostContribution(" + workerWalletAddr + ") : no unsatisfied market order");
+        final MarketOrderInterface marketOrder = marketOrderStarvingResources(theHost.getWorkerPoolAddr());
+        if (marketOrder == null) {
+            logger.info("hostContribution(" + workerWalletAddr + ") : no starving market order");
             return theHost;
         }
 
         logger.debug("hostContribution(" + workerWalletAddr + ") : " + marketOrder.toXml());
 
-        if(marketOrder.getWorkerPoolAddr().compareTo(theHost.getWorkerPoolAddr()) != 0) {
+        if (marketOrder.getWorkerPoolAddr().compareTo(theHost.getWorkerPoolAddr()) != 0) {
             logger.error("hostContribution(" + workerWalletAddr + ") : worker pool mismatch : "
                     + marketOrder.getWorkerPoolAddr() + " != "
                     + theHost.getWorkerPoolAddr());
             return theHost;
         }
+
         final Collection<HostInterface> hosts = hosts(workerWalletAddr, marketOrder);
         logger.debug("hostContribution(" + workerWalletAddr + ") : duplicated wallet " + (hosts == null ? 0 : hosts.size()));
 
-        boolean error = false;
         if (hosts != null) {
             for (HostInterface ahost : hosts) {
-                if (ahost.getUID().equals(theHost.getUID()))
-                    continue;
-                error = true;
                 logger.error("hostContribution(" + workerWalletAddr + ") : more than one wallet owner " + ahost.getUID());
                 ahost.leaveMarketOrder(marketOrder);
                 ahost.setActive(false);
-                ahost.update();
+                ahost.update(false);
             }
         }
-        if (error) {
-            logger.error("hostContribution(" + workerWalletAddr + ") : others presented the same wallet " + theHost.getUID());
-            theHost.leaveMarketOrder(marketOrder);
-            theHost.setActive(false);
+        if (theHost.canJoinMarketOrder()) {
+            logger.debug("hostContribution(" + workerWalletAddr + ") : joins market order "
+                    + marketOrder.getUID());
+
+            marketOrder.addWorker(theHost);
+            marketOrder.update(false);
+            theHost.update(false);
+
+            final List<WorkInterface> worksList = (List) marketOrderWorks(marketOrder);
+            if ((worksList != null) && worksList.size() > 0) {
+                SchedulerPocoWatcherImpl.allowWorkerToContribute(worksList.get(0).getWorkOrderId(),
+                        marketOrder,
+                        theHost);
+            }
         } else {
-            if (theHost.canContribute()) {
-                logger.debug("hostContribution(" + workerWalletAddr + ") : joins market order "
-                        + marketOrder.getUID());
-                marketOrder.addWorker(theHost);
-            } else {
-                logger.debug("hostContribution(" + workerWalletAddr + ") : don't want to contribute");
+            logger.debug("hostContribution(" + workerWalletAddr + ") : don't want to contribute");
+        }
+
+		final Collection<HostInterface> workersInOrder = DBInterface.getInstance().hosts(marketOrder);
+		final long workersInOrderSize = workersInOrder != null ? workersInOrder.size() : -1 ;
+
+		if(workersInOrderSize <= marketOrder.getNbWorkers()) {
+            logger.warn("hostContribution() resizing : marketOrder.getNbWorkers() = "
+                    + marketOrder.getNbWorkers() + "; workers.size = " + workersInOrderSize);
+            marketOrder.setNbWorkers(workersInOrderSize);
+        } else {
+		    final long diff =  workersInOrderSize - marketOrder.getNbWorkers();
+		    long counterWorker = 0;
+		    for(HostInterface worker : workersInOrder) {
+                worker.leaveMarketOrder(marketOrder);
+                counterWorker++;
+                if(counterWorker >= diff) {
+                    break;
+                }
             }
         }
 
-        theHost.update();
-        marketOrder.update();
-
-        if(marketOrder.canStart()) {
+        if (marketOrder.canBeCreated()) {
             final ActuatorService actuatorService = ActuatorService.getInstance();
             marketOrder.decRemaining();
-			DBConnPoolThread.getInstance().update(marketOrder,null,false);
+            marketOrder.update(false);
 
-			final BigInteger marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
-                    BigInteger.valueOf(marketOrder.getTrust()),
-                    BigInteger.valueOf(marketOrder.getPrice()),
-                    BigInteger.valueOf(marketOrder.getVolume()));
-            theHost.setAvailable();
-            marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
-            logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder started " + marketOrderIdx);
-        } else {
-            logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder still waiting");
-            marketOrder.setWaiting();
+            BigInteger marketOrderIdx = null;
+            for(int createTry = 0; createTry < 3 && marketOrderIdx == null; createTry++) {
+
+                logger.debug("hostContribution(" + workerWalletAddr + ") : trying to create marketorder " + createTry);
+                marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
+                        BigInteger.valueOf(marketOrder.getTrust()),
+                        BigInteger.valueOf(marketOrder.getPrice()),
+                        BigInteger.valueOf(marketOrder.getVolume()));
+                if (marketOrderIdx == null) {
+                    try {
+                        logger.debug("createMarketOrder; will retry in 10s");
+                        Thread.sleep(10000);
+                    } catch (final InterruptedException e) {
+                    }
+                }
+            }
+            if (marketOrderIdx != null) {
+                theHost.setAvailable();
+                marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
+                logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder created " + marketOrderIdx);
+            } else {
+                logger.error("hostContribution(" + workerWalletAddr + ") : cant create marketorder " + marketOrder.getUID());
+                marketOrder.setErrorMsg("cant create marketorder");
+                marketOrder.setError();
+                theHost.leaveMarketOrder(marketOrder);
+                final List<HostInterface> workers = (List) hosts(marketOrder);
+                for (HostInterface w : workers) {
+                    w.leaveMarketOrder(marketOrder);
+                    w.update();
+                }
+            }
+        }
+        else {
+            if (marketOrder.getStatus() == StatusEnum.ERROR)
+                logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder ERROR");
+            else {
+                logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder still waiting");
+                marketOrder.setWaiting();
+            }
         }
 
-        theHost.update();
-        marketOrder.update();
+        theHost.update(false);
+        marketOrder.update(false);
 
         return theHost;
     }

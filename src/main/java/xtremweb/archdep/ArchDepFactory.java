@@ -72,8 +72,7 @@ public class ArchDepFactory {
     protected ArchDepFactory() {
 
 		logger = new Logger(this);
-		logger.setLoggerLevel(LoggerLevel.FINEST);
-
+		logger.setLoggerLevel(LoggerLevel.INFO);
 		final Map<OSEnum, String> mapUtil = new Hashtable<OSEnum, String>(10);
 		final Map<OSEnum, String> mapTracer = new Hashtable<OSEnum, String>(10);
 		final Map<OSEnum, String> mapInterrupts = new Hashtable<OSEnum, String>(10);
@@ -203,16 +202,24 @@ public class ArchDepFactory {
 				try {
 					System.load(f.getAbsolutePath());
 				} catch (final UnsatisfiedLinkError ule) {
-					ule.printStackTrace();
-					System.loadLibrary(libResName);
+					if(logger.debug()) {
+						ule.printStackTrace();
+					}
+                    try {
+    					System.loadLibrary(libResName);
+                    } catch (final UnsatisfiedLinkError ule2) {
+                        if (logger.debug()) {
+                            ule2.printStackTrace();
+                        }
+                    }
 				}
 
-				logger.finest("Loaded jni library : " + s);
+				logger.info("Loaded jni library : " + s);
 				loaded = true;
 			}
 
 			if (!loaded) {
-				logger.finest("Not loaded jni library : " + s);
+				logger.debug("Not loaded jni library : " + s);
 			}
 
 		} catch (final Throwable e) {

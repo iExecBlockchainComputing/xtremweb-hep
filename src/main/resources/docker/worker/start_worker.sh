@@ -40,8 +40,8 @@ fi
 
 # Add defined SHAREDAPPS variable if defined, otherwise use a default value
 if [ ! -z $SHAREDAPPS ] ; then
-	sed -i "s/^#SHAREDAPPS=.*/SHAREDAPPS=$SHAREDAPPS/g" /iexec/conf/xtremweb.worker.conf
-else sed -i "s/^#SHAREDAPPS=.*/SHAREDAPPS=docker/g" /iexec/conf/xtremweb.worker.conf
+	sed -i "s/^SHAREDAPPS=.*/SHAREDAPPS=$SHAREDAPPS/g" /iexec/conf/xtremweb.worker.conf
+else sed -i "s/^SHAREDAPPS=.*/SHAREDAPPS=docker/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Add SHAREDPACKAGES only if it is given in parameters
@@ -79,6 +79,11 @@ fi
 # Change the wallet password
 if [ ! -z $WALLETPASSWORD ] ; then
 	sed -i "s/^ETHWALLETPASSWORD=.*/ETHWALLETPASSWORD=$WALLETPASSWORD/g" /iexec/conf/xtremweb.worker.conf
+fi
+
+# Change the timeout
+if [ ! -z $TIMEOUT ] ; then
+	sed -i "s/^TIMEOUT=.*/TIMEOUT=$TIMEOUT/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Change a flag in the docker start script to still be able to debug

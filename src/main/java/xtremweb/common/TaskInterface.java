@@ -383,7 +383,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 		} catch (final Exception e) {
 		}
 		try {
-			setLastAlive((Date) Columns.LASTALIVE.fromResultSet(rs));
+			setLastAliveDate((Date) Columns.LASTALIVE.fromResultSet(rs));
 		} catch (final Exception e) {
 		}
 		try {
@@ -494,7 +494,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 		setInsertionDate(itf.getInsertionDate());
 		setStartDate(itf.getStartDate());
 		setLastStartDate(itf.getLastStartDate());
-		setLastAlive(itf.getLastAlive());
+		setLastAliveDate(itf.getLastAlive());
 		setRemovalDate(itf.getRemovalDate());
 		setPrice(itf.getPrice());
 	}
@@ -709,6 +709,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 	 * This sets the task status as running on a worker.
 	 */
 	public void setRunning() {
+		Thread.currentThread().dumpStack();
 		setStatus(StatusEnum.RUNNING);
 	}
 
@@ -721,6 +722,20 @@ public final class TaskInterface extends xtremweb.common.Table {
 		return testStatus(StatusEnum.RUNNING);
 	}
 
+	/**
+	 * This tests whether task is supposed to be processed by a worker
+	 *
+	 * @return a boolean.
+	 * @since 13.1.0
+	 */
+	public boolean isUnderProcess() {
+		return isRunning()
+				|| isDataRequest()
+				|| isResultRequest()
+				|| hasContributed()
+				|| isContributing()
+				|| isRevealing();
+	}
 	/**
 	 * This sets the task status as pending for a worker.
 	 */
@@ -744,12 +759,30 @@ public final class TaskInterface extends xtremweb.common.Table {
 		return getStatus() == StatusEnum.CONTRIBUTED;
 	}
 	/**
+	 * This checks if this work contribution must be sent
+	 * @since 13.1.0
+	 */
+	public boolean isContributing() {
+		return getStatus() == StatusEnum.CONTRIBUTING;
+	}
+	/**
+	 * This marks this work as ready to reveal contribution, if this.getWorkOrderId() != null
+	 * @since 13.1.0
+	 */
+	public boolean isRevealing() {
+		return getStatus() == StatusEnum.REVEALING;
+	}
+	/**
 	 * This marks this as contribution
 	 * i.eg: the worker sent the contribution proposal
 	 * @since 13.1.0
 	 */
 	public void setContributed() {
 		setStatus(StatusEnum.CONTRIBUTED);
+	}
+
+	public void setContributing() {
+		setStatus(StatusEnum.CONTRIBUTING);
 	}
 
 	/**
@@ -765,6 +798,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 	 * This sets the task status as completed by a worker.
 	 */
 	public void setCompleted() {
+		Thread.currentThread().dumpStack();
 		setStatus(StatusEnum.COMPLETED);
 		setRemovalDate();
 	}
@@ -908,7 +942,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 	/**
 	 * This sets the last alive signal date of the current run
 	 */
-	public boolean setLastAlive(final Date v) {
+	public boolean setLastAliveDate(final Date v) {
 		return setValue(Columns.LASTALIVE, v);
 	}
 
@@ -954,10 +988,16 @@ public final class TaskInterface extends xtremweb.common.Table {
 	 */
 	public void setRunningBy(final UID worker) {
 
+		if ((isUnderProcess()) || (getHost() != null)) {
+			getLogger().debug("" + getUID() + " already under process : " + getStatus() + ", " +
+					(getHost() == null  ? "null" : getHost().getMyUid()));
+			return;
+		}
+
 		final java.util.Date newDate = new java.util.Date(System.currentTimeMillis());
 
 		setHost(worker);
-		setLastAlive(newDate);
+		setLastAliveDate(newDate);
 
 		if (getStartDate() == null) {
 			setStartDate(newDate);
@@ -983,7 +1023,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 	 */
 	public boolean setAlive(final UID worker) {
 
-		if ((isRunning() == false) || (getHost() == null)) {
+		if (getHost() == null) {
 			setRunningBy(worker);
 		}
 
@@ -991,7 +1031,7 @@ public final class TaskInterface extends xtremweb.common.Table {
 			return false;
 		}
 
-		setLastAlive(new java.util.Date(System.currentTimeMillis()));
+		setLastAliveDate(new java.util.Date(System.currentTimeMillis()));
 
 		incAliveCount();
 

@@ -34,7 +34,6 @@ package xtremweb.worker;
  */
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.*;
 import java.security.AccessControlException;
 import java.security.InvalidKeyException;
@@ -45,8 +44,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import com.iexec.common.ethereum.TransactionStatus;
-import com.iexec.worker.actuator.ActuatorService;
 import org.xml.sax.SAXException;
 
 import xtremweb.common.*;
@@ -167,7 +164,7 @@ public final class CommManager extends Thread {
 		firstWorkRequest = -1;
 
 		setPoolWork(new PoolWork());
-		final Hashtable<UID, Work> sWorks = getPoolWork().getSavingWork();
+		final Hashtable<UID, Work> sWorks = getPoolWork().getCompletedWorks();
 
 		if (sWorks != null) {
 			final Enumeration<Work> theEnumeration = sWorks.elements();
@@ -427,6 +424,9 @@ public final class CommManager extends Thread {
 		final HostInterface workerHost = Worker.getConfig().getHost();
 		final File d = Worker.getConfig().getTmpDir();
 		workerHost.setFreeTmp(d.getFreeSpace() / XWTools.ONEMEGABYTES);
+        if((workerHost.getWorkerPoolAddr() == null) || (workerHost.getWorkerPoolAddr().trim().length() < 1)){
+			Worker.getConfig().getBlockchainEthConfig();
+		}
 		final WorkInterface ret = commClient().workRequest(workerHost);
 		Worker.getConfig().getHost().setJobId(null);
 		return ret;
@@ -466,7 +466,7 @@ public final class CommManager extends Thread {
 	 * @since 8.0.0
 	 */
 	protected File uriPassThrough(final URI throughUri, final long maxLength) throws IOException, URISyntaxException, InvalidKeyException,
-	AccessControlException, ClassNotFoundException, SAXException, XWCommException {
+	AccessControlException, ClassNotFoundException, SAXException, XWCategoryException {
 
 		final File ret = null;
 		boolean islocked = false;
@@ -526,16 +526,18 @@ public final class CommManager extends Thread {
 	 * @param theWork is the work
 	 *
 	 */
-	private void downloadWork(final Work theWork) throws IOException {
+	private void downloadWork(final Work theWork) throws IOException, XWCategoryException {
 
 		try {
 			final float downloadBandwidth = downloadData(theWork.getStdin(), theWork.getMaxFileSize(), false);
 			theWork.setDownloadBandwidth(downloadBandwidth);
-		} catch (final Exception e) {
-			throw new IOException("can't download stdin (" + theWork.getStdin() + ")");
-		}
+        } catch (final XWCategoryException e) {
+            throw new XWCategoryException("stdin " + e.getMessage());
+        } catch (final Exception e) {
+            throw new IOException("can't download stdin (" + theWork.getStdin() + ")");
+        }
 
-		try {
+        try {
 			final URI uri = theWork.getDirin();
 			final float downloadBandwidth = downloadData(uri, theWork.getMaxFileSize(), false);
             theWork.setDownloadBandwidth(downloadBandwidth);
@@ -547,6 +549,8 @@ public final class CommManager extends Thread {
 					uriPassThrough(uri, theWork.getMaxFileSize());
 				}
 			}
+        } catch (final XWCategoryException e) {
+            throw new XWCategoryException("dirin " + e.getMessage());
 		} catch (final Exception e) {
 			logger.exception(e);
 			throw new IOException("can't download dirin (" + e.getMessage() + ")");
@@ -719,7 +723,7 @@ public final class CommManager extends Thread {
 	 * @throws InvalidKeyException
 	 */
 	private float uploadData(final URI uri, final long maxLength) throws ClassNotFoundException, UnknownHostException, ConnectException,
-	IOException, SAXException, InvalidKeyException, AccessControlException, URISyntaxException, XWCommException {
+	IOException, SAXException, InvalidKeyException, AccessControlException, URISyntaxException, XWCategoryException {
 
 		if (uri == null) {
 			throw new IOException("uploadData() : uri is null");
@@ -739,11 +743,10 @@ public final class CommManager extends Thread {
                 throw new IOException("uploadData(" + uri.toString() + ") can't get content file");
             }
             if (fdata.length() > maxLength) {
-                throw new XWCommException(new XMLRPCResult(XWReturnCode.DISK,
-                        "uploadData(" + uri.toString() +
+                throw new XWCategoryException("uploadData(" + uri.toString() +
                         ") file too long for the category (" +
                         fdata.length() + ", " +
-                        maxLength + ")"));
+                        maxLength + ")");
             }
 			final long fsize = fdata.length();
 
@@ -783,7 +786,7 @@ public final class CommManager extends Thread {
 	 */
 	protected synchronized float downloadData(URI uri, final long maxLength, final boolean bypass)
 			throws ClassNotFoundException, UnknownHostException, ConnectException, IOException, SAXException,
-			InvalidKeyException, AccessControlException, URISyntaxException, XWCommException {
+			InvalidKeyException, AccessControlException, URISyntaxException, XWCategoryException {
 
 		File fdata = null;
 		boolean islocked = false;
@@ -819,11 +822,10 @@ public final class CommManager extends Thread {
 				throw new IOException(uri.toString() + " SHASUM is not set");
 			}
             if (data.getSize() > maxLength) {
-                throw new XWCommException(new XMLRPCResult(XWReturnCode.DISK,
-                        "downloadData(" + uri.toString() +
+                throw new XWCategoryException("downloadData(" + uri.toString() +
                                 ") file too long for the category (" +
                                 fdata.length() + ", " +
-                                maxLength + ")"));
+                                maxLength + ")");
             }
 			commClient.lock(uri);
 			islocked = true;
@@ -893,8 +895,6 @@ public final class CommManager extends Thread {
 
             return bandwidth;
 
-        } catch (XWCommException e) {
-            throw e;
         } catch (NoSuchAlgorithmException e) {
             logger.exception(e);
 		} finally {
@@ -930,7 +930,7 @@ public final class CommManager extends Thread {
 	 * @throws InvalidKeyException
 	 */
 	private float wget(final URI uri, final long maxLength) throws ClassNotFoundException, UnknownHostException, ConnectException, IOException,
-	SAXException, InvalidKeyException, AccessControlException, URISyntaxException, XWCommException {
+	SAXException, InvalidKeyException, AccessControlException, URISyntaxException {
 
 		if (uri == null) {
 			return -1;
@@ -976,8 +976,6 @@ public final class CommManager extends Thread {
 				io = new StreamIO(null, new DataInputStream(conn.getInputStream()), false);
 				io.readFileContent(fdata, maxLength);
 				mileStone.println("</readfile>");
-            } catch (final XWCommException e) {
-                throw e;
 			} catch (final Exception e) {
 				logger.exception(e);
 				throw new IOException(e.getMessage());
@@ -1073,6 +1071,7 @@ public final class CommManager extends Thread {
 						logger.exception(e);
 					}
 					close();
+					close();
 
 					sleeping(SleepEvent.WORKREQUEST, e.toString());
 
@@ -1118,31 +1117,24 @@ public final class CommManager extends Thread {
 					newWork = getPoolWork().addWork(mw);
 					ThreadLaunch.getInstance().wakeup();
 
-					try {
-						downloadWork(newWork);
-					} catch (final Exception e) {
-						throw new IOException("can't download work :" + e.getMessage());
-					}
-					try {
-                        downloadApp(newWork.getApplication());
-					} catch (final Exception e) {
-						logger.exception("Download app err : ", e);
-						throw new IOException("can't download app : " + e.getMessage());
-					}
+                    downloadWork(newWork);
+                    downloadApp(newWork.getApplication());
 
 					mileStone.println("got new work files");
 
 					newWork.setPending();
-					Date d = new Date();
-					newWork.setDataReadyDate(d);
-					d = null;
-				} catch (final Exception e) {
+					newWork.setDataReadyDate(new Date());
+                } catch (final XWCategoryException e) {
+                    logger.exception("Category error", e);
+                    newWork.setErrorMsg("Category error : " + e.getMessage());
+                    newWork.setCompleted();
+                } catch (final Exception e) {
+                    logger.exception("Downloading error", e);
+                    newWork.setError("IOError : " + e.getMessage());
+                } finally {
 					close();
 
-					logger.exception("Downloading error", e);
-
-					if (newWork != null) {
-						newWork.setError("IOError : " + e.getMessage());
+					if ((newWork != null) && (newWork.isCompleted() || newWork.isError())){
 						sendResult(newWork);
 					} else {
 						logger.error("Downloading error : newWork = null ?!?!");
@@ -1216,7 +1208,7 @@ public final class CommManager extends Thread {
 	URISyntaxException, InvalidKeyException, AccessControlException, XWCommException {
 
 		if (theWork == null) {
-			logger.error("uploadResults : theWork is null");
+			logger.error("CommManager#uploadResults : theWork is null");
 			return;
 		}
 
@@ -1224,8 +1216,8 @@ public final class CommManager extends Thread {
 
 		if (resultURI == null) {
 			logger.debug("uploadResults : no result to upload");
-			workSend(theWork);
-			getPoolWork().saveWork(theWork);
+//			workSend(theWork);
+//			getPoolWork().saveCompletedWork(theWork);
 			return;
 		}
 
@@ -1234,8 +1226,8 @@ public final class CommManager extends Thread {
         final DataInterface data = getData(resultURI, false);
 		final CommClient commClient = commClient(resultURI);
 		try {
-		    if(theWork.canReveal()) {
-		        logger.debug("the work can reveal " + theWork.toXml());
+		    if(theWork.isRevealed()) {
+		        logger.debug("CommManager#uploadResults : the work can reveal " + theWork.toXml());
                 final File content = commClient.getContentFile(resultURI);
                 logger.debug("CommManager#uploadResults " + content);
                 if (content.exists()) {
@@ -1245,14 +1237,20 @@ public final class CommManager extends Thread {
                     data.setShasum(theWork.getHiddenH2r());
                     commClient.send(data);
                     logger.debug("CommManager#uploadResults revealing " + data.toXml());
-                    final float updloadBandwidth = uploadData(resultURI, theWork.getMaxFileSize());
-                    theWork.setStatus(StatusEnum.COMPLETED);
-                    theWork.setUploadBandwidth(updloadBandwidth);
-                }
+                    try {
+                        final float updloadBandwidth = uploadData(resultURI, theWork.getMaxFileSize());
+                        theWork.setUploadBandwidth(updloadBandwidth);
+                    } catch (final XWCategoryException e) {
+                        logger.exception("CommManager#uploadResults", e);
+                        theWork.setErrorMsg(e.getMessage());
+                    } finally {
+                        theWork.setStatus(StatusEnum.COMPLETED);
+                    }
+	    	    }
 
                 message(false);
             } else {
-                logger.debug("the work can not reveal " + theWork.toXml());
+                logger.debug("CommManager#uploadResults : the work can not reveal " + theWork.toXml());
                 if(theWork.isContributing()) {
 
                 	// we must send data now to comply to xtremweb workflow
@@ -1261,57 +1259,9 @@ public final class CommManager extends Thread {
                 	data.setShasum(null);
                 	data.setStatus(StatusEnum.UNAVAILABLE);
 					commClient.send(data);
-					logger.debug("CommManager#uploadResults contributing " + data.toXml());
+				}
+			}
 
-                    if (theWork.getHiddenH2r() != null) {
-                        logger.debug("the work can contribute " + theWork.toXml());
-                        dumpContributionStatus(Worker.getConfig().getHost().getEthWalletAddr(),
-                                theWork.getWorkOrderId());
-
-                    TransactionStatus status = TransactionStatus.FAILURE;
-
-                     for(int tries = 0 ; tries < 2; tries++) {
-						 System.out.println("ActuatorService.getInstance().contribute(" + theWork.getWorkOrderId() + ", "
-								  + theWork.getH2h2r() + ")");
-						 status = ActuatorService.getInstance().contribute(theWork.getWorkOrderId(),
-                                theWork.getH2h2r(),
-                                BigInteger.ZERO,
-                                "0",
-                                "0");
-                        if (status == TransactionStatus.SUCCESS)
-                            break;
-                        try {
-                            logger.debug("contribute failure ; sleeping 30s " + tries);
-                            Thread.sleep(30000);
-                        } catch(final Exception e) {
-                        }
-                    }
-
-                    if (status == TransactionStatus.SUCCESS) {
-                         theWork.setContributed();
-                         Worker.getConfig().getHost().setContributed();
-                     } else {
-                         logger.error("contribute transaction error; will retry later " + theWork.getUID());
-                         dumpContributionStatus(Worker.getConfig().getHost().getEthWalletAddr(),
-                                 theWork.getWorkOrderId());
-                         sendResult(theWork);
-                        }
-
-                    } else {
-                        theWork.setError("can't contribute");
-                    }
-                }
-            }
-
-        } catch (final XWCommException e) {
-            logger.exception("CommManager#uploadResults", e);
-            theWork.setFailed(e.getMessage());
-            throw e;
-        } catch (final Exception e) {
-			logger.exception("CommManager#uploadResults", e);
-            theWork.setStatus(StatusEnum.DATAREQUEST);
-            theWork.setErrorMsg(e.getMessage());
-            throw e;
 		} finally {
 
             try {
@@ -1321,7 +1271,7 @@ public final class CommManager extends Thread {
                 logger.exception(e);
             }
 
-            getPoolWork().saveWork(theWork);
+//            getPoolWork().saveWork(theWork);
 
             if (Worker.getConfig().stopComputing()) {
                 System.err.println("XWHEP Worker (" + Version.currentVersion.full() + ") [" + new Date()
@@ -1333,13 +1283,6 @@ public final class CommManager extends Thread {
 
         }
         mileStone.println("</uploadResults>");
-	}
-
-	private void dumpContributionStatus(final String ethWalletAddr, final String workOrderId) {
-
-        final String urlStr = "http://localhost:3030/api/workorders/" +
-                workOrderId + "/contribution?worker=" + ethWalletAddr;
-        XWTools.dumpUrlContent(urlStr);
 	}
 
 	/**

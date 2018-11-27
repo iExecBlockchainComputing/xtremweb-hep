@@ -605,7 +605,7 @@ public class DateActivator extends PollingActivator {
 		c.dump();
 
 		logger.info("isActive = " + c.isActive());
-		logger.info("canStart = " + c.canStart());
+		logger.info("canBeCreated = " + c.canStart());
 		logger.info("mustSop  = " + c.mustStop());
 	}
 }

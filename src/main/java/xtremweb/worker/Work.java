@@ -104,8 +104,12 @@ public final class Work extends WorkInterface {
 
 		super(job);
 
+        contributeV = "0";
+        contributeR = "0";
+        contributeS = "0";
 		dataPackageName = null;
 		revealCalls = 0;
+		contribCalls = 0;
 		if (dir) {
 			prepareDir();
 		} else {
@@ -260,7 +264,38 @@ public final class Work extends WorkInterface {
 		return scratchDir.getAbsolutePath();
 	}
 
-	private String hiddenh2r;
+	/**
+     * This used by the SGX enclave challenge. This is optional ; default is "0"
+     */
+    private String contributeV;
+    public String getContributeV(){
+        return contributeV;
+    }
+    public void setContributeV(final String v) {
+        contributeV = v;
+    }
+    /**
+     * This used by the SGX enclave challenge. This is optional ; default is "0"
+     */
+    private String contributeR;
+    public String getContributeR(){
+        return contributeR;
+    }
+    public void setContributeR(final String r) {
+        contributeR = r;
+    }
+    /**
+     * This used by the SGX enclave challenge. This is optional ; default is "0"
+     */
+    private String contributeS;
+    public String getContributeS(){
+        return contributeS;
+    }
+    public void setContributeS(final String s) {
+        contributeS = s;
+    }
+
+    private String hiddenh2r;
 	public void setHiddenH2r(final String h2r) {
 		hiddenh2r = h2r;
 	}
@@ -269,10 +304,23 @@ public final class Work extends WorkInterface {
 	}
 
 	private int revealCalls;
-    public void incRevealCalls() {
-        revealCalls++;
-    }
-    public int getRevealCalls() {
-        return revealCalls;
-    }
+	public void incRevealCalls() {
+		revealCalls++;
+	}
+	public int getRevealCalls() {
+		return revealCalls;
+	}
+	public boolean stopTryingRevealCall() {
+		return revealCalls > 3;
+	}
+	private int contribCalls;
+	public void incContribCalls() {
+		contribCalls++;
+	}
+	public int getContribCalls() {
+		return contribCalls;
+	}
+	public boolean stopTryingContribCall() {
+		return contribCalls > 3;
+	}
 }

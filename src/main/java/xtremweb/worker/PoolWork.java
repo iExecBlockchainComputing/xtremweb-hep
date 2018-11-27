@@ -60,7 +60,7 @@ public class PoolWork {
 	 *
 	 * @since v1r2-rc0 (RPC-V)
 	 */
-	private final Hashtable<UID, Work> savingWorks;
+    private final Hashtable<UID, Work> completedWorks;
 
 	/**
 	 * This is the default constructor. This erases any old data.
@@ -70,7 +70,7 @@ public class PoolWork {
 		logger = new Logger(this);
 
 		poolWorks = new Hashtable<>();
-		savingWorks = new Hashtable<>();
+        completedWorks = new Hashtable<>();
 
 		try {
 			final File worksDir = Worker.getConfig().getWorksDir();
@@ -145,7 +145,7 @@ public class PoolWork {
 	}
 
 	/**
-	 * This stores the given work to the list of saving ones; i.e. the list of
+	 * This stores the given work to the list of completed ones; i.e. the list of
 	 * finished works which results are being saved to the coordinator This is
 	 * called when provided work computation is finished and results can then
 	 * been sent to the server.
@@ -155,19 +155,20 @@ public class PoolWork {
 	 * @see #removeWork(UID)
 	 * @since v1r2-rc0 (RPC-V)
 	 */
-	public synchronized void saveWork(final Work w) {
+	public synchronized void saveCompletedWork(final Work w) {
 
 		final UID uid = w.getUID();
 		if(uid == null) {
-			logger.error("saveWork can't find uid???");
+			logger.error("saveCompletedWork can't find uid???");
 			notifyAll();
 			return;
 		}
-		logger.debug("PoolWork::saveWork(" + uid + ") = " + w.toXml());
-		if (savingWorks.get(uid) != null) {
+		logger.debug("PoolWork::saveCompletedWork(" + uid + ") = " + w.toXml());
+		if (completedWorks.get(uid) != null) {
 			// this may happen on communication failure
 			// then, work has already been saved, and we retry to upload result
 			logger.debug(uid.toString() + " already saved");
+			Thread.currentThread().dumpStack();
 			if (poolWorks.remove(uid) != null) {
 				logger.error(uid.toString() + " still in poolWorks???");
 			}
@@ -175,69 +176,127 @@ public class PoolWork {
 			return;
 		}
 
-		savingWorks.put(uid, w);
+		completedWorks.put(uid, w);
 		if (poolWorks.remove(uid) == null) {
-			logger.error("saveWork can't remove element");
+			logger.error("saveCompletedWork can't remove element");
 		}
 		CommManager.getInstance().workRequest();
 		notifyAll();
 	}
 
 	/**
-	 * This retrieves works being saved
+	 * This retrieves completed works
 	 *
 	 * @return a vector containing the saving works
 	 * @since v1r2-rc0(RPC-V)
 	 */
-	public synchronized Hashtable<UID, Work> getSavingWork() {
-		final Hashtable<UID, Work> ret = savingWorks;
-		notifyAll();
-		return ret;
-	}
+    public synchronized Hashtable<UID, Work> getCompletedWorks() {
+        return completedWorks;
+    }
+
+    /**
+     * This retrieves all works
+     *
+     * @return a vector containing the saving being computed
+     * @since v1r2-rc0(RPC-V)
+     */
+    public synchronized Hashtable<UID, Work> getAllRunningWorks() {
+        return getWorks(true);
+    }
+    /**
+     * This retrieves alive works
+     *
+     * @return a vector containing the saving being computed
+     * @since v1r2-rc0(RPC-V)
+     */
+    public synchronized Hashtable<UID, Work> getAliveWorks() {
+        return getWorks(false);
+    }
+
+    /**
+     * This retrieves works
+     * @param anything if false this does not retrieve non alive works
+     * @return
+     */
+    public synchronized Hashtable<UID, Work> getWorks(final boolean anything) {
+
+        if(anything) {
+            logger.debug("PoolWork::getWorks() works size = " + poolWorks.size());
+            return poolWorks;
+        }
+
+        final Hashtable<UID, Work> worksAlive = new Hashtable<>();
+        final Enumeration<Work> poolWorksEnum = poolWorks.elements();
+
+        while (poolWorksEnum.hasMoreElements()) {
+            final Work w = poolWorksEnum.nextElement();
+            logger.debug("PoolWork::getAliveWorks() running work " + w.getUID() + " is " + w.getStatus());
+            if (w.isAlive()) {
+                worksAlive.put(w.getUID(), w);
+            }
+        }
+
+        logger.debug("PoolWork::getWorks() alive works size = " + worksAlive.size());
+        return worksAlive;
+    }
 
 	/**
-	 * This retrieves a work being saved
+	 * This retrieves a completed work
 	 *
 	 * @param uid
 	 *            is the task UID to retrieve
 	 * @return the saving work or null if not found
 	 * @since v1r2-rc0(RPC-V)
 	 */
-	public synchronized Work getSavingWork(final UID uid) {
+	public synchronized Work getCompletedWork(final UID uid) {
 
 		if(uid == null)
 			return null;
 
-		final Work ret = savingWorks.get(uid);
-		logger.debug("PoolWork::getSavingWork() : task " + (ret == null ? "not" : "") + " found " + uid);
+		final Work ret = completedWorks.get(uid);
+		logger.debug("PoolWork::getCompletedWorks() : work " + (ret == null ? "not" : "") + " found " + uid);
 		notifyAll();
 		return ret;
 	}
 
 	/**
-	 * This saves a revealed work so that its result can be sent
+	 * This saves a non completed work
 	 *
 	 * @param w is the revealed work
 	 * @since 13.1.0
 	 */
-	public synchronized void saveRevealedWork(final Work w) {
+	public synchronized void saveWorkUnderProcess(final Work w) {
 
 		final UID uid = w.getUID();
 		if(uid == null) {
-			logger.error("saveRevealedWork can't find uid???");
+			logger.error("saveWorkUnderProcess can't find uid???");
 			notifyAll();
 			return;
 		}
 
-		final Work ret = savingWorks.remove(uid);
-		logger.debug("PoolWork::saveRevealedWork(" + uid + ") : work " + (ret == null ? "not" : "") + " found in savings");
-
-        logger.debug("PoolWork::saveRevealedWork(" + uid + ") = " + w.toXml());
-
-		savingWorks.put(uid, w);
+		final Work ret = poolWorks.remove(uid);
+		logger.debug("PoolWork::saveWorkUnderProcess(" + uid + ") : work " + (ret == null ? "not" : "") + " found in savings");
+		logger.debug("PoolWork::saveWorkUnderProcess(" + uid + ") = " + w.toXml());
+        poolWorks.put(uid, w);
 		notifyAll();
 	}
-	/**
+
+    public synchronized Hashtable<UID, Work> getWorksUnderProcess() {
+        return poolWorks;
+    }
+
+    public synchronized Work getWorkUnderProcess(final UID uid) {
+
+        if(uid == null)
+            return null;
+
+        final Work ret = poolWorks.get(uid);
+        logger.debug("PoolWork::getWorkUnderProcess() : work " + (ret == null ? "not" : "") + " found " + uid);
+        notifyAll();
+        return ret;
+    }
+
+    /**
 	 * This removes provided work from saving list. This is called when work
 	 * results have been successfully saved by the server, or when the work is
 	 * in unrecoverable error state.
@@ -246,8 +305,9 @@ public class PoolWork {
 	 */
 	public synchronized void removeWork(final UID uid) {
 
-		final Work ret = savingWorks.remove(uid);
+		final Work ret = completedWorks.remove(uid);
 		logger.debug("PoolWork::removeWork(" + uid + ") : work " + (ret == null ? "not" : "") + " found in savings");
+        Thread.currentThread().dumpStack();
 
 		if (ret != null) {
 			ret.clean(false);
@@ -265,8 +325,9 @@ public class PoolWork {
 	 */
 	public synchronized void removeKilledWork(final UID uid) {
 
-		Work ret = savingWorks.remove(uid);
+		Work ret = completedWorks.remove(uid);
 		logger.debug("PoolWork::removeWork(" + uid + ") : work " + (ret == null ? "not" : "") + " found in savings");
+        Thread.currentThread().dumpStack();
 		//
 		// maybe job has been killed then it has not been saved
 		//
@@ -279,29 +340,6 @@ public class PoolWork {
 	}
 
 	/**
-	 * This retrieves works being computed
-	 *
-	 * @return a vector containing the saving being computed
-	 * @since v1r2-rc0(RPC-V)
-	 */
-	public synchronized Vector<Work> getAliveWork() {
-		Vector<Work> worksAlive = new Vector<Work>();
-		final Enumeration<Work> theEnumeration = poolWorks.elements();
-
-		while (theEnumeration.hasMoreElements()) {
-			final Work w = theEnumeration.nextElement();
-			logger.debug("PoolWork::getAliveWork() w.getResult() = " + w.getResult());
-			logger.debug("PoolWork::getAliveWork() " + w.getUID() + " is " + w.getStatus().toString());
-			if (w.isAlive()) {
-				worksAlive.addElement(w);
-			}
-		}
-
-		logger.debug("PoolWork::getAliveWork()  worksAlive size = " + worksAlive.size());
-		return worksAlive;
-	}
-
-	/**
 	 * This retrieves a work being computing
 	 *
 	 * @param uid
@@ -309,9 +347,9 @@ public class PoolWork {
 	 * @return the saving work or null if not found
 	 * @since 8.2.0
 	 */
-	public synchronized Work getAliveWork(final UID uid) {
-		return poolWorks.get(uid);
-	}
+//	public synchronized Work getAliveWorks(final UID uid) {
+//		return poolWorks.get(uid);
+//	}
 
 	/**
 	 * This retrieves the next available work to compute This returns only when

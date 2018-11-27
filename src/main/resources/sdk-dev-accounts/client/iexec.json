@@ -1,0 +1,27 @@
+{
+  "description": "My iExec ressource description",
+  "license": "MIT",
+  "author": "?",
+  "social": {
+    "website": "?",
+    "github": "?"
+  },
+  "logo": "logo.png",
+  "app": {
+    "name": "vanityeth",
+    "price": 1,
+    "params": {
+      "type": "DOCKER",
+      "envvars": "XWDOCKERIMAGE=iexechub/vanityeth"
+    }
+  },
+  "order": {
+    "buy": {
+      "app": "0x88f29bef874957012ed55fd4968c296c9e4ec69e",
+      "dataset": "0x0000000000000000000000000000000000000000",
+      "params": {
+        "cmdline": "ace"
+      }
+    }
+  }
+}

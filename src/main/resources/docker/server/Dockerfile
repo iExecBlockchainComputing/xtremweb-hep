@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM iexechub/ubuntu:16.04
 EXPOSE 4321 4322 4323 443
 
 COPY conf/xtremweb.server.conf /iexec/conf/
@@ -11,8 +11,6 @@ COPY bin /iexec/bin/
 ADD docker/server/start_server.sh /iexec/start_server.sh
 
 WORKDIR /iexec
-
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -y openjdk-8-jdk zip unzip wget make iputils-ping
 
 RUN chmod +x /iexec/start_server.sh
 

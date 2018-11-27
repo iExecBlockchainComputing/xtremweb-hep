@@ -341,12 +341,14 @@ public final class UID extends XMLable {
 		logger.info("cache.get(copy) = " + cache.get(copy));
 		logger.info("org = " + org);
 		logger.info("org.hasCode = " + org.hashCode());
+        String address="0xd881fab27d8b25dcf33b4fa93ace8cacdc5aff3d";
+		logger.info("from " + address + " = " + new UID(UUID.nameUUIDFromBytes(address.getBytes()).toString()).toString());
 	}
 
 	/**
 	 * This retrieves myUid
 	 *
-	 * @return the myUid
+	 * @return myUid
 	 */
 	public static UID getMyUid() {
 		return myUid;

@@ -270,7 +270,7 @@ public class DBConnPoolThread extends Thread {
 	 *            is the row type
 	 * @return a vector of rows found in DB, or null if no row found
 	 */
-	protected final synchronized <T extends Table> Collection<T> executeQuery(final String query, final T row)
+	public final synchronized <T extends Table> Collection<T> executeQuery(final String query, final T row)
 			throws IOException {
 		return executeQuery(null, query, row);
 	}

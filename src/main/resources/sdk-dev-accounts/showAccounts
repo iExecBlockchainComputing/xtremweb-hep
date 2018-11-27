@@ -1,0 +1,15 @@
+#!/bin/sh
+
+scriptDir=$(dirname $0)
+
+cd $scriptDir
+
+for dir in client scheduler worker1 worker2 worker3 worker4 worker5; do
+	echo "****  "$dir"  ****"
+	echo
+	cd ./$dir
+	iexec wallet show
+	iexec account show
+	echo 
+	cd ..
+done

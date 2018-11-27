@@ -40,28 +40,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.iexec.common.model.ContributionStatusEnum;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 
-import xtremweb.common.DataInterface;
-import xtremweb.common.HostInterface;
-import xtremweb.common.Logger;
-import xtremweb.common.MileStone;
-import xtremweb.common.StatusEnum;
-import xtremweb.common.TaskInterface;
-import xtremweb.common.UID;
-import xtremweb.common.UserInterface;
-import xtremweb.common.UserRightEnum;
-import xtremweb.common.Version;
-import xtremweb.common.WorkInterface;
-import xtremweb.common.WorkerParameters;
-import xtremweb.common.XMLHashtable;
-import xtremweb.common.XMLValue;
-import xtremweb.common.XMLVector;
-import xtremweb.common.XMLable;
-import xtremweb.common.XWConfigurator;
-import xtremweb.common.XWPropertyDefs;
-import xtremweb.common.XWReturnCode;
+import xtremweb.common.*;
 import xtremweb.communications.*;
 
 /**
@@ -701,26 +684,28 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 		boolean keepWorking = false;
 		final UID jobUID = ((XMLRPCCommandWorkAliveByUID) command).getURI().getUID();
 
-		mileStone(command, "<workAlive host=" + (_host != null ? _host.getName() : "null") + ">");
+		mileStone(command, "<workAlivebyuid host='" + (_host != null ? _host.getName() : "null")
+				+ "' uid='" + jobUID + "'>");
 		final UserInterface theClient = DBInterface.getInstance().checkClient(command, UserRightEnum.GETJOB);
 
 		_host.setIPAddr(command.getRemoteIP());
 		final HostInterface theHost = DBInterface.getInstance().hostRegister(theClient, _host);
 
 		if (theHost == null) {
-			throw new IOException("workAlive : can't find host ");
+			throw new IOException("workAlivebyuid : can't find host ");
 		}
 		final boolean isActive = _host.isActive();
 
-		logger.debug("retrieving current computing job");
+		logger.debug("workAlivebyuid : retrieving current computing job " + jobUID);
 		// theHost = DBInterface.getInstance().host(_host.getUID());
 		final WorkInterface theWork = DBInterface.getInstance().work(theClient, jobUID);
-		final TaskInterface theTask = DBInterface.getInstance().task(theWork, theHost);
+		final TaskInterface theTask = DBInterface.getInstance().computingTask(theWork, theHost);
 
 		if (theTask != null) {
 			if (!isActive) {
 				theWork.unlockWork();
 				theTask.setError();
+				theTask.setErrorMsg("host is inactive");
 				keepWorking = false;
 			} else {
 				try {
@@ -730,17 +715,18 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 				}
 			}
 			theTask.update();
-		} else {
-			logger.finest("work is not in the dispatcher pool. Send back 'abort'");
+		}
+		else {
+			logger.finest("workAlivebyuid: work is not in the dispatcher pool. Send back 'abort'");
 			keepWorking = false;
 		}
 
 		if (!keepWorking) {
-			warn(command, "workAlive(" + _host.getName() + "," + jobUID + ") stopping!");
+			warn(command, "workAlivebyuid(" + _host.getName() + "," + jobUID + ") stopping!");
 		}
 		final Hashtable result = new Hashtable();
 		result.put("keepWorking", new Boolean(keepWorking));
-		mileStone(command, "</workAlive>");
+		mileStone(command, "<keepworking>" + keepWorking + "</keepworking></workAlivebyuid>");
 		return result;
 
 	}
@@ -832,18 +818,29 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 						if (workUID == null) {
 							continue;
 						}
-						final WorkInterface w = DBInterface.getInstance().work(theClient, workUID);
-						if (w == null) {
+						final WorkInterface theWork = DBInterface.getInstance().work(theClient, workUID);
+						if (theWork == null) {
 							// we don't know that job, remove result on worker
 							// side
 							// (maybe it has been removed by user)
 							debug(command, "workAlive (" + _host.getName() + ") : worker must stop " + workUID);
 							finishedTasks.add(workUID);
 						} else {
-							final URI resultURI = w.getResult();
-							final StatusEnum workStatus = w.getStatus();
+							final URI resultURI = theWork.getResult();
+							final StatusEnum workStatus = theWork.getStatus();
 
-							debug(command, "workAlive job = " + w.toXml());
+							debug(command, "workAlive job = " + theWork.toXml());
+
+							final TaskInterface theTask = DBInterface.getInstance().computingTask(theWork, theHost);
+							try {
+								final StatusEnum status = theTask.getStatus();
+								theTask.setAlive(_host.getUID());
+								theTask.setStatus(status);
+								theTask.update();
+							} catch (final Exception e) {
+								error(command, e);
+							}
+
 							if ((resultURI != null) && (resultURI.isXtremWeb())) {
 								final UID resultUID = resultURI.getUID();
 								final DataInterface workResult = DBInterface.getInstance().data(resultUID);
@@ -858,16 +855,43 @@ public abstract class CommHandler extends Thread implements xtremweb.communicati
 								}
 							}
 
+							final ContributionStatusEnum contributionStatus =
+									XWTools.workerContributionStatus(new EthereumWallet(theHost.getEthWalletAddr()),
+											theWork.getWorkOrderId());
+							debug(command, "workAlive (" + _host.getName() + ") : " + workUID + "- " + workStatus + " ; " + contributionStatus);
+/*
+        logger.debug("ThreadAlive()::checkJob() : Contribution status : " + contributionStatus);
+
+        if(contributionStatus != null) {
+
+            switch (contributionStatus) {
+*/
 							switch (workStatus) {
+							case CONTRIBUTED:
+							case CONTRIBUTING:
+
+								if (theTask == null) {
+									break;
+								}
+
+								if (!isActive) {
+									theWork.unlockWork();
+                                    theWork.update();
+									theTask.setError();
+									theTask.setErrorMsg("host is inactive");
+                                    theTask.update();
+								}
+                                revealingTasks.add(workUID);
+								break;
 							case ERROR:
 							case COMPLETED:
 								debug(command, "workAlive (" + _host.getName() + ") : worker can delete " + resultURI);
 								finishedTasks.add(workUID);
 								break;
                             case REVEALING:
-								debug(command, "workAlive (" + _host.getName() + ") : worker must reveal " + resultURI);
-								revealingTasks.add(workUID);
-								break;
+								debug(command, "workAlive (" + _host.getName() + ") : worker is revealing " + workUID);
+                                revealingTasks.add(workUID);
+                                break;
 							}
 						}
 					}

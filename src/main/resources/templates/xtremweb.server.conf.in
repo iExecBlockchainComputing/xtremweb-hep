@@ -118,6 +118,11 @@ DELEGATEDREGISTRATION=true
 #
 BLOCKCHAINETHENABLED=true
 
+
+# CHANGE THIS VALUE TO INFURA NODE IN PRODUCTION
+# https://rinkeby.infura.io/v3/a48fbf3d504c45128e62ef2a10af8b79
+WORKERETHNODEADDRESS=http://localhost:8545
+
 #
 # All : ethereum wallet path
 # Property type : string
@@ -528,13 +533,13 @@ USERCERTDIR=
 # This is the max simultaneous incoming connections
 # Default is 200
 #
-#MAXCONNECTIONS=200
+MAXCONNECTIONS=1000
 
 #
 # This is the max simultaneous connections to DB
 # Default is 60
 #
-#DBCONNECTIONS=60
+DBCONNECTIONS=400
 
 #
 # This is a very special case and should usually not be used

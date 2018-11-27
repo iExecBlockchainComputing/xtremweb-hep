@@ -60,6 +60,7 @@ import javax.servlet.http.HttpSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iexec.common.ethereum.CommonConfiguration;
 import com.iexec.common.ethereum.IexecConfigurationService;
+import com.iexec.common.ethereum.NodeConfig;
 import com.iexec.common.workerpool.WorkerPoolConfig;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
@@ -765,7 +766,19 @@ public class HTTPHandler extends xtremweb.dispatcher.CommHandler {
                 final StringBuilder msg = new StringBuilder();
 
 				ObjectMapper mapper = new ObjectMapper();
-				msg.append(mapper.writeValueAsString(IexecConfigurationService.getInstance().getCommonConfiguration()));
+				CommonConfiguration schedulerCommonConfiguration = IexecConfigurationService.getInstance().getCommonConfiguration();
+
+				//propose a dedicated ethereum node for workers
+				CommonConfiguration workerCommonConfiguration = new CommonConfiguration();
+				workerCommonConfiguration.setContractConfig(schedulerCommonConfiguration.getContractConfig());
+				NodeConfig workerNodeConfig = new NodeConfig();
+				workerNodeConfig.setClientAddress(getConfig().getWorkerEthNodeAddress());
+				workerNodeConfig.setGasLimit(schedulerCommonConfiguration.getNodeConfig().getGasLimit());
+				workerNodeConfig.setGasPrice(schedulerCommonConfiguration.getNodeConfig().getGasPrice());
+				workerNodeConfig.setStartBlock(schedulerCommonConfiguration.getNodeConfig().getStartBlock());
+				workerCommonConfiguration.setNodeConfig(workerNodeConfig);
+
+				msg.append(mapper.writeValueAsString(workerCommonConfiguration));
                 response.setContentType(TEXTPLAIN + ";charset=UTF-8");
                 response.setHeader(CONTENTLENGTHLABEL, "" + msg.length());
                 writer.println(msg);

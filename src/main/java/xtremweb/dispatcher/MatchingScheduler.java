@@ -25,9 +25,7 @@ package xtremweb.dispatcher;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Vector;
 
 import com.iexec.common.model.MarketOrderModel;
 import com.iexec.scheduler.marketplace.MarketplaceService;
@@ -118,56 +116,75 @@ public class MatchingScheduler extends SimpleScheduler {
 				}
 			}
 
-			getLogger().debug("host      = " + theHost.toXml());
-			getLogger().debug("criterias = " + moreCriterias);
-			System.out.println("host      = " + theHost.toXml());
-			System.out.println("criterias = " + moreCriterias);
-			System.out.println("full criterias = " + workRequest.getFullCriterias());
 			theWork = db.selectOne(workSelection, moreCriterias.toString());
-			System.out.println(theHost.getUID() + "/" + theHost.getEthWalletAddr() + " found work = " + (theWork == null ? "none" : theWork.toXml()));
-			if (theWork != null) {
-				final AppInterface theApp = db.app(user, theWork.getApplication());
-				final UserInterface theWorkOwner = db.user(theWork.getOwner());
-				final MarketOrderInterface marketOrder = db.marketOrder(theWork.getMarketOrderUid());
-				theApp.decPendingJobs();
-				theApp.incRunningJobs();
-				theWorkOwner.decPendingJobs();
-				theWorkOwner.incRunningJobs();
-				theHost.incRunningJobs();
-				theHost.setRunning();
-				theTask = new TaskInterface(theWork);
-				theWork.setRunning();
-				theTask.setRunningBy(theHost.getUID());
-				if(marketOrder != null) {
-					marketOrder.setRunning(theHost);
-                    final MarketOrderModel marketOrderModel = MarketplaceService.getInstance().getMarketOrderModel(BigInteger.valueOf(marketOrder.getMarketOrderIdx()));
-					if(marketOrderModel != null) {
-						theTask.setPrice(marketOrderModel.getValue().longValue());
-					} else {
-					    marketOrder.setStatus(StatusEnum.ERROR);
-					    theWork.setError("can't find market order model from idx " + marketOrder.getMarketOrderIdx());
-					    theTask.setError();
-					    theApp.decRunningJobs();
-					    theWorkOwner.decRunningJobs();
-					    theHost.decRunningJobs();
-					    theHost.leaveMarketOrder(marketOrder);
-					    logger.warn("can't find market order model from idx " + marketOrder.getMarketOrderIdx());
-                    }
-				}
-				//
-				// 20 juin 2011
-				// We must first update work, otherwise scheduler may return
-				// the same work several times.
-				// Then we can update all others
-				//
-				DBConnPoolThread.getInstance().update(theWork, null, false);
+			if (theWork == null) {
+                logger.debug(theHost.getUID() + "/" + theHost.getEthWalletAddr() + " found no work");
+			    return null;
+            }
 
-                marketOrder.update();
-                theHost.update();
-				theTask.update();
-				theApp.update();
-				theWorkOwner.update();
-			}
+            getLogger().debug("host      = " + theHost.toXml());
+            final MarketOrderInterface marketOrder = db.marketOrder(theWork.getMarketOrderUid());
+
+            logger.debug(theHost.getUID() + " : test if canContribute to " +
+                    " theWork.getMarketOrderUid() = " + theWork.getMarketOrderUid() + " ;" +
+                    " theWork.getExpectedHost() = " + theWork.getExpectedHost());
+            if((theWork.getMarketOrderUid() != null)
+                    && (theWork.getExpectedHost() == null)) {
+                if (theHost.canContribute(marketOrder)) {
+                    // to ensure we don't "crossrun" within the market order
+                    // this may happen if work has been rescheduled
+                    logger.debug(theHost.getUID() + "/" + theHost.getEthWalletAddr() + " can contribute to " + theWork.toXml());
+                    theWork.setExpectedHost(theHost.getUID());
+                }
+                else {
+                    logger.debug(theHost.getUID() + "/" + theHost.getEthWalletAddr() + " cannot contribute to " + theWork.toXml());
+                    return null;
+                }
+            }
+
+            logger.debug(theHost.getUID() + "/" + theHost.getEthWalletAddr() + " found work = " + theWork.toXml());
+
+            final AppInterface theApp = db.app(user, theWork.getApplication());
+            final UserInterface theWorkOwner = db.user(theWork.getOwner());
+            theApp.decPendingJobs();
+            theApp.incRunningJobs();
+            theWorkOwner.decPendingJobs();
+            theWorkOwner.incRunningJobs();
+            theHost.incRunningJobs();
+            theHost.setRunning();
+            theTask = new TaskInterface(theWork);
+            theWork.setRunning();
+            theTask.setRunningBy(theHost.getUID());
+            if(marketOrder != null) {
+                marketOrder.setRunning(theHost);
+                final MarketOrderModel marketOrderModel = MarketplaceService.getInstance().getMarketOrderModel(BigInteger.valueOf(marketOrder.getMarketOrderIdx()));
+                if(marketOrderModel != null) {
+                    theTask.setPrice(marketOrderModel.getValue().longValue());
+                } else {
+                    theWork.setError("can't find market order model from idx " + marketOrder.getMarketOrderIdx());
+                    theTask.setError();
+                    theApp.decRunningJobs();
+                    theWorkOwner.decRunningJobs();
+                    theHost.decRunningJobs();
+                    theHost.leaveMarketOrder(marketOrder);
+                    logger.warn("can't find market order model from idx " + marketOrder.getMarketOrderIdx());
+                }
+            }
+            //
+            // 20 juin 2011
+            // We must first update work, otherwise scheduler may return
+            // the same work several times.
+            // Then we can update all others
+            //
+            DBConnPoolThread.getInstance().update(theWork, null, false);
+
+            marketOrder.update();
+            theHost.update();
+            theWork.update();
+            theTask.update();
+            theApp.update();
+            theWorkOwner.update();
+
 		} catch (final Exception e) {
 			getLogger().exception(e);
 			ioe = new IOException(e.toString());

@@ -159,7 +159,7 @@ public abstract class Table extends Type {
 	public final boolean setErrorMsg(final String v) {
 		String val = v;
 		if(val != null) {
-			val = val.replaceAll("[\\n\\s\'\"]+", "");
+			val = val.replaceAll("[\\n\'\"]+", "");
 			val = val.replaceAll("&amp;", "&");
 			val = val.replaceAll("&", "&amp;");
 		}
@@ -401,7 +401,7 @@ public abstract class Table extends Type {
 	 * @see #update(boolean)
 	 */
 	public void update() throws IOException {
-		update(true);
+		update(false);
 	}
 
 	/**

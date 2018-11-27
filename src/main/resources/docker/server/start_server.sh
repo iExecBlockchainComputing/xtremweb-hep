@@ -31,6 +31,9 @@ replace_predefined_var_in_conf WORKERPASSWORD
 replace_predefined_var_in_conf WORKERUID
 replace_predefined_var_in_conf LOGGERLEVEL
 replace_predefined_var_in_conf BLOCKCHAINETHENABLED
+replace_predefined_var_in_conf WORKERETHNODEADDRESS
+replace_predefined_var_in_conf MAXCONNECTIONS
+replace_predefined_var_in_conf DBCONNECTIONS
 
 
 iexecSchedulerYmlFile=/iexec/conf/iexec-scheduler.yml
@@ -41,6 +44,10 @@ sed -i "s/clientAddress:.*/clientAddress: $ETHNODE/g"               $iexecSchedu
 sed -i "s/rlcAddress:.*/rlcAddress: $RLCCONTRACT/g"                 $iexecSchedulerYmlFile
 sed -i "s/iexecHubAddress:.*/iexecHubAddress: $IEXECHUBCONTRACT/g"  $iexecSchedulerYmlFile
 sed -i "s/address:.*/address: $WORKERPOOLADDRESS/g"  				$iexecSchedulerYmlFile
+
+sed -i "s/subscriptionMinimumStakePolicy:.*/subscriptionMinimumStakePolicy: $SUBSCRIPTION_MINIMIM_STAKE_POLICY/g"  	$iexecSchedulerYmlFile
+sed -i "s/stakeRatioPolicy:.*/stakeRatioPolicy: $STAKE_RATIO_POLICY/g"  											$iexecSchedulerYmlFile
+sed -i "s/schedulerRewardRatioPolicy:.*/schedulerRewardRatioPolicy: $SCHEDULER_REWARD_RATIO_POLICY/g"  				$iexecSchedulerYmlFile
 
 replace_commented_var_in_conf () {
   varName=$1;

@@ -13,6 +13,7 @@ project.ext{
     doc = res + '/doc'
     docker = res + '/docker'
     wallet = res + '/wallet'
+    sdkDevAccounts = res + '/sdk-dev-accounts'
     installers = res + '/installers'
     misc = res + '/misc'
     scripts = res + '/scripts'

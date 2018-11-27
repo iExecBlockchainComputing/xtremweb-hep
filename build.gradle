@@ -171,6 +171,10 @@ task copyMiscToDist(type: Copy) {
         from wallet
     }
 
+    into("/sdk-dev-accounts") {
+        from sdkDevAccounts
+    }
+
     into("/lib") {
         from(build + '/libs')
         include('xtremweb-' + version + '.jar')

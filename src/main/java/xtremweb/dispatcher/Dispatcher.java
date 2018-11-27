@@ -189,6 +189,37 @@ public class Dispatcher {
             e.printStackTrace();
         }
 
+        if (config.getBoolean(BLOCKCHAINETHENABLED) == true) {
+            try {
+                IexecSchedulerLibrary.initialize(config.getConfigFile().getParentFile().getAbsolutePath() + "/iexec-scheduler.yml");
+                boolean ethNodeRunning = Web3jService.getInstance().getWeb3j().web3ClientVersion().send().getWeb3ClientVersion() != null;
+                if (ethNodeRunning) {
+                    SchedulerPocoWatcherImpl schedulerPocoWatcher = new SchedulerPocoWatcherImpl();
+                } else {
+                    throw new IOException("Unable to connect to ETH node");
+                }
+            } catch (final Exception e) {
+                logger.exception("Can't access to blockchain services", e);
+            }
+
+            final ActuatorService actuatorService = ActuatorService.getInstance();
+            final List<IexecHub.CreateCategoryEventResponse> categories =
+                    actuatorService != null ?
+                            actuatorService.getCategories() :
+                            null;
+            if (categories != null) {
+                for (final Iterator<IexecHub.CreateCategoryEventResponse> iter = categories.iterator(); iter.hasNext(); ) {
+                    try {
+                        final IexecHub.CreateCategoryEventResponse category = iter.next();
+                        logger.debug(category.catid + " " + category.name);
+                        db.insertCategory(category);
+                    } catch (final Exception e) {
+                        logger.warn("Unable to start service : " + e);
+                    }
+                }
+            }
+        }
+
         tset = new HashTaskSet();
         try {
             setScheduler(
@@ -293,37 +324,6 @@ public class Dispatcher {
                     logger.warn("Unable to start service : " + e);
                 }
                 db.updateAppsPool();
-            }
-        }
-
-        if (config.getBoolean(BLOCKCHAINETHENABLED) == true) {
-            try {
-                IexecSchedulerLibrary.initialize(config.getConfigFile().getParentFile().getAbsolutePath() + "/iexec-scheduler.yml");
-                boolean ethNodeRunning = Web3jService.getInstance().getWeb3j().web3ClientVersion().send().getWeb3ClientVersion() != null;
-                if (ethNodeRunning) {
-                    SchedulerPocoWatcherImpl schedulerPocoWatcher = new SchedulerPocoWatcherImpl();
-                } else {
-                    throw new IOException("Unable to connect to ETH node");
-                }
-            } catch (final Exception e) {
-                logger.exception("Can't access to blockchain services", e);
-            }
-
-            final ActuatorService actuatorService = ActuatorService.getInstance();
-            final List<IexecHub.CreateCategoryEventResponse> categories =
-                    actuatorService != null ?
-                            actuatorService.getCategories() :
-                            null;
-            if (categories != null) {
-                for (final Iterator<IexecHub.CreateCategoryEventResponse> iter = categories.iterator(); iter.hasNext(); ) {
-                    try {
-                        final IexecHub.CreateCategoryEventResponse category = iter.next();
-                        logger.debug(category.catid + " " + category.name);
-                        db.insertCategory(category);
-                    } catch (final Exception e) {
-                        logger.warn("Unable to start service : " + e);
-                    }
-                }
             }
         }
 

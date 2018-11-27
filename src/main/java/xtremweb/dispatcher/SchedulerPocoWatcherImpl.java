@@ -4,9 +4,7 @@ import com.iexec.common.contracts.generated.WorkerPool;
 import com.iexec.common.ethereum.IexecConfigurationService;
 import com.iexec.common.ethereum.TransactionStatus;
 import com.iexec.common.ethereum.Web3jService;
-import com.iexec.common.model.AppModel;
-import com.iexec.common.model.ModelService;
-import com.iexec.common.model.WorkOrderModel;
+import com.iexec.common.model.*;
 import com.iexec.scheduler.actuator.ActuatorService;
 import com.iexec.scheduler.iexechub.IexecHubService;
 import com.iexec.scheduler.iexechub.IexecHubWatcher;
@@ -20,9 +18,13 @@ import xtremweb.communications.XMLRPCCommandSendWork;
 import xtremweb.database.SQLRequest;
 import xtremweb.security.XWAccessRights;
 
+import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatcher {
@@ -34,7 +36,6 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
 
     private UserInterface administrator = null;
 
-
     public SchedulerPocoWatcherImpl() {
         logger = new Logger(this);
         logger.info(IexecConfigurationService.getInstance().getCommonConfiguration().getContractConfig().getWorkerPoolConfig().getAddress());
@@ -43,7 +44,7 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
         } catch (IOException e) {
             e.printStackTrace();
         }
-        actuatorService.depositRlc();
+        //actuatorService.depositRlc();
         iexecHubService.registerIexecHubWatcher(this);
         workerPoolService.registerWorkerPoolWatcher(this);
 
@@ -70,14 +71,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
      * @param workerWalletAddr is the worker wallet address
      */
     @Override
-    public void onSubscription(String workerWalletAddr) {
+    public synchronized void onSubscription(String workerWalletAddr) {
 
         try {
             DBInterface.getInstance().hostContribution(new EthereumWallet(workerWalletAddr));
-
         } catch (final IOException e) {
             logger.exception(e);
         }
+        notifyAll();
     }
 
     /**
@@ -188,10 +189,31 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 return null;
             }
 
+            final UID clientGroup = appOwner.getGroup();
+
             newApp.setOwner(appOwner.getUID());
             newApp.setName(appModel.getId());
             newApp.setPrice(appModel.getPrice().longValue());
-            newApp.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | XWAccessRights.STICKYBIT_INT));
+            newApp.setAccessRights(null);
+
+            if (appOwner.getRights().lowerThan(UserRightEnum.ADVANCED_USER)) {
+                logger.debug("set app AR to USERALL " + new XWAccessRights(XWAccessRights.USERALL.value() | XWAccessRights.STICKYBIT_INT));
+                newApp.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | XWAccessRights.STICKYBIT_INT));
+            }
+            if (appOwner.getRights().doesEqual(UserRightEnum.SUPER_USER)) {
+                if (newApp.getAccessRights() == null) {
+                    logger.debug("set app AR to DEFAULT " + new XWAccessRights(XWAccessRights.DEFAULT.value()));
+                    newApp.setAccessRights(new XWAccessRights(XWAccessRights.DEFAULT.value()));
+                }
+                else {
+                    logger.debug("keeping app AR " + newApp.getAccessRights());
+                }
+            } else {
+                if ((appOwner.getRights().higherOrEquals(UserRightEnum.INSERTAPP)) && (clientGroup != null)) {
+                    logger.debug("set app AR to OWNERGROUP " + new XWAccessRights(XWAccessRights.OWNERGROUP.value()));
+                    newApp.setAccessRights(new XWAccessRights(XWAccessRights.OWNERGROUP.value()));
+                }
+            }
 
             final String appParams = appModel.getParams();
             if(appParams != null) {
@@ -200,14 +222,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                     final String envvars = XWTools.jsonValueFromString(appModel.getParams(), "envvars");
                     newApp.setEnvVars(envvars);
                 } catch (final JSONException e) {
-                    logger.warn(e.getMessage());
+                    logger.info("Can't retreive app envvars : " + e.getMessage());
                 }
                 try {
                     final String appTypeStr = XWTools.jsonValueFromString(appModel.getParams(), "type");
                     final AppTypeEnum appType = AppTypeEnum.valueOf(appTypeStr);
                     newApp.setType(appType);
                 } catch(final JSONException e) {
-                    logger.warn(e.getMessage());
+                    logger.error("Can't retreive app type : " + e.getMessage());
                     return null;
                 }
             }
@@ -249,12 +271,7 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
     private Collection<WorkInterface> getMarketOrderWorks(final  long idx) {
         try {
             final MarketOrderInterface marketOrder = getMarketOrder(idx);
-            if(marketOrder == null) {
-                throw new IOException("can't retrieve market order : " + idx);
-            }
-
             return DBInterface.getInstance().marketOrderWorks(marketOrder);
-
         } catch(final Exception e) {
             logger.exception(e);
             return null;
@@ -283,7 +300,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                     + workModel.getMarketorderIdx().longValue());
             return null;
         }
-        if(marketOrder.getWorkerPoolAddr().compareTo(workModel.getWorkerpool()) != 0) {
+        if (marketOrder.getStatus() != StatusEnum.AVAILABLE) {
+            logger.error("createWork() : market order status error : " + marketOrder.getStatus());
+            return marketOrder;
+        }
+
+        logger.debug("createWork() : " + marketOrder.toXml());
+
+        if((marketOrder.getWorkerPoolAddr() != null) && marketOrder.getWorkerPoolAddr().compareTo(workModel.getWorkerpool()) != 0) {
             logger.error("createWork() : worker pool mismatch : "
                     + marketOrder.getWorkerPoolAddr() + " != "
                     + workModel.getWorkerpool());
@@ -296,15 +320,21 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                     + workModel.getApp());
             return null;
         }
-        final AppInterface app = getApp(appModel);
-        if(app == null) {
+        final AppInterface theApp = getApp(appModel);
+        if(theApp == null) {
             logger.error ("createWork() : can't add/retrieve app " + appModel.getName());
             return null;
         }
 
-        final UserInterface requester = getUser(workModel.getRequester());
+        String user = workModel.getRequester();
+        // ISSUE add support of beneficiary param : https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/93
+        if( !workModel.getBeneficiary().equals("0x")){
+            logger.info("Beneficiary is not null replace current getRequester["+user+"] by ["+workModel.getBeneficiary()+"]");
+            user=workModel.getBeneficiary();
+        }
+        final UserInterface requester = getUser(user);
         if (requester == null) {
-            logger.error("createWork() : unkown requester " + workModel.getRequester());
+            logger.error("createWork() : unkown requester " + user);
             return null;
         }
 
@@ -313,7 +343,7 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             work.setUID(new UID());
             work.setMarketOrderUid(marketOrder.getUID());
             work.setOwner(requester.getUID());
-            work.setApplication(app.getUID());
+            work.setApplication(theApp.getUID());
             work.setDataset(workModel.getDataset());
             work.setBeneficiary(workModel.getBeneficiary());
             work.setWorkerPool(workModel.getWorkerpool());
@@ -323,25 +353,24 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 final String cmdline = XWTools.jsonValueFromString(workModel.getParams(), "cmdline");
                 work.setCmdLine(cmdline);
             } catch(final JSONException e) {
-                logger.warn(e.getMessage());
+                logger.debug(e.getMessage());
+                logger.info("Can't retreive task cmdline : " + e.getMessage());
             }
             try {
                 final String dirinuri = XWTools.jsonValueFromString(workModel.getParams(), "dirinuri");
                 work.setDirin(new URI(dirinuri));
             } catch(final JSONException e) {
-                logger.warn(e.getMessage());
+                logger.info("Can't retreive task dirinuri : " + e.getMessage());
             }
 
             work.setCallback(workModel.getCallback());
             work.setBeneficiary(workModel.getBeneficiary());
-            work.setExpectedReplications(marketOrder.getExpectedWorkers());
             work.setCategoryId(marketOrder.getCategoryId());
             work.setWorkOrderId(workOrderId);
             work.setStatus(StatusEnum.PENDING);
             work.setExpectedReplications(marketOrder.getExpectedWorkers());
-            work.setReplicaSetSize(marketOrder.getNbWorkers());
-            work.setAccessRights(new XWAccessRights(XWAccessRights.USERALL.value() | XWAccessRights.STICKYBIT_INT));
-
+            work.setReplicaSetSize(marketOrder.getExpectedWorkers());
+            work.setAccessRights(theApp.getAccessRights());
             final XMLRPCCommandSendWork cmd =
                     new XMLRPCCommandSendWork(XWTools.newURI(work.getUID()),
                             administrator,
@@ -374,8 +403,32 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
         }
 
         try {
-            final MarketOrderInterface marketOrder = createWork(workOrderId, workOrderModel);
-            logger.error("onWorkOrderActivated() : marketOrder " + marketOrder);
+            MarketOrderInterface marketOrder = null;
+
+            int createWorkTry;
+            for(createWorkTry = 0; createWorkTry < 3; createWorkTry++) {
+
+                marketOrder = createWork(workOrderId, workOrderModel);
+                if (marketOrder != null) {
+                    break;
+                }
+                try {
+                    logger.warn("onWorkOrderActivated; will retry in 3s");
+                    Thread.sleep(3000);
+                } catch (final InterruptedException e) {
+                }
+            }
+
+            if (createWorkTry >= 3) {
+                logger.error("onWorkOrderActivated() : can't create work for workOrderId " + workOrderId);
+                return;
+            }
+            if (marketOrder.getStatus() != StatusEnum.AVAILABLE) {
+                logger.error("onWorkOrderActivated() : market order status error : " + marketOrder.getStatus());
+                return;
+            }
+
+            logger.info("onWorkOrderActivated() : marketOrder " + marketOrder);
             final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
             if(workers == null) {
                 logger.warn("onWorkOrderActivated(" + workOrderId +") : can't find any host" );
@@ -385,20 +438,18 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 return;
             }
 
-            final ArrayList<String> wallets = new ArrayList();
             for(final HostInterface worker : workers ) {
                 logger.error("onWorkOrderActivated() : worker: " + worker);
                 worker.setPending();
                 worker.update();
                 if (worker.getEthWalletAddr() != null) {
-                    wallets.add(worker.getEthWalletAddr());
                     logger.debug("onWorkOrderActivated(" + workOrderId +") : allowing " + worker.getEthWalletAddr());
                 }
+                allowWorkerToContribute(workOrderId, marketOrder, worker);
             }
+
             marketOrder.setPending();
             marketOrder.update();
-
-            allowWorkersToContribute(workOrderId, marketOrder, wallets, workers);
 
         } catch(final Exception e) {
             logger.exception(e);
@@ -406,16 +457,69 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
         //        DatasetModel datasetModel = ModelService.getInstance().getDatasetModel(workOrderModel.getDataset());
     }
 
-    private synchronized void allowWorkersToContribute(final String workOrderId,
-                                           final MarketOrderInterface marketOrder,
-                                           final ArrayList<String> wallets,
-                                           final Collection<HostInterface> workers)
-                    throws IOException {
+    /**
+     * This allows one worker to contribute
+     * @param workOrderId
+     * @param marketOrder
+     * @param worker
+     */
+    public static synchronized void allowWorkerToContribute(final String workOrderId,
+                                                            final MarketOrderInterface marketOrder,
+                                                            final HostInterface worker)
+            throws IOException{
 
-        if (actuatorService.allowWorkersToContribute(workOrderId,
-                wallets,
-                "0") == TransactionStatus.FAILURE) {
-            for (final HostInterface worker : workers) {
+        if(worker.getEthWalletAddr() == null) {
+            System.out.println("allowWorkerToContribute() : no wallet");
+            return;
+        }
+        final Date now = new Date();
+        final EthereumWallet wallet = new EthereumWallet(worker.getEthWalletAddr());
+
+        final ContributionModel contribution = WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId,
+                wallet.getAddress());
+        if((contribution != null) && (contribution.getStatus() != ContributionStatusEnum.UNSET)) {
+            System.out.println("[" + now + "] allowWorkerToContribute() : " + wallet.getAddress()
+                    + " cannot contribute to " + workOrderId
+                    + " (" + contribution.getStatus() + ")");
+            return;
+        }
+
+        final ArrayList<String> wallets = new ArrayList<>();
+        wallets.add(wallet.getAddress());
+
+        final String enclageChallengeValue = Dispatcher.getConfig().getProperty(XWPropertyDefs.ENCLAVECHALLENGE);
+        final String enclaveChallenge = enclageChallengeValue == null || enclageChallengeValue.length() < 1 ?
+                "0" : enclageChallengeValue;
+
+        System.out.println("[" + now + "] allowWorkerToContribute(" + workOrderId + "," +
+                (marketOrder == null ? "null" : marketOrder.getUID()) + "," +
+                (wallet == null ? "null" : wallet.getAddress()) + "," +
+                (worker == null ? "null" : worker.getUID()) + ") " +
+                "enclaveChallenge = " + enclaveChallenge);
+
+        int contributeTry;
+        for(contributeTry = 0; contributeTry < 3; contributeTry++) {
+
+            final TransactionStatus txStatus =
+                    actuatorService.allowWorkersToContribute(workOrderId,
+                            wallets,
+                            enclaveChallenge);
+
+            if ((txStatus == null) || (txStatus == TransactionStatus.FAILURE)) {
+                try {
+                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 1s " + txStatus);
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+                }
+            }
+            else {
+                break;
+            }
+        }
+
+        if (contributeTry >= 3) {
+            final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
+            for (final HostInterface w : workers) {
                 marketOrder.removeWorker(worker);
                 worker.update();
             }
@@ -423,9 +527,21 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             marketOrder.setError();
             marketOrder.update();
         }
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
+    }
+
+    /**
+     * This allows a list of workers to contribute
+     * @param workOrderId
+     * @param marketOrder
+     * @param workers
+     */
+    public static synchronized void allowWorkersToContribute(final String workOrderId,
+                                                             final MarketOrderInterface marketOrder,
+                                                             final Collection<HostInterface> workers)
+            throws IOException{
+
+        for (final HostInterface worker : workers) {
+            allowWorkerToContribute(workOrderId,marketOrder, worker);
         }
     }
     /**
@@ -436,162 +552,309 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
     @Override
     public void onContributeEvent(WorkerPool.ContributeEventResponse contributeEventResponse) {
 
-/*
-        final WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(contributeEventResponse.woid);
-        final WorkInterface theWork = DBInterface.getInstance().work(contributeEventResponse);
-        if(theWork == null)
-            return;
+//        final WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(contributeEventResponse.woid);
+//        final WorkInterface theWork = DBInterface.getInstance().work(contributeEventResponse);
+//        if(theWork == null)
+//            return;
+//
+//        final String contributionStr = XWTools.byteArrayToHexString(contributeEventResponse.resultHash);
+//        theWork.setH2h2r(contributionStr);
+//        logger.debug("onContributeEvent() : " + theWork.toXml());
+//
+//        final MarketOrderInterface marketOrder = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
+//        final Collection<WorkInterface> works = getMarketOrderWorks(workOrderModel.getMarketorderIdx().longValue());
+//
+//        if(works == null) {
+//            logger.error("createWork() : can't retrieve any work for market order : "
+//                    + workOrderModel.getMarketorderIdx().longValue());
+//            return;
+//        }
+//
+//        try {
+//            final TaskInterface theWorkTask = DBInterface.getInstance().task(theWork);
+//            final HostInterface theHost = DBInterface.getInstance().host(theWorkTask.getHost());
+//            theHost.setContributed();
+//            theHost.update();
+//        } catch (final IOException e) {
+//            logger.exception(e);
+//        }
+//
+//        final long expectedWorkers = marketOrder.getExpectedWorkers();
+//        logger.debug("onContributeEvent() : expected workers: " + expectedWorkers);
+//        final long trust = marketOrder.getTrust();
+//        logger.debug("onContributeEvent() : trust: " + trust);
+//        final long expectedContributions = (expectedWorkers * trust / 100);
+//        logger.debug("onContributeEvent() : expectedContributions: " + expectedContributions);
+//        long totalContributions = 0L;
+//        for(final WorkInterface work : works ) {
+//            if(work.hasContributed()
+//                    && (work.getH2h2r().compareTo(contributionStr) == 0)) {
+//                totalContributions++;
+//            }
+//        }
+//        if (totalContributions >= expectedContributions) {
+//            logger.debug("onContributeEvent() : enough contributions");
+//            theWork.setRevealing();
+//            try {
+//                theWork.update();
+//            } catch (final IOException e) {
+//                logger.exception(e);
+//            }
+//            logger.debug("onContributeEvent() : work must be revealed " + theWork.toXml());
+//
+//            for (final WorkInterface contributingWork : works) {
+//
+//                logger.debug("onContributeEvent() : work must be revealed " + contributingWork.toXml());
+//                try {
+//                    contributingWork.setRevealing();
+//                    contributingWork.update();
+//
+//                    final TaskInterface contributingTask = DBInterface.getInstance().task(contributingWork);
+//                    if (contributingTask != null) {
+//                        contributingTask.setRevealing();
+//                        contributingTask.update();
+//                    }
+//                } catch (final IOException e) {
+//                    logger.exception(e);
+//                }
+//            }
+//
+//            marketOrder.setRevealing();
+//            try {
+//                marketOrder.update();
+//            } catch(final IOException e) {
+//                logger.exception(e);
+//            }
+//
+//
+//            if(actuatorService.revealConsensus(contributeEventResponse.woid, Numeric.toHexString(contributeEventResponse.resultHash)) == TransactionStatus.FAILURE) {
+//                marketOrder.setErrorMsg("transaction error : revealConsensus");
+//                marketOrder.setError();
+//                try {
+//                    marketOrder.update();
+//                } catch(final IOException e) {
+//                    logger.exception(e);
+//                }
+//            }
+//
+//        } else {
+//            logger.debug("onContributeEvent() : not enough contributions");
+//        }
 
-        final String contributionStr = XWTools.byteArrayToHexString(contributeEventResponse.resultHash);
-        theWork.setH2h2r(contributionStr);
-        logger.debug("onContributeEvent() : " + theWork.toXml());
-
-        final MarketOrderInterface marketOrder = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
-        final Collection<WorkInterface> works = getMarketOrderWorks(workOrderModel.getMarketorderIdx().longValue());
-
-        if(works == null) {
-            logger.error("createWork() : can't retrieve any work for market order : "
-                    + workOrderModel.getMarketorderIdx().longValue());
-            return;
-        }
-
-        try {
-            final TaskInterface theWorkTask = DBInterface.getInstance().task(theWork);
-            final HostInterface theHost = DBInterface.getInstance().host(theWorkTask.getHost());
-            theHost.setContributed();
-            theHost.update();
-        } catch (final IOException e) {
-            logger.exception(e);
-        }
-
-        final long expectedWorkers = marketOrder.getExpectedWorkers();
-        logger.debug("onContributeEvent() : expected workers: " + expectedWorkers);
-        final long trust = marketOrder.getTrust();
-        logger.debug("onContributeEvent() : trust: " + trust);
-        final long expectedContributions = (expectedWorkers * trust / 100);
-        logger.debug("onContributeEvent() : expectedContributions: " + expectedContributions);
-        long totalContributions = 0L;
-        for(final WorkInterface work : works ) {
-            if(work.hasContributed()
-                    && (work.getH2h2r().compareTo(contributionStr) == 0)) {
-                totalContributions++;
-            }
-        }
-        if (totalContributions >= expectedContributions) {
-            logger.debug("onContributeEvent() : enough contributions");
-            theWork.setRevealing();
-            try {
-                theWork.update();
-            } catch (final IOException e) {
-                logger.exception(e);
-            }
-            logger.debug("onContributeEvent() : work must be revealed " + theWork.toXml());
-
-            for (final WorkInterface contributingWork : works) {
-
-                logger.debug("onContributeEvent() : work must be revealed " + contributingWork.toXml());
-                try {
-                    contributingWork.setRevealing();
-                    contributingWork.update();
-
-                    final TaskInterface contributingTask = DBInterface.getInstance().task(contributingWork);
-                    if (contributingTask != null) {
-                        contributingTask.setRevealing();
-                        contributingTask.update();
-                    }
-                } catch (final IOException e) {
-                    logger.exception(e);
-                }
-            }
-
-            marketOrder.setRevealing();
-            try {
-                marketOrder.update();
-            } catch(final IOException e) {
-                logger.exception(e);
-            }
-
-
-            if(actuatorService.revealConsensus(contributeEventResponse.woid, Numeric.toHexString(contributeEventResponse.resultHash)) == TransactionStatus.FAILURE) {
-                marketOrder.setErrorMsg("transaction error : revealConsensus");
-                marketOrder.setError();
-                try {
-                    marketOrder.update();
-                } catch(final IOException e) {
-                    logger.exception(e);
-                }
-            }
-
-        } else {
-            logger.debug("onContributeEvent() : not enough contributions");
-        }
- */
     }
 
     @Override
-    public void onReveal(WorkerPool.RevealEventResponse revealEventResponse) {
-        final WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(revealEventResponse.woid);
-        final MarketOrderInterface marketOrder = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
-        final Collection<WorkInterface> works = getMarketOrderWorks(workOrderModel.getMarketorderIdx().longValue());
-        if(works == null) {
-            logger.error("can't find any work fot work order " + revealEventResponse.woid);
+    public void onReveal(final WorkerPool.RevealEventResponse revealEventResponse) {
+//        final WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(revealEventResponse.woid);
+//        final MarketOrderInterface marketOrder = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
+//        final Collection<WorkInterface> works = getMarketOrderWorks(workOrderModel.getMarketorderIdx().longValue());
+//        if (works == null) {
+//            logger.error("can't find any work fot work order " + revealEventResponse.woid);
+//            return;
+//        }
+//
+//        URI result = null;
+//
+//        int MAX_TRY = 30;
+//
+//        boolean doFinalize = true;
+//
+//        for (final WorkInterface work : works) {
+//            logger.debug("onReveal(): work: " + work.toXml());
+//            try {
+//                innerloop:
+//                for (int count = 0; count < MAX_TRY; count++) {
+//                    if (result == null) {
+//                        WorkInterface workval = DBInterface.getInstance().work(work.getUID());
+//                        logger.debug("onReveal(): loop: " + count);
+//                        TimeUnit.SECONDS.sleep(2);
+//                        result = workval.getResult();
+//                    } else {
+//                        logger.debug("onReveal(): result: " + result);
+//                        break innerloop;
+//                    }
+//                }
+//
+//                if (work.getStatus() != StatusEnum.COMPLETED) {
+//                    doFinalize = false;
+//                }
+//
+//            } catch (final IOException | InterruptedException e) {
+//                logger.exception(e);
+//            }
+//        }
+//
+//        if (!doFinalize) {
+//            logger.info("not finalizing " + marketOrder.getMarketOrderIdx() + " : missing contribution");
+//            return;
+//        }
+//        else {
+//            doFinalize(revealEventResponse.woid, result, marketOrder, works, logger);
+//        }
+    }
+
+    protected static synchronized void doFinalize(final String woid,
+                                     final URI result,
+                                     final MarketOrderInterface marketOrder,
+                                     final Collection<WorkInterface> works,
+                                     final Logger logger) {
+
+        logger.debug("doFinalize(" + woid + ", "
+                + result + ", "
+                + marketOrder.getUID() +", "
+                + (works == null ? "null" : works.size()) + ")");
+
+        if(works == null)
             return;
-        }
 
-        URI result = null;
 
-        int MAX_TRY = 30;
+        final ConsensusModel theConsensusModel = XWTools.getConsensusModel(woid);
+        final Date revealDate = new Date(theConsensusModel.getRevealDate().longValue());
+        final long winnerCount = theConsensusModel.getWinnerCount().longValue();
+        final long revealCounter = theConsensusModel.getRevealCounter().longValue();
+        final Date now = new Date();
+        logger.debug("doFinalize() : consensModel.revealCounter = " + revealCounter);
+        logger.debug("doFinalize() : consensModel.revealDate  = " + revealDate +
+                " (now is " + now + ")");
+
+        final boolean canFinalize = (revealCounter > 0 && revealDate.compareTo(now) >= 0) ||
+                (revealCounter == winnerCount);
+
+        logger.debug("doFinalize() : canFinalize = " + canFinalize);
+
+        if(!canFinalize)
+            return;
+
         for(final WorkInterface work : works ) {
-            logger.debug ("onReveal(): work: " + work);
             try {
-                final TaskInterface theWorkTask = DBInterface.getInstance().task(work);
-                innerloop:
-                for(int count = 0; count < MAX_TRY; count++){
-                    if (result == null){
-                        WorkInterface workval = DBInterface.getInstance().work(work.getUID());
-                        logger.debug ("onReveal(): loop: " + count);
-                        TimeUnit.SECONDS.sleep(2);
-                        result = workval.getResult();
-                    } else {
-                        logger.debug ("onReveal(): result: " + result);
-                        break innerloop;
-                    }
+                logger.debug("doFinalize() : " + work.getUID());
+
+                final TaskInterface theWorkTask = DBInterface.getInstance().computingTask(work);
+                if(theWorkTask == null) {
+                    logger.debug("doFinalize() can't find any running task for the work " + work.getUID());
+                    continue;
                 }
-
-
+                theWorkTask.setCompleted();
+                theWorkTask.update(false);
                 final HostInterface theHost = DBInterface.getInstance().host(theWorkTask.getHost());
+
                 if(theHost == null) {
-                    logger.error ("can't the host for the work " + work.getUID());
+                    logger.error("doFinalize() can't find the host for the work " + work.getUID());
                     continue;
                 }
 
                 marketOrder.removeWorker(theHost);
-                logger.debug("onReval " + theHost.toXml());
-                theHost.update();
+                logger.debug("doFinalize() " + theHost.toXml());
+                theHost.update(false);
 
-            } catch (final IOException | InterruptedException e) {
+            } catch (final IOException e) {
                 logger.exception(e);
             }
         }
-        marketOrder.setCompleted();
+
         try {
+            marketOrder.setFinalizing();
             marketOrder.update();
         } catch(final IOException e) {
             logger.exception(e);
         }
 
-        if(actuatorService.finalizeWork(revealEventResponse.woid,
-                "",
-                "",
+        //Valorized stdOutCallback and stdErrCallback for finalizeWork and triggerWorkOrderCallback
+        String stdOutCallback="";
+        String stdErrCallback="";
+        try {
+
+          final WorkInterface work = DBInterface.getInstance().work(woid);
+          final DataInterface data = work == null ?
+                  null :
+                  DBInterface.getInstance().data(work.getResult());
+          final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+                    ModelService.getInstance().getWorkOrderModel(woid) :
+                    null;
+          if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+                final FileInputStream finput = new FileInputStream(data.getPath());
+                final DataInputStream input = new DataInputStream(finput);
+                final StreamIO io = new StreamIO(null, input,false);
+                final boolean isStdErr =
+                         data != null &&
+                         data.getName() != null &&
+                         data.getName().compareTo(XWTools.STDERR) == 0;
+
+                 String content= io.readString();
+                 if(content != null && content.length() >250){
+                   logger.debug("cut callback content to 250 char");
+                   content=content.substring(0, 250);
+                 }
+                 if(isStdErr){
+                   stdErrCallback =content;
+                   logger.debug("valorize stdOutCallback to :"+stdErrCallback);
+                 }
+                 else{
+                   stdOutCallback=content;
+                   logger.debug("valorize stdOutCallback to :"+stdOutCallback);
+                 }
+            }
+            else{
+              logger.debug("callback is unset no stdout valorized");
+            }
+        } catch(final Exception e) {
+            logger.error("Failed to valorized  stdoutCallback and stderrCallback");
+            logger.exception(e);
+        }
+
+
+
+        if (actuatorService.finalizeWork(woid,
+                stdOutCallback,
+                stdErrCallback,
                 result == null ? "" : result.toString()) == TransactionStatus.FAILURE) {
 
-            marketOrder.setErrorMsg("transaction error : finalizeWork");
-            marketOrder.setError();
-            try {
-                marketOrder.update();
-            } catch(final IOException e) {
+            logger.debug("doFinalize() : WARN:stillFinalizing");
+            marketOrder.setErrorMsg("WARN:stillFinalizing");
+        }
+        else {
+            logger.debug("doFinalize() : INFO:finalized");
+            marketOrder.setCompleted();
+            marketOrder.setErrorMsg("INFO:finalized");
+/*
+            XWTools.STDOUT
+			XWTools.STDERR
+            data.setType(DataTypeEnum.TEXT);
+            protected WorkInterface work(final String workOrderId) {
+
+*/
+          // ISSUE add callback support https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/94
+          try {
+              final WorkInterface work = DBInterface.getInstance().work(woid);
+              final DataInterface data = work == null ?
+                    null :
+                    DBInterface.getInstance().data(work.getResult());
+              final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
+                        ModelService.getInstance().getWorkOrderModel(woid) :
+                        null;
+              if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+                  ActuatorService.getInstance().triggerWorkOrderCallback(woid,
+                              stdOutCallback,
+                              stdErrCallback,
+                              result == null ? "" : result.toString());
+
+               }
+            } catch(IOException e) {
                 logger.exception(e);
             }
+        }
+//        final long revealingDate = marketOrder.getRevealingDate().getTime();
+//        final long now = new Date().getTime();
+//        if(now - revealingDate > (Dispatcher.getConfig().getInt(XWPropertyDefs.REVEALTIMEOUTMULTIPLICATOR)
+//                * Dispatcher.getConfig().getTimeout())) {
+//            marketOrder.setError();
+//            marketOrder.setErrorMsg("ERROR:finalizationTimeOut");
+//            logger.debug("doFinalize() : ERROR:finalizationTimeOut");
+//        }
+        try {
+            marketOrder.update();
+        } catch(final IOException e) {
+            logger.exception(e);
         }
     }
 

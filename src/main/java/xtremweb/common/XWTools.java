@@ -51,11 +51,14 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import com.iexec.common.model.ConsensusModel;
+import com.iexec.common.model.ContributionModel;
+import com.iexec.common.model.ContributionStatusEnum;
+import com.iexec.scheduler.workerpool.WorkerPoolService;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import xtremweb.communications.URI;
-
 
 /**
  *
@@ -107,7 +110,14 @@ public class XWTools {
 	 * @since 13.1.0
 	 */
 	public static final String CONSENSUSFILENAME = "consensus.iexec";
-    /**
+	/**
+	 * This is the name of the file containing SGX params
+	 * @ref https://iexecproject.atlassian.net/browse/IEXPROD-406
+	 * @since 13.1.0
+	 */
+	public static final String ENCLAVESIGFILENAME = "enclaveSig.iexec";
+
+	/**
      * This is the launchscript header name
      * @since 13.0.0
      */
@@ -420,6 +430,12 @@ public class XWTools {
 
 		final SimpleDateFormat logDateFormat = new SimpleDateFormat("[dd/MMM/yyyy:HH:mm:ss Z]", Locale.US);
 		logger.fatal(logDateFormat.format(new Date()) + " Fatal : " + s);
+	}
+
+	public static void debug(final String s) {
+
+		final SimpleDateFormat logDateFormat = new SimpleDateFormat("[dd/MMM/yyyy:HH:mm:ss Z]", Locale.US);
+		logger.debug(logDateFormat.format(new Date()) + " DEBUG : " + s);
 	}
 
 	/**
@@ -1005,29 +1021,29 @@ public class XWTools {
 	}
 
 	public static String sha256CheckSum(final File data) throws NoSuchAlgorithmException, IOException
-    {
-        final MessageDigest md = MessageDigest.getInstance("SHA-256");
-        try (final FileInputStream fis = new FileInputStream(data)) {
+	{
+		final MessageDigest md = MessageDigest.getInstance("SHA-256");
+		try (final FileInputStream fis = new FileInputStream(data)) {
 
-        	final byte[] dataBytes = new byte[1024];
+			final byte[] dataBytes = new byte[1024];
 
-        	int nread = 0;
-	        while ((nread = fis.read(dataBytes)) != -1) {
-	          md.update(dataBytes, 0, nread);
-	        };
-	        final byte[] digest = md.digest();
+			int nread = 0;
+			while ((nread = fis.read(dataBytes)) != -1) {
+				md.update(dataBytes, 0, nread);
+			};
+			final byte[] digest = md.digest();
 
-	        return String.format( "%064x", new BigInteger( 1, digest ) );
-        } 
-    }
+			return String.format( "%064x", new BigInteger( 1, digest ) );
+		}
+	}
 
-    public static String sha256(final String data) throws NoSuchAlgorithmException {
-        final MessageDigest md = MessageDigest.getInstance( "SHA-256" );
-        // Change this to UTF-16 if needed
-        md.update( data.getBytes( StandardCharsets.UTF_8 ) );
-        final byte[] digest = md.digest();
-        return String.format( "%064x", new BigInteger( 1, digest ) );
-      }
+	public static String sha256(final String data) throws NoSuchAlgorithmException {
+		final MessageDigest md = MessageDigest.getInstance( "SHA-256" );
+		// Change this to UTF-16 if needed
+		md.update( data.getBytes( StandardCharsets.UTF_8 ) );
+		final byte[] digest = md.digest();
+		return String.format( "%064x", new BigInteger( 1, digest ) );
+	}
 
       public static void dumpUrlContent(final String urlStr) {
 
@@ -1084,6 +1100,39 @@ public class XWTools {
 */
 	  }
 
+	/**
+	 * This retrieves contribution status
+	 * @param ethWalletAddr is the ethereum wallet
+	 * @param workOrderId is the work order id
+	 */
+	public static ContributionStatusEnum workerContributionStatus(final EthereumWallet ethWalletAddr, final String workOrderId) {
+
+		final ContributionModel contribution = WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId,
+				ethWalletAddr.getAddress());
+
+		return contribution == null ? null : contribution.getStatus();
+	}
+
+	/**
+	 * This retrieves consensus status
+	 * @param workOrderId is the work order id
+	 */
+	public static ConsensusModel getConsensusModel(final String workOrderId) {
+		return WorkerPoolService.getInstance().getConsensusModelByWorkOrderId(workOrderId);
+	}
+
+    /**
+     * This dumps contribution status
+     * @param ethWalletAddr is the ethereum wallet
+     * @param workOrderId is the work order id
+     */
+    public static void dumpWorkerContribution(final EthereumWallet ethWalletAddr, final String workOrderId) {
+        final ContributionModel contribution = WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId,
+                ethWalletAddr.getAddress());
+        XWTools.debug("[Contribution Model ] " + contribution.toString());
+//        XWTools.debug("[Contribution Status] " + contribution.getStatus());
+    }
+
     /**
 	 * This is for testing only
 	 */
@@ -1115,8 +1164,12 @@ public class XWTools {
 			if (argv.length > 1) {
 				logger.info("sha256  (\"" + argv[1] + "\") = " + sha256(argv[1]));
 				File f = new File(argv[1]);
-				if(f.exists())
-					logger.info("sha256CheckSum  (" + argv[1] + ") = " + sha256CheckSum(f));
+				if(f.exists()) {
+					final String h2r = sha256CheckSum(f);
+					final String h2h2r = sha256(h2r);
+					logger.info("  h2r = sha256CheckSum(" + argv[1] + ") = " + h2r);
+					logger.info("h2h2r = ha256(" + h2r + ") = " + h2h2r);
+				}
 			}
 
 		} catch (final Exception e) {

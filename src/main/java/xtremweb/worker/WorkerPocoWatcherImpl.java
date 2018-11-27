@@ -22,14 +22,13 @@ public class WorkerPocoWatcherImpl implements WorkerPoolWatcher, IexecHubWatcher
     private static final Logger log = LoggerFactory.getLogger(WorkerPocoWatcherImpl.class);
 
     public WorkerPocoWatcherImpl() {
-        iexecHubService.registerIexecHubWatcher(this);
-        workerPoolService.registerWorkerPoolWatcher(this);
+        //iexecHubService.registerIexecHubWatcher(this);
+        //workerPoolService.registerWorkerPoolWatcher(this);
 
-        actuatorService.depositRlc();
+        //actuatorService.depositRlc();
 
         TransactionStatus status = TransactionStatus.FAILURE;
         while (status == TransactionStatus.FAILURE ) {
-            actuatorService.unsubscribeFromPool();
             status = actuatorService.subscribeToPool();
             log.info("Subscribing to pool " + status);
             if (status==TransactionStatus.FAILURE) {

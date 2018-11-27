@@ -2198,6 +2198,7 @@ public class WorkInterface extends Table {
      * @since 13.1.0
      */
     public void setContributed() {
+    	Thread.currentThread().dumpStack();
         if (getWorkOrderId() != null)
             setStatus(StatusEnum.CONTRIBUTED);
     }
@@ -2206,6 +2207,7 @@ public class WorkInterface extends Table {
      * @since 13.1.0
      */
     public void setContributing() {
+		Thread.currentThread().dumpStack();
         if (getWorkOrderId() != null)
             setStatus(StatusEnum.CONTRIBUTING);
     }
@@ -2227,18 +2229,35 @@ public class WorkInterface extends Table {
      * This marks this work as ready to reveal contribution, if this.getWorkOrderId() != null
      * @since 13.1.0
      */
-    public void setRevealing() {
-        if (getWorkOrderId() != null) {
+	public void setRevealing() {
+		Thread.currentThread().dumpStack();
+		if (getWorkOrderId() != null) {
 			setStatus(StatusEnum.REVEALING);
 		}
-    }
-    /**
-     * This marks this work as ready to reveal contribution, if this.getWorkOrderId() != null
-     * @since 13.1.0
-     */
-    public boolean isRevealing() {
-        return getStatus() == StatusEnum.REVEALING;
-    }
+	}
+	/**
+	 * This marks this work as revealed, if this.getWorkOrderId() != null
+	 * @since 13.1.0
+	 */
+	public void setRevealed() {
+		if (getWorkOrderId() != null) {
+			setStatus(StatusEnum.REVEALED);
+		}
+	}
+	/**
+	 * This checks if this work has revealed
+	 * @since 13.1.0
+	 */
+	public boolean isRevealed() {
+		return getStatus() == StatusEnum.REVEALED;
+	}
+	/**
+	 * This checks if this work is under reveal process
+	 * @since 13.1.0
+	 */
+	public boolean isRevealing() {
+		return getStatus() == StatusEnum.REVEALING;
+	}
     /**
      * This returns true if result can be sent to data repository
      * Result can be sent if this does not belong to any marker order
@@ -2260,6 +2279,7 @@ public class WorkInterface extends Table {
 	 * This marks this work as completed
 	 */
 	public void setCompleted() {
+        Thread.currentThread().dumpStack();
 
 		setStatus(StatusEnum.COMPLETED);
 
@@ -2276,6 +2296,7 @@ public class WorkInterface extends Table {
 	 * This marks this work as running
 	 */
 	public void setRunning() {
+		incRetry();
 		setStatus(StatusEnum.RUNNING);
 	}
 
@@ -2285,9 +2306,9 @@ public class WorkInterface extends Table {
 
 	public boolean isAlive() {
 		return isRunning()
-				|| isRevealing()
 				|| isContributing()
-				|| hasContributed();
+				|| hasContributed()
+                || isRevealing();
 	}
 
     /**

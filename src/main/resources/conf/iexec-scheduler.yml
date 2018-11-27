@@ -1,7 +1,7 @@
 walletConfig:
   path: "../wallet/wallet_scheduler.json"
   password: "whatever"
-  rlcDeposit: 100
+  rlcDeposit: 0
 commonConfiguration:
   nodeConfig:
     clientAddress: http://localhost:8545 #default
@@ -15,7 +15,34 @@ commonConfiguration:
       address:  #leave blank will create a new workerpool (else plug scheduler to existing one)
       name: "myWorkerPool"              #unchangeable after creation
       subscriptionLockStakePolicy: 0    #unchangeable after creation
-      subscriptionMinimumStakePolicy: 10
+      subscriptionMinimumStakePolicy: 0
       subscriptionMinimumScorePolicy: 0
       stakeRatioPolicy: 30
       schedulerRewardRatioPolicy: 1
+
+#
+# Next is for testing only
+# DON'T USE THAT IN PRODUCTION
+#
+
+#walletConfig:
+#  path: "../wallet/wallet_scheduler.json"
+#  password: "whatever"
+#  rlcDeposit: 0 #100
+#commonConfiguration:
+#  nodeConfig:
+#    clientAddress: http://localhost:8545 #default
+#    startBlock: 0
+#    gasPrice: 22000000000
+#    gasLimit: 4300000
+#  contractConfig:
+#    rlcAddress: 0x091233035dcb12ae5a4a4b7fb144d3c5189892e1 # this is for testing only with ; please see https://hub.docker.com/r/iexechub/geth-poco/
+#    iexecHubAddress: 0xc4e4a08bf4c6fd11028b714038846006e27d7be8 # this is for testing only with ; please see https://hub.docker.com/r/iexechub/geth-poco/
+#    workerPoolConfig:
+#      address:  #leave blank will create a new workerpool (else plug scheduler to existing one)
+#      name: "myWorkerPool"              #unchangeable after creation
+#      subscriptionLockStakePolicy: 0    #unchangeable after creation
+#      subscriptionMinimumStakePolicy: 0 #10
+#      subscriptionMinimumScorePolicy: 0
+#      stakeRatioPolicy: 0 #30
+#      schedulerRewardRatioPolicy: 1

@@ -119,6 +119,30 @@ public enum XWPropertyDefs {
 	 */
 	BLOCKCHAINETHENABLED,
 	/**
+	 *
+	 */
+	WORKERETHNODEADDRESS,
+	/**
+	 * This is the challenge public address
+	 * @since 13.1.0
+	 */
+	ENCLAVECHALLENGE,
+    IEXECWORKERPUBLICADDR,
+	/**
+	 * Worker : send a false contribution to blockchain; this is for testing only
+	 * Property type : boolean
+	 *
+	 * @since 13.1.0
+	 */
+	FAKECONTRIBUTE,
+	/**
+	 * Worker : send ERROR on reveal()
+	 * Property type : boolean
+	 *
+	 * @since 13.1.0
+	 */
+	FAKEREVEAL,
+	/**
 	 * Server, Worker : do we connect to Ethereum blockchain ?
 	 * <p>
 	 * Property type : boolean
@@ -800,6 +824,28 @@ public enum XWPropertyDefs {
 		}
 	},
 	/**
+	 * Server : how many wallclocktime before requiring more workers?
+	 * Property type : integer
+	 * Default : 10
+	 */
+	CONTRIBUTETIMEOUTMULTIPLICATOR {
+		@Override
+		public String defaultValue() {
+			return "5";
+		}
+	},
+	/**
+	 * Server : how many wallclocktime before giving up a market order?
+	 * Property type : integer
+	 * Default : 10
+	 */
+	REVEALTIMEOUTMULTIPLICATOR {
+		@Override
+		public String defaultValue() {
+			return "10";
+		}
+	},
+	/**
 	 * Worker : this tells how long to wait when there is no job to compute
 	 * If the worker receive no job within this delay, it shuts down This is
 	 * especially helpful when deploying workers on a cluster; this ensures we
@@ -1253,7 +1299,7 @@ public enum XWPropertyDefs {
 		/**
 		 * This retrieves the String representation of the default value
 		 *
-		 * @return "" + (Integer.parseInt(ALIVEPERIOD.defaultValue()) * 3)
+		 * @return "" + (Integer.parseInt(ALIVEPERIOD.defaultValue()) * 5)
 		 */
 		@Override
 		public String defaultValue() {
