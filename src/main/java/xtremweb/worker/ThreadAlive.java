@@ -181,8 +181,7 @@ public class ThreadAlive extends Thread {
         logger.debug("ThreadAlive::checkJob() : theJob = " + theJob.toXml());
 
         final ContributionStatusEnum contributionStatus =
-                XWTools.workerContributionStatus(new EthereumWallet(Worker.getConfig().getHost().getEthWalletAddr()),
-                        theJob.getWorkOrderId());
+                XWTools.workerContributionStatus(theJob.getWorkOrderId());
 
         logger.debug("ThreadAlive()::checkJob() : Contribution status : " + contributionStatus);
 

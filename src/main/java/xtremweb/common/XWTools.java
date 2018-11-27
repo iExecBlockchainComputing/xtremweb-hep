@@ -1101,7 +1101,7 @@ public class XWTools {
 	  }
 
 	/**
-	 * This retrieves contribution status
+	 * This retrieves contribution status - called by dispatcher
 	 * @param ethWalletAddr is the ethereum wallet
 	 * @param workOrderId is the work order id
 	 */
@@ -1109,6 +1109,17 @@ public class XWTools {
 
 		final ContributionModel contribution = WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId,
 				ethWalletAddr.getAddress());
+
+		return contribution == null ? null : contribution.getStatus();
+	}
+
+	/**
+	 * This retrieves contribution status - called by worker
+	 * @param workOrderId is the work order id
+	 */
+	public static ContributionStatusEnum workerContributionStatus(final String workOrderId) {
+
+		final ContributionModel contribution = com.iexec.worker.workerpool.WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId);
 
 		return contribution == null ? null : contribution.getStatus();
 	}
