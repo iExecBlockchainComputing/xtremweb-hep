@@ -1138,10 +1138,9 @@ public class XWTools {
      * @param workOrderId is the work order id
      */
     public static void dumpWorkerContribution(final EthereumWallet ethWalletAddr, final String workOrderId) {
-        final ContributionModel contribution = WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId,
-                ethWalletAddr.getAddress());
-        XWTools.debug("[Contribution Model ] " + contribution.toString());
-//        XWTools.debug("[Contribution Status] " + contribution.getStatus());
+        final ContributionModel contribution = com.iexec.worker.workerpool.WorkerPoolService.getInstance().getWorkerContributionModelByWorkOrderId(workOrderId);
+		XWTools.debug("[Contribution Model ] " + contribution.toString());
+		// XWTools.debug("[Contribution Status] " + contribution.getStatus());
     }
 
     /**
