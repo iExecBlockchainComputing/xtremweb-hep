@@ -2231,9 +2231,13 @@ public class WorkInterface extends Table {
      */
 	public void setRevealing() {
 		Thread.currentThread().dumpStack();
+
+		getLogger().debug("=========> after dumpStack()");
+		
 		if (getWorkOrderId() != null) {
 			setStatus(StatusEnum.REVEALING);
 		}
+		getLogger().debug("=========> after setStatus");		
 	}
 	/**
 	 * This marks this work as revealed, if this.getWorkOrderId() != null

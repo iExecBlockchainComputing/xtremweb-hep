@@ -28,6 +28,7 @@ import com.iexec.worker.ethereum.CommonConfigurationGetter;
 import com.iexec.worker.ethereum.IexecWorkerLibrary;
 import xtremweb.communications.CommClient;
 import xtremweb.exec.Executor;
+import xtremweb.worker.WorkerPocoWatcherImpl;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.*;

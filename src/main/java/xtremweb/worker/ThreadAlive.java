@@ -272,6 +272,7 @@ public class ThreadAlive extends Thread {
                         logger.warn("reveal transaction error; will retry later " + theJob.getUID());
                         theJob.incRevealCalls();
                         CommManager.getInstance().getPoolWork().saveWorkUnderProcess(theJob);
+                        dumpInfosByWorkOrderId(theJob.getWorkOrderId());
                     }
 
                     break;
