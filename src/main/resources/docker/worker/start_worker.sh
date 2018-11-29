@@ -1,12 +1,12 @@
 #!/bin/sh
 
 # check that the server name has been defined
-if [ -z $SCHEDULER_DOMAIN ] ; then
+if [ -z "$SCHEDULER_DOMAIN" ] ; then
 	echo "The domain name of the scheduler is missing"; exit 1
 fi
 
 # Modify etc hosts if an ip is given in parameters
-if [ ! -z $SCHEDULER_IP ] ; then
+if [ ! -z "$SCHEDULER_IP" ] ; then
 	echo "$SCHEDULER_IP $SCHEDULER_DOMAIN" >> /etc/hosts
 fi
 
@@ -33,56 +33,56 @@ sed -i "s/^SSLKEYSTORE=.*/SSLKEYSTORE=\/etc\/ssl\/certs\/java\/cacerts/g" /iexec
 sed -i "s/^SSLKEYPASSWORD=.*/SSLKEYPASSWORD=changeit/g" /iexec/conf/xtremweb.worker.conf
 
 # add the TMPDIR variable if defined
-if [ ! -z $TMPDIR ] ; then
+if [ ! -z "$TMPDIR" ] ; then
 	sed -i "s/^TMPDIR=.*//g" /iexec/conf/xtremweb.worker.conf
 	echo "TMPDIR=$TMPDIR" >> /iexec/conf/xtremweb.worker.conf
 fi
 
 # Add defined SHAREDAPPS variable if defined, otherwise use a default value
-if [ ! -z $SHAREDAPPS ] ; then
+if [ ! -z "$SHAREDAPPS" ] ; then
 	sed -i "s/^SHAREDAPPS=.*/SHAREDAPPS=$SHAREDAPPS/g" /iexec/conf/xtremweb.worker.conf
 else sed -i "s/^SHAREDAPPS=.*/SHAREDAPPS=docker/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Add SHAREDPACKAGES only if it is given in parameters
-if [ ! -z $SHAREDPACKAGES ] ; then
+if [ ! -z "$SHAREDPACKAGES" ] ; then
 	sed -i "s/^#SHAREDPACKAGES=.*/SHAREDPACKAGES=$SHAREDPACKAGES/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Set default value for Login
-if [ ! -z $LOGIN ] ; then
+if [ ! -z "$LOGIN" ] ; then
 	sed -i "s/^LOGIN=.*/LOGIN=$LOGIN/g" /iexec/conf/xtremweb.worker.conf
 else sed -i "s/^LOGIN=.*/LOGIN=vworker/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Set default value for Password
-if [ ! -z $PASSWORD ] ; then
+if [ ! -z "$PASSWORD" ] ; then
 	sed -i "s/^PASSWORD=.*/PASSWORD=$PASSWORD/g" /iexec/conf/xtremweb.worker.conf
 else sed -i "s/^PASSWORD=.*/PASSWORD=vworkerp/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Set the LoggerLevel
-if [ ! -z $LOGGERLEVEL ] ; then
+if [ ! -z "$LOGGERLEVEL" ] ; then
 	sed -i "s/^LOGGERLEVEL=.*/LOGGERLEVEL=$LOGGERLEVEL/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Set the BLOCKCHAINETHENABLED
-if [ ! -z $BLOCKCHAINETHENABLED ] ; then
+if [ ! -z "$BLOCKCHAINETHENABLED" ] ; then
 	sed -i "s/^BLOCKCHAINETHENABLED=.*/BLOCKCHAINETHENABLED=$BLOCKCHAINETHENABLED/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Set the flag for sandboxing
-if [ ! -z $SANDBOXENABLED ] ; then
+if [ ! -z "$SANDBOXENABLED" ] ; then
 	sed -i "s/^SANDBOXENABLED=.*/SANDBOXENABLED=$SANDBOXENABLED/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Change the wallet password
-if [ ! -z $WALLETPASSWORD ] ; then
+if [ ! -z "$WALLETPASSWORD" ] ; then
 	sed -i "s/^ETHWALLETPASSWORD=.*/ETHWALLETPASSWORD=$WALLETPASSWORD/g" /iexec/conf/xtremweb.worker.conf
 fi
 
 # Change the timeout
-if [ ! -z $TIMEOUT ] ; then
+if [ ! -z "$TIMEOUT" ] ; then
 	sed -i "s/^TIMEOUT=.*/TIMEOUT=$TIMEOUT/g" /iexec/conf/xtremweb.worker.conf
 fi
 
