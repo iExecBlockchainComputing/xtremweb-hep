@@ -56,7 +56,6 @@ import xtremweb.security.PEMPrivateKey;
 import xtremweb.security.PEMPublicKey;
 import xtremweb.security.X509Proxy;
 import xtremweb.worker.Worker;
-import xtremweb.worker.WorkerPocoWatcherImpl;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -287,7 +286,6 @@ public final class XWConfigurator extends Properties {
 				if (workerPoolConfig != null) {
 					_host.setWorkerPoolAddr(workerPoolConfig.getAddress());
 				}
-				WorkerPocoWatcherImpl workerPocoWatcher = new WorkerPocoWatcherImpl();
 			}
 
             logger.info("getBlockchainEthConfig() : configuration retrieved");
