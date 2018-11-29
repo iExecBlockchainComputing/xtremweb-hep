@@ -222,6 +222,8 @@ public class ThreadAlive extends Thread {
                                     theJob.getContributeR(),
                                     theJob.getContributeS());
 
+                    logger.debug("ThreadAlive() : the work contribution status " + statusContribute.toString());
+
                     if (statusContribute == TransactionStatus.SUCCESS) {
                         theJob.setContributed();
                         Worker.getConfig().getHost().setContributed();
@@ -256,6 +258,8 @@ public class ThreadAlive extends Thread {
                     final TransactionStatus statusReveal =
                             ActuatorService.getInstance().reveal(theJob.getWorkOrderId(),
                                     theJob.getHiddenH2r());
+
+                    logger.debug("ThreadAlive() : the work revelation status " + statusReveal.toString());
 
                     if ((statusReveal == TransactionStatus.SUCCESS) || (theJob.stopTryingRevealCall())
                             || Worker.getConfig().getBoolean(XWPropertyDefs.FAKEREVEAL)) {
