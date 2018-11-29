@@ -38,8 +38,6 @@ import javax.mail.MessagingException;
 import com.iexec.common.contracts.generated.IexecHub;
 import com.iexec.common.contracts.generated.WorkerPool;
 import com.iexec.common.ethereum.*;
-import com.iexec.common.model.ConsensusModel;
-import com.iexec.common.model.ContributionStatusEnum;
 import com.iexec.common.workerpool.WorkerPoolConfig;
 import com.iexec.scheduler.actuator.ActuatorService;
 import com.iexec.scheduler.marketplace.MarketplaceService;
@@ -6151,41 +6149,53 @@ public final class DBInterface {
         }
 
         if (marketOrder.canBeCreated()) {
-            final ActuatorService actuatorService = ActuatorService.getInstance();
-            marketOrder.decRemaining();
-            marketOrder.update(false);
+			final Thread createMarketOrderThread = new Thread(Thread.currentThread().getName() + "CreateMarketOrder") {
+				@Override
+				public void run() {
+					try{
+						final ActuatorService actuatorService = ActuatorService.getInstance();
+						marketOrder.decRemaining();
+						marketOrder.update(false);
 
-            BigInteger marketOrderIdx = null;
-            for(int createTry = 0; createTry < 3 && marketOrderIdx == null; createTry++) {
+						BigInteger marketOrderIdx = null;
+						for (int createTry = 0; createTry < 3 && marketOrderIdx == null; createTry++) {
 
-                logger.debug("hostContribution(" + workerWalletAddr + ") : trying to create marketorder " + createTry);
-                marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
-                        BigInteger.valueOf(marketOrder.getTrust()),
-                        BigInteger.valueOf(marketOrder.getPrice()),
-                        BigInteger.valueOf(marketOrder.getVolume()));
-                if (marketOrderIdx == null) {
-                    try {
-                        logger.debug("createMarketOrder; will retry in 10s");
-                        Thread.sleep(10000);
-                    } catch (final InterruptedException e) {
-                    }
-                }
-            }
-            if (marketOrderIdx != null) {
-                theHost.setAvailable();
-                marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
-                logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder created " + marketOrderIdx);
-            } else {
-                logger.error("hostContribution(" + workerWalletAddr + ") : cant create marketorder " + marketOrder.getUID());
-                marketOrder.setErrorMsg("cant create marketorder");
-                marketOrder.setError();
-                theHost.leaveMarketOrder(marketOrder);
-                final List<HostInterface> workers = (List) hosts(marketOrder);
-                for (HostInterface w : workers) {
-                    w.leaveMarketOrder(marketOrder);
-                    w.update();
-                }
-            }
+							logger.debug("hostContribution(" + workerWalletAddr + ") : trying to create marketorder " + createTry);
+							marketOrderIdx = actuatorService.createMarketOrder(BigInteger.valueOf(marketOrder.getCategoryId()),
+									BigInteger.valueOf(marketOrder.getTrust()),
+									BigInteger.valueOf(marketOrder.getPrice()),
+									BigInteger.valueOf(marketOrder.getVolume()));
+							if (marketOrderIdx == null) {
+								try {
+									logger.debug("createMarketOrder; will retry in 10s");
+									Thread.sleep(10000);
+								} catch (final InterruptedException e) {
+								}
+							}
+						}
+						if (marketOrderIdx != null) {
+							theHost.setAvailable();
+							marketOrder.setMarketOrderIdx(marketOrderIdx.longValue());
+							logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder created " + marketOrderIdx);
+						} else {
+							logger.error("hostContribution(" + workerWalletAddr + ") : cant create marketorder " + marketOrder.getUID());
+							marketOrder.setErrorMsg("cant create marketorder");
+							marketOrder.setError();
+							theHost.leaveMarketOrder(marketOrder);
+							final List<HostInterface> workers = (List) hosts(marketOrder);
+							for (HostInterface w : workers) {
+								w.leaveMarketOrder(marketOrder);
+								w.update();
+							}
+						}
+						theHost.update(false);
+						marketOrder.update(false);
+					} catch(Exception e) {
+						logger.exception(e);
+					}
+				}
+			};
+			createMarketOrderThread.start();
         }
         else {
             if (marketOrder.getStatus() == StatusEnum.ERROR)
@@ -6193,11 +6203,9 @@ public final class DBInterface {
             else {
                 logger.debug("hostContribution(" + workerWalletAddr + ") : marketorder still waiting");
                 marketOrder.setWaiting();
+				marketOrder.update(false);
             }
         }
-
-        theHost.update(false);
-        marketOrder.update(false);
 
         return theHost;
     }

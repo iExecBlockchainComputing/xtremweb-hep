@@ -497,36 +497,45 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 (worker == null ? "null" : worker.getUID()) + ") " +
                 "enclaveChallenge = " + enclaveChallenge);
 
-        int contributeTry;
-        for(contributeTry = 0; contributeTry < 3; contributeTry++) {
+ 			final Thread allowToContributeThread = new Thread(Thread.currentThread().getName() + "allowWorkerToContribute") {
+                @Override
+                public void run() {
+                    try {
+                        int contributeTry;
+                        for (contributeTry = 0; contributeTry < 3; contributeTry++) {
 
-            final TransactionStatus txStatus =
-                    actuatorService.allowWorkersToContribute(workOrderId,
-                            wallets,
-                            enclaveChallenge);
+                            final TransactionStatus txStatus =
+                                    actuatorService.allowWorkersToContribute(workOrderId,
+                                            wallets,
+                                            enclaveChallenge);
 
-            if ((txStatus == null) || (txStatus == TransactionStatus.FAILURE)) {
-                try {
-                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 1s " + txStatus);
-                    Thread.sleep(1000);
-                } catch (final InterruptedException e) {
+                            if ((txStatus == null) || (txStatus == TransactionStatus.FAILURE)) {
+                                try {
+                                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 1s " + txStatus);
+                                    Thread.sleep(1000);
+                                } catch (final InterruptedException e) {
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (contributeTry >= 3) {
+                            final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
+                            for (final HostInterface w : workers) {
+                                marketOrder.removeWorker(worker);
+                                worker.update();
+                            }
+                            marketOrder.setErrorMsg("transaction error : allowWorkersToContribute");
+                            marketOrder.setError();
+                            marketOrder.update();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-            else {
-                break;
-            }
-        }
-
-        if (contributeTry >= 3) {
-            final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
-            for (final HostInterface w : workers) {
-                marketOrder.removeWorker(worker);
-                worker.update();
-            }
-            marketOrder.setErrorMsg("transaction error : allowWorkersToContribute");
-            marketOrder.setError();
-            marketOrder.update();
-        }
+            };
+ 			allowToContributeThread.start();
     }
 
     /**
