@@ -5582,14 +5582,13 @@ public final class DBInterface {
                     if (theTask != null) {
                         theTask.setError();
                     }
-                    if(theWork.getMarketOrderUid() != null) {
+                    if(marketOrder != null) {
                         final WorkInterface newWork = new WorkInterface(theWork);
                         newWork.setUID(new UID());
                         newWork.replicate(theWork.getReplicatedUid() != null ? theWork.getReplicatedUid() : theWork.getUID());
                         newWork.setExpectedHost(null);
                         newWork.insert();
-                        theApp.incPendingJobs();
-                        jobOwner.incPendingJobs();
+                        marketOrder.incExpectedWorkers();
                     }
                     break;
                 case FAILED:
