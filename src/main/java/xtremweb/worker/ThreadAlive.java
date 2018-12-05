@@ -189,10 +189,10 @@ public class ThreadAlive extends Thread {
 
             switch (contributionStatus) {
                 case AUTHORIZED:
-                    if(!theJob.isContributing()) {
-                        logger.debug("ThreadAlive::checkJob() : authorized but not contributing");
-                        break;
-                    }
+                    // if(!theJob.isContributing()) {
+                    //     logger.debug("ThreadAlive::checkJob() : authorized but not contributing");
+                    //     break;
+                    // }
 
                     if (theJob.getHiddenH2r() == null) {
                         theJob.setError("ThreadAlive() : can't contribute; H2R is null");
@@ -284,6 +284,10 @@ public class ThreadAlive extends Thread {
                     theJob.setCompleted();
                     CommManager.getInstance().sendWork(theJob);
                     CommManager.getInstance().getPoolWork().saveCompletedWork(theJob);
+                    break;
+                case ERROR:
+                    theJob.setError("Worker status is now ERROR");
+                    CommManager.getInstance().sendWork(theJob);
                     break;
             }
 

@@ -11,6 +11,8 @@ import com.iexec.scheduler.iexechub.IexecHubWatcher;
 import com.iexec.scheduler.workerpool.WorkerPoolService;
 import com.iexec.scheduler.workerpool.WorkerPoolWatcher;
 import org.json.JSONException;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+
 import xtremweb.common.*;
 import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommandSendApp;
@@ -445,7 +447,17 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 if (worker.getEthWalletAddr() != null) {
                     logger.debug("onWorkOrderActivated(" + workOrderId +") : allowing " + worker.getEthWalletAddr());
                 }
+
+                System.out.println("==> onWorkOrderActivated is calling");
+                
                 allowWorkerToContribute(workOrderId, marketOrder, worker);
+
+                try {
+                    System.out.println("==> sleeping 60s in onWorkOrderActivated");
+                    TimeUnit.SECONDS.sleep(60);
+                } catch (Exception e) {
+                    System.out.println("==> exception when waiting");
+                }
             }
 
             marketOrder.setPending();
@@ -521,9 +533,15 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                         }
 
                         if (contributeTry >= 3) {
+
+                            System.out.println("==> inside the if");
+
                             final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
                             for (final HostInterface w : workers) {
-                                marketOrder.removeWorker(worker);
+
+                                System.out.println("==> worker: " + w.getEthWalletAddr() + "is selected");
+
+                                marketOrder.removeWorker(w);
                                 worker.update();
                             }
                             marketOrder.setErrorMsg("transaction error : allowWorkersToContribute");
@@ -550,7 +568,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             throws IOException{
 
         for (final HostInterface worker : workers) {
+            System.out.println("allowWorkersToContribute is calling");
             allowWorkerToContribute(workOrderId,marketOrder, worker);
+            try {
+                System.out.println("==> sleeping 60s allowWorkersToContribute");
+                TimeUnit.SECONDS.sleep(60);
+            } catch (Exception e) {
+                System.out.println("==> exception when waiting");
+            }
         }
     }
     /**
