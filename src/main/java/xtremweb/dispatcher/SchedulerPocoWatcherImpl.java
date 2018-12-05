@@ -328,10 +328,10 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
 
         String user = workModel.getRequester();
         // ISSUE add support of beneficiary param : https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/93
-        if( workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("0x") ||
-            workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("0x0000000000000000000000000000000000000000") ||
-            workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("") ||
-            workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("0")
+        if( workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("0x")
+         && !workModel.getBeneficiary().equals("0x0000000000000000000000000000000000000000")
+         && !workModel.getBeneficiary().equals("")
+         && !workModel.getBeneficiary().equals("0")
             ){
             logger.info("Beneficiary is not null replace current getRequester["+user+"] by ["+workModel.getBeneficiary()+"]");
             user=workModel.getBeneficiary();
