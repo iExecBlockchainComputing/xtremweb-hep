@@ -448,15 +448,13 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                     logger.debug("onWorkOrderActivated(" + workOrderId +") : allowing " + worker.getEthWalletAddr());
                 }
 
-                System.out.println("==> onWorkOrderActivated is calling");
-                
                 allowWorkerToContribute(workOrderId, marketOrder, worker);
 
                 try {
-                    System.out.println("==> sleeping 60s in onWorkOrderActivated");
+                    logger.debug("sleeping 60s before allowing next worker to contribute");
                     TimeUnit.SECONDS.sleep(60);
                 } catch (Exception e) {
-                    System.out.println("==> exception when waiting");
+                    logger.error("Error when sleepping");
                 }
             }
 
@@ -533,14 +531,8 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                         }
 
                         if (contributeTry >= 3) {
-
-                            System.out.println("==> inside the if");
-
                             final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
                             for (final HostInterface w : workers) {
-
-                                System.out.println("==> worker: " + w.getEthWalletAddr() + "is selected");
-
                                 marketOrder.removeWorker(w);
                                 worker.update();
                             }
@@ -568,14 +560,7 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
             throws IOException{
 
         for (final HostInterface worker : workers) {
-            System.out.println("allowWorkersToContribute is calling");
             allowWorkerToContribute(workOrderId,marketOrder, worker);
-            try {
-                System.out.println("==> sleeping 60s allowWorkersToContribute");
-                TimeUnit.SECONDS.sleep(60);
-            } catch (Exception e) {
-                System.out.println("==> exception when waiting");
-            }
         }
     }
     /**

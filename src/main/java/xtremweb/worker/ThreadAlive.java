@@ -29,6 +29,7 @@ import com.iexec.common.ethereum.Utils;
 import com.iexec.common.model.*;
 import com.iexec.scheduler.marketplace.MarketplaceService;
 import com.iexec.worker.actuator.ActuatorService;
+import com.iexec.common.marketplace.WorkOrderStatusEnum;
 import org.xml.sax.SAXException;
 import xtremweb.common.*;
 import xtremweb.communications.*;
@@ -241,7 +242,18 @@ public class ThreadAlive extends Thread {
 
                     break;
                 case CONTRIBUTED:
-                    if(!theJob.canReveal()) {
+
+                    System.out.println("==> about to get workOrderStatus");
+                    Boolean workOrderIsRevealing = null;
+                    try {
+                        workOrderIsRevealing = ModelService.getInstance().getWorkOrderModel(theJob.getWorkOrderId())
+                                                         .getStatus().equals(WorkOrderStatusEnum.REVEALING);    
+                    } catch (Exception e) {
+                        System.out.println("cant get workOrder status - " + e);
+                    }
+                    System.out.println("==> workOrderIsRevealing: " + workOrderIsRevealing);
+
+                    if( !(theJob.canReveal() && workOrderIsRevealing) ) {
                         logger.debug("ThreadAlive::checkJob() : contributed but cant reveal");
                         break;
                     }
@@ -284,10 +296,6 @@ public class ThreadAlive extends Thread {
                     theJob.setCompleted();
                     CommManager.getInstance().sendWork(theJob);
                     CommManager.getInstance().getPoolWork().saveCompletedWork(theJob);
-                    break;
-                case ERROR:
-                    theJob.setError("Worker status is now ERROR");
-                    CommManager.getInstance().sendWork(theJob);
                     break;
             }
 
@@ -392,6 +400,8 @@ public class ThreadAlive extends Thread {
         Hashtable rmiResults;
         try {
             rmiResults = workAlive(rmiParams);
+            System.out.println("==> rmiResults");
+            System.out.println(rmiResults);
         } catch (final Exception e) {
             logger.exception("workAlive : connection error", e);
             return;
