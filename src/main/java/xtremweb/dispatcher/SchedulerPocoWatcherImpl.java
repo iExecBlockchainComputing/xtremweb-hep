@@ -521,8 +521,8 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
 
                             if ((txStatus == null) || (txStatus == TransactionStatus.FAILURE)) {
                                 try {
-                                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 1s " + txStatus);
-                                    Thread.sleep(1000);
+                                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 30s " + txStatus);
+                                    Thread.sleep(30000);
                                 } catch (final InterruptedException e) {
                                 }
                             } else {
