@@ -400,8 +400,6 @@ public class ThreadAlive extends Thread {
         Hashtable rmiResults;
         try {
             rmiResults = workAlive(rmiParams);
-            System.out.println("==> rmiResults");
-            System.out.println(rmiResults);
         } catch (final Exception e) {
             logger.exception("workAlive : connection error", e);
             return;
