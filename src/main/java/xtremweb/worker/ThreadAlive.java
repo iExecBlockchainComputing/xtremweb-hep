@@ -29,6 +29,7 @@ import com.iexec.common.ethereum.Utils;
 import com.iexec.common.model.*;
 import com.iexec.scheduler.marketplace.MarketplaceService;
 import com.iexec.worker.actuator.ActuatorService;
+import com.iexec.common.marketplace.WorkOrderStatusEnum;
 import org.xml.sax.SAXException;
 import xtremweb.common.*;
 import xtremweb.communications.*;
@@ -181,8 +182,7 @@ public class ThreadAlive extends Thread {
         logger.debug("ThreadAlive::checkJob() : theJob = " + theJob.toXml());
 
         final ContributionStatusEnum contributionStatus =
-                XWTools.workerContributionStatus(new EthereumWallet(Worker.getConfig().getHost().getEthWalletAddr()),
-                        theJob.getWorkOrderId());
+                XWTools.workerContributionStatus(theJob.getWorkOrderId());
 
         logger.debug("ThreadAlive()::checkJob() : Contribution status : " + contributionStatus);
 
@@ -190,10 +190,10 @@ public class ThreadAlive extends Thread {
 
             switch (contributionStatus) {
                 case AUTHORIZED:
-                    if(!theJob.isContributing()) {
-                        logger.debug("ThreadAlive::checkJob() : authorized but not contributing");
-                        break;
-                    }
+                    // if(!theJob.isContributing()) {
+                    //     logger.debug("ThreadAlive::checkJob() : authorized but not contributing");
+                    //     break;
+                    // }
 
                     if (theJob.getHiddenH2r() == null) {
                         theJob.setError("ThreadAlive() : can't contribute; H2R is null");
@@ -242,7 +242,18 @@ public class ThreadAlive extends Thread {
 
                     break;
                 case CONTRIBUTED:
-                    if(!theJob.canReveal()) {
+
+                    System.out.println("==> about to get workOrderStatus");
+                    Boolean workOrderIsRevealing = null;
+                    try {
+                        workOrderIsRevealing = ModelService.getInstance().getWorkOrderModel(theJob.getWorkOrderId())
+                                                         .getStatus().equals(WorkOrderStatusEnum.REVEALING);    
+                    } catch (Exception e) {
+                        System.out.println("cant get workOrder status - " + e);
+                    }
+                    System.out.println("==> workOrderIsRevealing: " + workOrderIsRevealing);
+
+                    if( !(theJob.canReveal() && workOrderIsRevealing) ) {
                         logger.debug("ThreadAlive::checkJob() : contributed but cant reveal");
                         break;
                     }
