@@ -11,6 +11,8 @@ import com.iexec.scheduler.iexechub.IexecHubWatcher;
 import com.iexec.scheduler.workerpool.WorkerPoolService;
 import com.iexec.scheduler.workerpool.WorkerPoolWatcher;
 import org.json.JSONException;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+
 import xtremweb.common.*;
 import xtremweb.communications.URI;
 import xtremweb.communications.XMLRPCCommandSendApp;
@@ -328,7 +330,11 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
 
         String user = workModel.getRequester();
         // ISSUE add support of beneficiary param : https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/93
-        if( !workModel.getBeneficiary().equals("0x")){
+        if( workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("0x")
+         && !workModel.getBeneficiary().equals("0x0000000000000000000000000000000000000000")
+         && !workModel.getBeneficiary().equals("")
+         && !workModel.getBeneficiary().equals("0")
+            ){
             logger.info("Beneficiary is not null replace current getRequester["+user+"] by ["+workModel.getBeneficiary()+"]");
             user=workModel.getBeneficiary();
         }
@@ -445,7 +451,15 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 if (worker.getEthWalletAddr() != null) {
                     logger.debug("onWorkOrderActivated(" + workOrderId +") : allowing " + worker.getEthWalletAddr());
                 }
+
                 allowWorkerToContribute(workOrderId, marketOrder, worker);
+
+                try {
+                    logger.debug("sleeping 60s before allowing next worker to contribute");
+                    TimeUnit.SECONDS.sleep(60);
+                } catch (Exception e) {
+                    logger.error("Error when sleepping");
+                }
             }
 
             marketOrder.setPending();
@@ -497,36 +511,45 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 (worker == null ? "null" : worker.getUID()) + ") " +
                 "enclaveChallenge = " + enclaveChallenge);
 
-        int contributeTry;
-        for(contributeTry = 0; contributeTry < 3; contributeTry++) {
+ 			final Thread allowToContributeThread = new Thread(Thread.currentThread().getName() + "allowWorkerToContribute") {
+                @Override
+                public void run() {
+                    try {
+                        int contributeTry;
+                        for (contributeTry = 0; contributeTry < 3; contributeTry++) {
 
-            final TransactionStatus txStatus =
-                    actuatorService.allowWorkersToContribute(workOrderId,
-                            wallets,
-                            enclaveChallenge);
+                            final TransactionStatus txStatus =
+                                    actuatorService.allowWorkersToContribute(workOrderId,
+                                            wallets,
+                                            enclaveChallenge);
 
-            if ((txStatus == null) || (txStatus == TransactionStatus.FAILURE)) {
-                try {
-                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 1s " + txStatus);
-                    Thread.sleep(1000);
-                } catch (final InterruptedException e) {
+                            if ((txStatus == null) || (txStatus == TransactionStatus.FAILURE)) {
+                                try {
+                                    System.out.println("[" + now + "] allowWorkersToContribute; will retry in 30s " + txStatus);
+                                    Thread.sleep(30000);
+                                } catch (final InterruptedException e) {
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (contributeTry >= 3) {
+                            final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
+                            for (final HostInterface w : workers) {
+                                marketOrder.removeWorker(w);
+                                worker.update();
+                            }
+                            marketOrder.setErrorMsg("transaction error : allowWorkersToContribute");
+                            marketOrder.setError();
+                            marketOrder.update();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-            else {
-                break;
-            }
-        }
-
-        if (contributeTry >= 3) {
-            final Collection<HostInterface> workers = DBInterface.getInstance().hosts(marketOrder);
-            for (final HostInterface w : workers) {
-                marketOrder.removeWorker(worker);
-                worker.update();
-            }
-            marketOrder.setErrorMsg("transaction error : allowWorkersToContribute");
-            marketOrder.setError();
-            marketOrder.update();
-        }
+            };
+ 			allowToContributeThread.start();
     }
 
     /**
@@ -771,7 +794,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
           final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
                     ModelService.getInstance().getWorkOrderModel(woid) :
                     null;
-          if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+          if (workOrderModel != null
+              && !workOrderModel.getCallback().equals("0x")
+              && !workOrderModel.getCallback().equals("0x0000000000000000000000000000000000000000")
+              && !workOrderModel.getCallback().equals("")
+              && !workOrderModel.getCallback().equals("0")
+          ) { // check callback is set
+
+
                 final FileInputStream finput = new FileInputStream(data.getPath());
                 final DataInputStream input = new DataInputStream(finput);
                 final StreamIO io = new StreamIO(null, input,false);
@@ -832,7 +862,12 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
               final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
                         ModelService.getInstance().getWorkOrderModel(woid) :
                         null;
-              if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+              if (workOrderModel != null
+                && !workOrderModel.getCallback().equals("0x")
+                && !workOrderModel.getCallback().equals("0x0000000000000000000000000000000000000000")
+                && !workOrderModel.getCallback().equals("")
+                && !workOrderModel.getCallback().equals("0")
+              ) { // check callback is set
                   ActuatorService.getInstance().triggerWorkOrderCallback(woid,
                               stdOutCallback,
                               stdErrCallback,
