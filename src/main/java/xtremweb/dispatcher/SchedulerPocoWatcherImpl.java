@@ -330,7 +330,11 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
 
         String user = workModel.getRequester();
         // ISSUE add support of beneficiary param : https://github.com/iExecBlockchainComputing/xtremweb-hep/issues/93
-        if( !workModel.getBeneficiary().equals("0x")){
+        if( workModel.getBeneficiary() != null && !workModel.getBeneficiary().equals("0x")
+         && !workModel.getBeneficiary().equals("0x0000000000000000000000000000000000000000")
+         && !workModel.getBeneficiary().equals("")
+         && !workModel.getBeneficiary().equals("0")
+            ){
             logger.info("Beneficiary is not null replace current getRequester["+user+"] by ["+workModel.getBeneficiary()+"]");
             user=workModel.getBeneficiary();
         }
@@ -790,7 +794,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
           final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
                     ModelService.getInstance().getWorkOrderModel(woid) :
                     null;
-          if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+          if (workOrderModel != null
+              && !workOrderModel.getCallback().equals("0x")
+              && !workOrderModel.getCallback().equals("0x0000000000000000000000000000000000000000")
+              && !workOrderModel.getCallback().equals("")
+              && !workOrderModel.getCallback().equals("0")
+          ) { // check callback is set
+
+
                 final FileInputStream finput = new FileInputStream(data.getPath());
                 final DataInputStream input = new DataInputStream(finput);
                 final StreamIO io = new StreamIO(null, input,false);
@@ -851,7 +862,12 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
               final WorkOrderModel workOrderModel = (data != null) && (data.getType() == DataTypeEnum.TEXT) ?
                         ModelService.getInstance().getWorkOrderModel(woid) :
                         null;
-              if (workOrderModel != null && !workOrderModel.getCallback().equals("0x")) { // check callback is set
+              if (workOrderModel != null
+                && !workOrderModel.getCallback().equals("0x")
+                && !workOrderModel.getCallback().equals("0x0000000000000000000000000000000000000000")
+                && !workOrderModel.getCallback().equals("")
+                && !workOrderModel.getCallback().equals("0")
+              ) { // check callback is set
                   ActuatorService.getInstance().triggerWorkOrderCallback(woid,
                               stdOutCallback,
                               stdErrCallback,
