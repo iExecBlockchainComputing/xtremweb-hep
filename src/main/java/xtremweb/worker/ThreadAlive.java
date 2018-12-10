@@ -27,7 +27,7 @@ import com.iexec.common.ethereum.CredentialsService;
 import com.iexec.common.ethereum.TransactionStatus;
 import com.iexec.common.ethereum.Utils;
 import com.iexec.common.model.*;
-import com.iexec.scheduler.marketplace.MarketplaceService;
+// import com.iexec.scheduler.marketplace.MarketplaceService;
 import com.iexec.worker.actuator.ActuatorService;
 import com.iexec.common.marketplace.WorkOrderStatusEnum;
 import org.xml.sax.SAXException;
@@ -288,7 +288,7 @@ public class ThreadAlive extends Thread {
                         logger.warn("reveal transaction error; will retry later " + theJob.getUID());
                         theJob.incRevealCalls();
                         CommManager.getInstance().getPoolWork().saveWorkUnderProcess(theJob);
-                        dumpInfosByWorkOrderId(theJob.getWorkOrderId());
+                        // dumpInfosByWorkOrderId(theJob.getWorkOrderId());
                     }
 
                     break;
@@ -591,9 +591,9 @@ public class ThreadAlive extends Thread {
 
     private void dumpInfosByWorkOrderId(final String workOrderId) {
         WorkOrderModel workOrder = ModelService.getInstance().getWorkOrderModel(workOrderId);
-        MarketOrderModel marketOrder = MarketplaceService.getInstance().getMarketOrderModel(workOrder.getMarketorderIdx());
+        // MarketOrderModel marketOrder = MarketplaceService.getInstance().getMarketOrderModel(workOrder.getMarketorderIdx());
         XWTools.debug(workOrder.toString());
-        XWTools.debug(marketOrder.toString());
+        // XWTools.debug(marketOrder.toString());
     }
 
     /**
