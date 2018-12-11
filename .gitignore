@@ -1,5 +1,5 @@
 .project
-.clasppath
+.classpath
 .sonar/
 .settings/
 /out/
@@ -14,3 +14,5 @@ build/
 /src/main/javascript/client/node_modules/
 *.pem
 trustedcerts.txt
+.vscode/
+bin/
