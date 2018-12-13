@@ -400,11 +400,24 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
      * @param workOrderId is the blockchain work order id
      */
     @Override
-    public void onWorkOrderActivated(String workOrderId) {
+    public synchronized void onWorkOrderActivated(String workOrderId) {
         final WorkOrderModel workOrderModel = ModelService.getInstance().getWorkOrderModel(workOrderId);
         logger.debug("onWorkOrderActivated() : onWorkOrderActivated(" + workOrderId + "), workOrderModel: " + workOrderModel);
         if(workOrderModel == null) {
             logger.error("onWorkOrderActivated() : can't retrieve work model " + workOrderId);
+            return;
+        }
+
+        final MarketOrderInterface mo = getMarketOrder(workOrderModel.getMarketorderIdx().longValue());
+
+        if (mo == null) {
+            logger.info("market order is null, cant continue !");
+            return;
+        }
+
+        logger.info("this marketorder status is: " + mo.getStatus());
+        if (mo.getStatus() != StatusEnum.AVAILABLE) {
+            logger.warn("this marketorder has been already processed, backup !");
             return;
         }
 
@@ -444,6 +457,9 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 return;
             }
 
+            marketOrder.setPending();
+            marketOrder.update();
+
             for(final HostInterface worker : workers ) {
                 logger.error("onWorkOrderActivated() : worker: " + worker);
                 worker.setPending();
@@ -454,17 +470,22 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
 
                 allowWorkerToContribute(workOrderId, marketOrder, worker);
 
+                int delay;
                 try {
-                    logger.debug("sleeping 60s before allowing next worker to contribute");
-                    TimeUnit.SECONDS.sleep(60);
+                    delay = Integer.parseInt(System.getenv("WORKER_ALLOWANCE_DELAY"));
+                } catch (NumberFormatException e) {
+                    logger.error("delay ''" + System.getenv("WORKER_ALLOWANCE_DELAY") + "' is not a number or not defined");
+                    logger.warn("defaulting to 0");
+                    delay = 0;
+                }
+
+                try {
+                    logger.debug("sleeping " + delay + " seconds before allowing next worker to contribute");
+                    TimeUnit.SECONDS.sleep(delay);
                 } catch (Exception e) {
                     logger.error("Error when sleepping");
                 }
             }
-
-            marketOrder.setPending();
-            marketOrder.update();
-
         } catch(final Exception e) {
             logger.exception(e);
         }

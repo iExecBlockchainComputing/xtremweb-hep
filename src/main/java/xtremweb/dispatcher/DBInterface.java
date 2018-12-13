@@ -1268,7 +1268,7 @@ public final class DBInterface {
      * @param idx is the market order
      * @since 13.1.0
      */
-     MarketOrderInterface marketOrderByIdx(final long idx) throws IOException {
+     synchronized MarketOrderInterface marketOrderByIdx(final long idx) throws IOException {
         return selectOne(new MarketOrderInterface(),
                 SQLRequest.MAINTABLEALIAS + "." + MarketOrderInterface .Columns.MARKETORDERIDX + "="
                         + idx);
