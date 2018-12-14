@@ -791,6 +791,7 @@ public final class MarketOrderInterface extends Table {
      * @return true if value has changed, false otherwise
      */
     public boolean setPending() {
+		Thread.currentThread().dumpStack();
         return setValue(Columns.STATUS, StatusEnum.PENDING);
     }
     /**
