@@ -264,7 +264,7 @@ fi
 ENVFILENAME="/tmp/env_${XWJOBUID}.list"
 printenv | grep -vE "HOSTNAME|TERM|LS_COLORS|PATH|PWD|SHLVL|HOME|_|SHELL|TERM|SSH|LC_|LANG|LOG|XDG_RUNTIME_DIR|LESS|USER|MAIL"> ${ENVFILENAME}
 docker pull ${IMAGENAME} 2>&1 >/dev/null
-docker run ${PDOARGS} -v $(pwd):/iexec --rm --name ${CONTAINERNAME} --env-file ${ENVFILENAME} ${IMAGENAME} ${ARGS} 2>&1 |  grep -vE "Unable to find image|Pulling from|Pull complete|Digest:|Status:|: Pulling fs layer|: Verifying Checksum|: Download complete|: Already exists"
+docker run ${PDOARGS} -v $(pwd):/iexec --rm --name ${CONTAINERNAME} ${IMAGENAME} ${ARGS} 2>&1 |  grep -vE "Unable to find image|Pulling from|Pull complete|Digest:|Status:|: Pulling fs layer|: Verifying Checksum|: Download complete|: Already exists"
 
 
 
