@@ -10,9 +10,9 @@ buildscript {
 }
 
 def UNIQUE_ID = 'hostname -f'.execute().text.trim()
-def tokencommon = 'curl -XPOST --data name=${UNIQUE_ID} https://cc02acaa7954c9d63333b18e6d5decead7d457ac3cfddeeb:@packagecloud.io/install/repositories/iexec/common/tokens.text'.execute().text.trim()
+def tokencommon = 'curl -XPOST --data name=${UNIQUE_ID} https://cc02acaa7954c9d63333b18e6d5decead7d457ac3cfddeeb:@packagecloud.io/install/repositories/iexec/common-legacy/tokens.text'.execute().text.trim()
 def tokenscheduler = 'curl -XPOST --data name=${UNIQUE_ID} https://6f087db4a17b65a64d456e474a6b4b16b59a52d59690b70d:@packagecloud.io/install/repositories/iexec/scheduler/tokens.text'.execute().text.trim()
-def tokenworker = 'curl -XPOST --data name=${UNIQUE_ID} https://77715138d032c32e0d60769e5ae002b18837aa67da59f966:@packagecloud.io/install/repositories/iexec/worker/tokens.text'.execute().text.trim()
+def tokenworker = 'curl -XPOST --data name=${UNIQUE_ID} https://77715138d032c32e0d60769e5ae002b18837aa67da59f966:@packagecloud.io/install/repositories/iexec/worker-legacy/tokens.text'.execute().text.trim()
 
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java-library'
@@ -20,13 +20,13 @@ apply plugin: 'java-library'
 repositories {
     mavenCentral()
     maven {
-        url "https://packagecloud.io/priv/${tokencommon}/iexec/common/maven2"
+        url "https://packagecloud.io/priv/${tokencommon}/iexec/common-legacy/maven2"
     }
     maven {
         url "https://packagecloud.io/priv/${tokenscheduler}/iexec/scheduler/maven2"
     }
     maven {
-        url "https://packagecloud.io/priv/${tokenworker}/iexec/worker/maven2"
+        url "https://packagecloud.io/priv/${tokenworker}/iexec/worker-legacy/maven2"
     }
 }
 
