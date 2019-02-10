@@ -54,12 +54,12 @@ public enum AppTypeEnum {
 	 */
 	SHARED,
 	/**
-	 * On July 3rd, 2017, this is our 2nd shared application: docker
+	 * On July 3rd, 2017, this is Intel PDO shared application
 	 * @since 14.0.0
 	 */
 	PDO,
 	/**
-	 * On July 3rd, 2017, this is our 2nd shared application: docker
+	 * On July 3rd, 2017, this is Docker shared application
 	 * @since 11.0.0
 	 */
 	DOCKER,
