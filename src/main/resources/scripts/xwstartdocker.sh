@@ -1,12 +1,13 @@
 #!/bin/sh
 #=============================================================================
 #
-#  File    : docker
-#  Date    : March, 2018
+#  File    : xwstartdocker.sh
+#  Date    : March, 2017
 #  Author  : Oleg Lodygensky
 #
 #  Change log:
-#  - Jul 3rd,2017 : Oleg Lodygensky; creation
+#  - Feb 10th,2010 : Oleg Lodygensky; Fortanix support
+#  - Jul 3rd,2017  : Oleg Lodygensky; creation
 #
 #  OS      : Linux, mac os x
 #
@@ -250,21 +251,18 @@ if [ -f ${DOCKERFILENAME} ] ; then
     fatal "Dockerfile is not supported"
 fi
 
-#
-# --stop-timeout (SIGKILL)
-# --memory BYTES
-# --cpus 1
-#
 
-PDOARGS=""
-if [ ! -z "${PDOENABLED}" ] ; then
-	PDOARGS="--device=/dev/isgx -v /var/run/aesmd:/var/run/aesmd"
+# docker run -it -v  /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket  --device /dev/isgx --device /dev/gsgx   --network host  <docker image....>
+
+FORTANIXARGS=""
+if [ ! -z "${FORTANIXENABLED}" ] ; then
+	FORTANIXARGS="-v  /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket  --device /dev/isgx --device /dev/gsgx   --network host"
 fi
 
 ENVFILENAME="/tmp/env_${XWJOBUID}.list"
 printenv | grep -vE "HOSTNAME|TERM|LS_COLORS|PATH|PWD|SHLVL|HOME|_|SHELL|TERM|SSH|LC_|LANG|LOG|XDG_RUNTIME_DIR|LESS|USER|MAIL"> ${ENVFILENAME}
 docker pull ${IMAGENAME} 2>&1 >/dev/null
-docker run ${PDOARGS} -v $(pwd):/iexec --rm --name ${CONTAINERNAME} ${IMAGENAME} ${ARGS} 2>&1 |  grep -vE "Unable to find image|Pulling from|Pull complete|Digest:|Status:|: Pulling fs layer|: Verifying Checksum|: Download complete|: Already exists"
+docker run ${FORTANIXARGS} -v $(pwd):/iexec --rm --name ${CONTAINERNAME} ${IMAGENAME} ${ARGS} 2>&1 |  grep -vE "Unable to find image|Pulling from|Pull complete|Digest:|Status:|: Pulling fs layer|: Verifying Checksum|: Download complete|: Already exists"
 
 
 
