@@ -10,7 +10,7 @@
 #
 #  OS      : Linux, mac os x
 #
-#  Purpose : this script checks docker usage on worker side
+#  Purpose : this script starts docker for Intel PDO on worker side
 #
 #
 #  !!!!!!!!!!!!!!!!    DO NOT EDIT    !!!!!!!!!!!!!!!!
