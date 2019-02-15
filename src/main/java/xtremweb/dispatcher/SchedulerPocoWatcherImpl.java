@@ -363,6 +363,14 @@ public class SchedulerPocoWatcherImpl implements IexecHubWatcher, WorkerPoolWatc
                 logger.info("Can't retreive task cmdline : " + e.getMessage());
             }
             try {
+                final String envvars = XWTools.jsonValueFromString(workModel.getParams(), "envvars");
+                work.setEnvVars(envvars);
+            }
+            catch(final JSONException e) {
+                logger.debug(e.getMessage());
+                logger.info("Can't retreive task envvars : " + e.getMessage());
+            }
+            try {
                 final String dirinuri = XWTools.jsonValueFromString(workModel.getParams(), "dirinuri");
                 work.setDirin(new URI(dirinuri));
             } catch(final JSONException e) {
