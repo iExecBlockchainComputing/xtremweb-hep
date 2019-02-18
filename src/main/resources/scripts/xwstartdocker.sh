@@ -255,7 +255,7 @@ fi
 # docker run -it -v  /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket  --device /dev/isgx --device /dev/gsgx   --network host  <docker image....>
 
 FORTANIXARGS=""
-if [ ![ ! -z "${FORTANIXENABLED}" ]  -z "${FORTANIXENABLED}" ] ; then
+if [ ! -z "${FORTANIXENABLED}" ] ; then
 	FORTANIXARGS="-v  /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket  --device /dev/isgx --device /dev/gsgx   --network host"
 fi
 
