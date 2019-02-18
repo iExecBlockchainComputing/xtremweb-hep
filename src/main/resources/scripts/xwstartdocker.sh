@@ -255,12 +255,12 @@ fi
 # docker run -it -v  /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket  --device /dev/isgx --device /dev/gsgx   --network host  <docker image....>
 
 FORTANIXARGS=""
-if [ ! -z "${FORTANIXENABLED}" ] ; then
+if [ ![ ! -z "${FORTANIXENABLED}" ]  -z "${FORTANIXENABLED}" ] ; then
 	FORTANIXARGS="-v  /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket  --device /dev/isgx --device /dev/gsgx   --network host"
 fi
 
 ENVFILENAME="/tmp/env_${XWJOBUID}.list"
-printenv | grep -vE "HOSTNAME|TERM|LS_COLORS|PATH|PWD|SHLVL|HOME|_|SHELL|TERM|SSH|LC_|LANG|LOG|XDG_RUNTIME_DIR|LESS|USER|MAIL"> ${ENVFILENAME}
+printenv | grep -vE "HOSTNAME|TERM|LS_COLORS|PATH|PWD|SHLVL|HOME|SHELL|TERM|SSH|LC_|LANG|LOG|XDG_RUNTIME_DIR|LESS|USER|MAIL"> ${ENVFILENAME}
 docker pull ${IMAGENAME} 2>&1 >/dev/null
 docker run ${FORTANIXARGS} -v $(pwd):/iexec --rm --name ${CONTAINERNAME} --env-file ${ENVFILENAME} ${IMAGENAME} ${ARGS} 2>&1 |  grep -vE "Unable to find image|Pulling from|Pull complete|Digest:|Status:|: Pulling fs layer|: Verifying Checksum|: Download complete|: Already exists"
 
