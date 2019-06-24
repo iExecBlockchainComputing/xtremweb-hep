@@ -1,4 +1,9 @@
-# xtremweb-hep
+# Deprecated
+
+Warning!! This repository is deprecated and not used anymore. It was used in the version 2 of iexec. Now, since version 3, the project to use should be https://github.com/iExecBlockchainComputing/iexec-core.
+
+---------------------------------------------------------------
+
 Data driven volunteer cloud
 
 ### Status
